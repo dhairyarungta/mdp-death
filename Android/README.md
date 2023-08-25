@@ -1,3 +1,0 @@
-# Android README
-
-#HELLOOOO
