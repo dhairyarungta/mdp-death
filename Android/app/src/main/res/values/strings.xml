@@ -1,6 +1,33 @@
 <resources>
     <string name="app_name">MDP_Android</string>
     <string name="title_home">Home</string>
-    <string name="title_dashboard">Dashboard</string>
-    <string name="title_notifications">Notifications</string>
+    <string name="title_bluetooth">Bluetooth</string>
+    <string name="title_messages">Messages</string>
+
+    <!--  strings used for home page  -->
+    <string name="text_obstacle1">1</string>
+    <string name="text_obstacle2">2</string>
+    <string name="text_obstacle3">3</string>
+    <string name="text_obstacle4">4</string>
+    <string name="text_obstacle5">5</string>
+    <string name="text_obstacle6">6</string>
+    <string name="text_obstacle7">7</string>
+    <string name="text_obstacle8">8</string>
+    <string name="button_reset">Reset</string>
+    <string name="button_imagerec">Start Image Rec Task</string>
+    <string name="button_fastest">Start Fastest Car Task</string>
+    <string name="text_robotstatus">Robot Status:</string>
+    <string name="text_bluetooth">Bluetooth Status:</string>
+
+    <!--  strings used for bluetooth page  -->
+    <string name="button_scan">Scan</string>
+    <string name="button_pair">Pair</string>
+    <string name="text_paired">Paired Devices</string>
+    <string name="text_available">Available Devices</string>
+
+    <!--  strings used for messages page  -->
+    <string name="text_received">Messages Received:</string>
+    <string name="text_sent">Messages Sent:</string>
+    <string name="text_hint">Enter message</string>
+    <string name="button_send">Send</string>
 </resources>
