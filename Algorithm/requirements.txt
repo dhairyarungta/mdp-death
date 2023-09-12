@@ -1,0 +1,6 @@
+pygame==2.1.2
+networkx==2.8.5
+matplotlib==3.5.3
+parse==1.19.0
+numpy==1.23.2
+opencv-python
