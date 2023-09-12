@@ -3,20 +3,19 @@ import os
 import queue
 import threading
 
-from mdpalgo import constants
 import pygame
-from mdpalgo.algorithm.astar import AStar
-from mdpalgo.algorithm.astar_hamiltonian import AStarHamiltonian
-from mdpalgo.algorithm.hamiltonian_path_planners import ExhaustiveHamiltonianPathPlanner
-from mdpalgo.algorithm.path_planning import PathPlan
-from mdpalgo.communication.comms import AlgoClient
-from mdpalgo.communication.message_parser import MessageParser, MessageType, TaskType
-from mdpalgo.interface.panel import Panel
-from mdpalgo.map.grid import Grid
-from mdpalgo.robot.robot import Robot
 
-# for saving the image
-from PIL import Image
+from Algorithm.mdpalgo.constants import mdp_constants
+import pygame
+from Algorithm.mdpalgo.algorithm.astar import AStar
+from Algorithm.mdpalgo.algorithm.astar_hamiltonian import AStarHamiltonian
+from Algorithm.mdpalgo.algorithm.hamiltonian_path_planners import ExhaustiveHamiltonianPathPlanner
+from Algorithm.mdpalgo.algorithm.path_planning import PathPlan
+from Algorithm.mdpalgo.communication.comms import AlgoClient
+from Algorithm.mdpalgo.communication.message_parser import MessageParser, MessageType, TaskType
+from Algorithm.mdpalgo.interface.panel import Panel
+from Algorithm.mdpalgo.map.grid import Grid
+from Algorithm.mdpalgo.robot.robot import Robot
 
 # Set the HEIGHT and WIDTH of the screen
 WINDOW_SIZE = [960, 660]
@@ -33,9 +32,9 @@ class Simulator:
         self.root.init()
         self.root.display.set_caption("MDP Algorithm Simulator")
         self.screen = None
-        if not constants.HEADLESS:
+        if not mdp_constants.HEADLESS:
             self.screen = pygame.display.set_mode(WINDOW_SIZE)
-            self.screen.fill(constants.SIMULATOR_BG)
+            self.screen.fill(mdp_constants.SIMULATOR_BG)
 
         # Callback methods queue - for passing of callback functions from worker thread to main UI thread
         self.callback_queue = queue.Queue()
@@ -53,7 +52,7 @@ class Simulator:
         self.grid_from_screen_top_left = (120, 120)
         # Initialise 20 by 20 Grid
         self.grid = Grid(20, 20, 20, self.grid_from_screen_top_left)
-        if not constants.HEADLESS:
+        if not mdp_constants.HEADLESS:
             # Draw the grid
             self.redraw_grid()
 
@@ -69,8 +68,8 @@ class Simulator:
         current_dir = os.path.dirname(os.path.abspath(__file__))
         image_path = os.path.join(current_dir, "car.png")
         car_image = pygame.image.load(image_path)
-        self.car = Robot(self, self.screen, self.grid, constants.ROBOT_W, constants.ROBOT_H,
-                         constants.ROBOT_STARTING_X, constants.ROBOT_STARTING_Y, constants.ROBOT_STARTING_ANGLE,
+        self.car = Robot(self, self.screen, self.grid, mdp_constants.ROBOT_W, mdp_constants.ROBOT_H,
+                         mdp_constants.ROBOT_STARTING_X, mdp_constants.ROBOT_STARTING_Y, mdp_constants.ROBOT_STARTING_ANGLE,
                          car_image)
         # Draw the car
         self.car.draw_car()
@@ -88,10 +87,10 @@ class Simulator:
     def run(self):
         # Loop until the user clicks the close button.
         done = False
-        print('HEADLESS is:', constants.HEADLESS)
+        print('HEADLESS is:', mdp_constants.HEADLESS) # default is False
 
         # -------- Main Program Loop -----------
-        if constants.HEADLESS:  # to simplify implementation, we use 2 threads even if headless
+        if mdp_constants.HEADLESS:  # to simplify implementation, we use 2 threads even if headless
             print("Waiting to connect")
             self.start_algo_client()
             while True:
@@ -125,7 +124,7 @@ class Simulator:
                             self.check_button_clicked(pos)
 
                 now = pygame.time.get_ticks() / 1000
-                if now - self.startTime > 1 / constants.FPS:
+                if now - self.startTime > 1 / mdp_constants.FPS:
                     self.startTime = now
                     self.root.display.flip()
 
@@ -147,7 +146,7 @@ class Simulator:
         """Connect to RPi wifi server and start a thread to receive messages """
         self.comms = AlgoClient()
         self.comms.connect()
-        constants.RPI_CONNECTED = True
+        mdp_constants.RPI_CONNECTED = True
         self.receiving_process()
 
     def handle_worker_callbacks(self):
@@ -172,14 +171,14 @@ class Simulator:
         Running UI updating methods in a worker thread will cause a flashing effect as both threads attempt to update the UI
         """
 
-        while constants.RPI_CONNECTED:
+        while mdp_constants.RPI_CONNECTED:
             try:
                 if self.comms.client_socket is not None:
                     txt = self.comms.client_socket.recv(1024)
                     print("RECEIVED MSG: ", txt)
                     if (txt == None):
                         continue
-
+                # todo change to our own contract
                 message_type_and_data = self.parser.parse(txt.decode())
                 message_data = message_type_and_data["data"]
                 if message_type_and_data["type"] == MessageType.START_TASK:  # From Android
@@ -230,7 +229,7 @@ class Simulator:
             raise ValueError("Unimplemented response for updated robot pose")
 
     def reprint_screen_and_buttons(self):
-        self.screen.fill(constants.SIMULATOR_BG)
+        self.screen.fill(mdp_constants.SIMULATOR_BG)
         self.panel.redraw_buttons()
 
     def check_button_clicked(self, pos):
@@ -254,7 +253,7 @@ class Simulator:
                 elif button_func == "DISCONNECT":
                     print("Disconnect button pressed.")
                     self.comms.disconnect()
-                    constants.RPI_CONNECTED = False
+                    mdp_constants.RPI_CONNECTED = False
                     self.comms = None
 
                 # for testing purposes
@@ -275,14 +274,13 @@ class Simulator:
             else:
                 pass
 
-    # todo
     def start_button_clicked(self):
         print("START button clicked!")
 
-        # Get fastest route (currently not using this)
+        # Get the fastest route (currently not using this)
         self.astar = AStar(self.grid, self.car.grid_x, self.car.grid_y)
 
-        # Get fastest route using AStar Hamiltonian
+        # Get the fastest route using AStar Hamiltonian
         if len(self.grid.get_target_locations()) != 0:
             self.astar_hamiltonian = AStarHamiltonian(self.grid, self.car.grid_x, self.car.grid_y)
             graph = self.astar_hamiltonian.create_graph()

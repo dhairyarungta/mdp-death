@@ -39,13 +39,6 @@ RPI_CONNECTED = False
 # if Headless = False, this NSWE "+" sign will rotate together with the front of the bot when it turns left/right or changes direction.
 HEADLESS = False
 
-# WIFI server IP address
-RPI_IP = "10.91.234.84"  # real RPi server
-# RPI_IP_WIFI = "192.168.15.1"
-# RPI_IP_WIFI_NEW = "192.168.15.69"
-MY_IP = "192.168.1.8"
-TEST_IP = "10.91.96.223"  # Use this for easier testing RPi integration without RPi
 
 GRP_14 = "192.168.14.1"
-WIFI_IP = GRP_14
 PORT = 8888

@@ -1,8 +1,8 @@
-from mdpalgo import constants
+from Algorithm.mdpalgo.constants import mdp_constants
 
 
 class Obstacle:
-    def __init__(self, x_coordinate, y_coordinate, dir = constants.NORTH):
+    def __init__(self, x_coordinate, y_coordinate, dir = mdp_constants.NORTH):
         # TODO: if possible, combine obstacle class into cell
         # TODO: set unique ids to identify different obstacles
         # TODO: need boolean parameter to mark obstacle as visited
@@ -13,18 +13,18 @@ class Obstacle:
 
     def obstacle_clicked(self):
         if self.direction is None:
-            self.direction = constants.NORTH
+            self.direction = mdp_constants.NORTH
 
-        elif self.direction == constants.NORTH:
-            self.direction = constants.EAST
+        elif self.direction == mdp_constants.NORTH:
+            self.direction = mdp_constants.EAST
 
-        elif self.direction == constants.EAST:
-            self.direction = constants.SOUTH
+        elif self.direction == mdp_constants.EAST:
+            self.direction = mdp_constants.SOUTH
 
-        elif self.direction == constants.SOUTH:
-            self.direction = constants.WEST
+        elif self.direction == mdp_constants.SOUTH:
+            self.direction = mdp_constants.WEST
 
-        elif self.direction == constants.WEST:
+        elif self.direction == mdp_constants.WEST:
             self.direction = None
 
         else:

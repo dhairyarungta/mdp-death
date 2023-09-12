@@ -1,7 +1,7 @@
 import logging
 import argparse
-import constants
 
+from Algorithm.mdpalgo.constants import mdp_constants
 from interface.simulator import Simulator
 
 # Logging
@@ -18,14 +18,11 @@ parser.add_argument("--testwifi", help="use test wifi server on PC instead "
 
 
 def main():
-    constants.HEADLESS = False
+    mdp_constants.HEADLESS = False
     args = parser.parse_args()
     if args.hl:
-        constants.HEADLESS = True
+        mdp_constants.HEADLESS = True
         print("Running in headless mode")
-    if args.testwifi:
-        constants.WIFI_IP = constants.TEST_IP
-        print("Use local IP address for integration testing without RPi")
 
     x = Simulator()
     x.run()

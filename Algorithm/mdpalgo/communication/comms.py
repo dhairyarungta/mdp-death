@@ -3,7 +3,8 @@ Algorithm Socket to connect with RPi.
 """
 import socket
 import struct
-import mdpalgo.constants as constants
+
+from Algorithm.mdpalgo.constants import mdp_constants
 
 FORMAT = "UTF-8"
 ALGO_SOCKET_BUFFER_SIZE = 1024
@@ -16,8 +17,8 @@ class AlgoClient:
         print("[Algo Client] Initialising Algo Client.")
         self.client_socket = None
         # self.server_address = None
-        self.server_ip = constants.WIFI_IP
-        self.server_port = constants.PORT
+        self.server_ip = mdp_constants.GRP_14
+        self.server_port = mdp_constants.PORT
         self.server_address = (self.server_ip, self.server_port)
         # self.set_server_address()
         print("[Algo Client] Client has been initilised.")
@@ -105,16 +106,16 @@ class AlgoClient:
         except:
             return None
 
-
-# Standalone testing.
+'''
+GRP14: MINI-PROGRAM TO TEST CONNECTION BETWEEN RPI AND LAPTOP
+'''
 if __name__ == '__main__':
-    constants.WIFI_IP = constants.GRP_14  # use the testing IP
     client = AlgoClient()
     connect_status = client.connect()
-    assert (connect_status)  # if the server is up, this should be truehi
+    assert connect_status  # if the server is up, this should be true
 
     # import the libraries for parsing messages
-    from mdpalgo.communication.message_parser import MessageParser, MessageType
+    from message_parser import MessageParser, MessageType
 
     parser = MessageParser()
 
@@ -125,6 +126,7 @@ if __name__ == '__main__':
 
         # test the photo data
         message_data = parser.parse(received)
+        # todo find out if image_taken is removed
         if message_data["type"] == MessageType.IMAGE_TAKEN:
             import cv2
 

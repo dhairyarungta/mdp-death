@@ -1,10 +1,11 @@
 import time
 from math import degrees
 from pygame.math import Vector2
-from mdpalgo import constants
 import pygame
-from mdpalgo.map.configuration import Pose
-from mdpalgo.map.grid import Grid
+
+from Algorithm.mdpalgo.constants import mdp_constants
+from Algorithm.mdpalgo.map.configuration import Pose
+from Algorithm.mdpalgo.map.grid import Grid
 from enum import Enum
 
 # This sets the margin between each Cell
@@ -62,22 +63,22 @@ class Robot(object):
         return Pose([self.grid_x, self.grid_y, self.angle])
 
     def draw_car(self):
-        if constants.HEADLESS:
+        if mdp_constants.HEADLESS:
             return
         rotated = pygame.transform.rotate(self.car_image, self.angle)
         rect = rotated.get_rect()
         rect.center = self.car_rect.center
         self.screen.blit(rotated, rect)
-        pygame.draw.rect(self.screen, constants.RED, self.car_rect, 1)
+        pygame.draw.rect(self.screen, mdp_constants.RED, self.car_rect, 1)
 
         # Refresh screen by frame rate
         now = pygame.time.get_ticks() / 1000
-        if now - self.simulator.startTime > 1 / constants.FPS:
+        if now - self.simulator.startTime > 1 / mdp_constants.FPS:
             self.simulator.startTime = now
             self.simulator.root.display.flip()
 
     def redraw_car_refresh_screen(self):
-        if constants.HEADLESS:
+        if mdp_constants.HEADLESS:
             return
         # Need to redraw over everything (grid_surface, grid and car)
         self.simulator.reprint_screen_and_buttons()
@@ -140,13 +141,13 @@ class Robot(object):
     def move_forward(self):
         initial_pixel_pos = self.get_pixel_pos()
         # Set position to stop moving
-        if self.angle == constants.NORTH:  # CAR FACING NORTH
+        if self.angle == mdp_constants.NORTH:  # CAR FACING NORTH
             final_pixel_pos = Vector2(initial_pixel_pos[0], initial_pixel_pos[1] - ONE_CELL)
-        elif self.angle == constants.SOUTH:  # CAR FACING SOUTH
+        elif self.angle == mdp_constants.SOUTH:  # CAR FACING SOUTH
             final_pixel_pos = Vector2(initial_pixel_pos[0], initial_pixel_pos[1] + ONE_CELL)
-        elif self.angle == constants.EAST:  # CAR FACING EAST
+        elif self.angle == mdp_constants.EAST:  # CAR FACING EAST
             final_pixel_pos = Vector2(initial_pixel_pos[0] + ONE_CELL, initial_pixel_pos[1])
-        elif self.angle == constants.WEST:  # CAR FACING WEST
+        elif self.angle == mdp_constants.WEST:  # CAR FACING WEST
             final_pixel_pos = Vector2(initial_pixel_pos[0] - ONE_CELL, initial_pixel_pos[1])
         else:
             final_pixel_pos = initial_pixel_pos  # car will not move
@@ -158,7 +159,7 @@ class Robot(object):
 
         self.set_velocity(0, -self.speed)
         while not self.check_movement_complete(final_pixel_pos):
-            if constants.HEADLESS:
+            if mdp_constants.HEADLESS:
                 break
             self.pixel_pos += self.velocity.rotate(-self.angle) * dt
             self.redraw_car_refresh_screen()
@@ -171,13 +172,13 @@ class Robot(object):
         # print("MOVE BACKWARD FACING", self.angle)
         initial_pixel_pos = self.get_pixel_pos()
         # Set position to stop moving
-        if self.angle == constants.NORTH:  # CAR FACING NORTH
+        if self.angle == mdp_constants.NORTH:  # CAR FACING NORTH
             final_pixel_pos = Vector2(initial_pixel_pos[0], initial_pixel_pos[1] + ONE_CELL)
-        elif self.angle == constants.SOUTH:  # CAR FACING SOUTH
+        elif self.angle == mdp_constants.SOUTH:  # CAR FACING SOUTH
             final_pixel_pos = Vector2(initial_pixel_pos[0], initial_pixel_pos[1] - ONE_CELL)
-        elif self.angle == constants.EAST:  # CAR FACING EAST
+        elif self.angle == mdp_constants.EAST:  # CAR FACING EAST
             final_pixel_pos = Vector2(initial_pixel_pos[0] - ONE_CELL, initial_pixel_pos[1])
-        elif self.angle == constants.WEST:  # CAR FACING WEST
+        elif self.angle == mdp_constants.WEST:  # CAR FACING WEST
             final_pixel_pos = Vector2(initial_pixel_pos[0] + ONE_CELL, initial_pixel_pos[1])
         else:
             final_pixel_pos = initial_pixel_pos  # car will not move
@@ -188,7 +189,7 @@ class Robot(object):
 
         self.set_velocity(0, self.speed)
         while not self.check_movement_complete(final_pixel_pos):
-            if constants.HEADLESS:
+            if mdp_constants.HEADLESS:
                 break
             self.pixel_pos += self.velocity.rotate(-self.angle) * dt
             self.redraw_car_refresh_screen()
@@ -203,18 +204,18 @@ class Robot(object):
         initial_pixel_pos = self.get_pixel_pos()
         initial_angle = self.angle
         # Set position to stop moving
-        if self.angle == constants.NORTH:  # CAR FACING NORTH
+        if self.angle == mdp_constants.NORTH:  # CAR FACING NORTH
             final_pixel_pos = Vector2(initial_pixel_pos[0] + THREE_CELL, initial_pixel_pos[1] - THREE_CELL)
-            final_angle = constants.EAST
-        elif self.angle == constants.SOUTH:  # CAR FACING SOUTH
+            final_angle = mdp_constants.EAST
+        elif self.angle == mdp_constants.SOUTH:  # CAR FACING SOUTH
             final_pixel_pos = Vector2(initial_pixel_pos[0] - THREE_CELL, initial_pixel_pos[1] + THREE_CELL)
-            final_angle = constants.WEST
-        elif self.angle == constants.EAST:  # CAR FACING EAST
+            final_angle = mdp_constants.WEST
+        elif self.angle == mdp_constants.EAST:  # CAR FACING EAST
             final_pixel_pos = Vector2(initial_pixel_pos[0] + THREE_CELL, initial_pixel_pos[1] + THREE_CELL)
-            final_angle = constants.SOUTH
-        elif self.angle == constants.WEST:  # CAR FACING WEST
+            final_angle = mdp_constants.SOUTH
+        elif self.angle == mdp_constants.WEST:  # CAR FACING WEST
             final_pixel_pos = Vector2(initial_pixel_pos[0] - THREE_CELL, initial_pixel_pos[1] - THREE_CELL)
-            final_angle = constants.NORTH
+            final_angle = mdp_constants.NORTH
         else:
             final_pixel_pos = initial_pixel_pos  # car will not move
             final_angle = initial_angle
@@ -225,7 +226,7 @@ class Robot(object):
 
         self.set_velocity(0, -self.speed)
         while not self.check_if_turned(initial_angle, final_pixel_pos):
-            if constants.HEADLESS:
+            if mdp_constants.HEADLESS:
                 break
             turning_radius = THREE_CELL
             angular_velocity = self.velocity.y / turning_radius
@@ -242,18 +243,18 @@ class Robot(object):
         initial_pixel_pos = self.get_pixel_pos()
         initial_angle = self.angle
         # Set position to stop moving
-        if self.angle == constants.NORTH:  # CAR FACING NORTH
+        if self.angle == mdp_constants.NORTH:  # CAR FACING NORTH
             final_pixel_pos = Vector2(initial_pixel_pos[0] - THREE_CELL, initial_pixel_pos[1] - THREE_CELL)
-            final_angle = constants.WEST
-        elif self.angle == constants.SOUTH:  # CAR FACING SOUTH
+            final_angle = mdp_constants.WEST
+        elif self.angle == mdp_constants.SOUTH:  # CAR FACING SOUTH
             final_pixel_pos = Vector2(initial_pixel_pos[0] + THREE_CELL, initial_pixel_pos[1] + THREE_CELL)
-            final_angle = constants.EAST
-        elif self.angle == constants.EAST:  # CAR FACING EAST
+            final_angle = mdp_constants.EAST
+        elif self.angle == mdp_constants.EAST:  # CAR FACING EAST
             final_pixel_pos = Vector2(initial_pixel_pos[0] + THREE_CELL, initial_pixel_pos[1] - THREE_CELL)
-            final_angle = constants.NORTH
-        elif self.angle == constants.WEST:  # CAR FACING WEST
+            final_angle = mdp_constants.NORTH
+        elif self.angle == mdp_constants.WEST:  # CAR FACING WEST
             final_pixel_pos = Vector2(initial_pixel_pos[0] - THREE_CELL, initial_pixel_pos[1] + THREE_CELL)
-            final_angle = constants.SOUTH
+            final_angle = mdp_constants.SOUTH
         else:
             final_pixel_pos = initial_pixel_pos  # car will not move
             final_angle = initial_angle
@@ -265,7 +266,7 @@ class Robot(object):
         # Set velocity of car
         self.set_velocity(0, -self.speed)
         while not self.check_if_turned(initial_angle, final_pixel_pos):
-            if constants.HEADLESS:
+            if mdp_constants.HEADLESS:
                 break
             turning_radius = THREE_CELL
             angular_velocity = self.velocity.y / turning_radius
@@ -284,18 +285,18 @@ class Robot(object):
         initial_pixel_pos = self.get_pixel_pos()
         initial_angle = self.angle
         # Set position to stop moving
-        if self.angle == constants.NORTH:  # CAR FACING NORTH
+        if self.angle == mdp_constants.NORTH:  # CAR FACING NORTH
             final_pixel_pos = Vector2(initial_pixel_pos[0] + THREE_CELL, initial_pixel_pos[1] + THREE_CELL)
-            final_angle = constants.WEST
-        elif self.angle == constants.SOUTH:  # CAR FACING SOUTH
+            final_angle = mdp_constants.WEST
+        elif self.angle == mdp_constants.SOUTH:  # CAR FACING SOUTH
             final_pixel_pos = Vector2(initial_pixel_pos[0] - THREE_CELL, initial_pixel_pos[1] - THREE_CELL)
-            final_angle = constants.EAST
-        elif self.angle == constants.EAST:  # CAR FACING EAST
+            final_angle = mdp_constants.EAST
+        elif self.angle == mdp_constants.EAST:  # CAR FACING EAST
             final_pixel_pos = Vector2(initial_pixel_pos[0] - THREE_CELL, initial_pixel_pos[1] + THREE_CELL)
-            final_angle = constants.NORTH
-        elif self.angle == constants.WEST:  # CAR FACING WEST
+            final_angle = mdp_constants.NORTH
+        elif self.angle == mdp_constants.WEST:  # CAR FACING WEST
             final_pixel_pos = Vector2(initial_pixel_pos[0] + THREE_CELL, initial_pixel_pos[1] - THREE_CELL)
-            final_angle = constants.SOUTH
+            final_angle = mdp_constants.SOUTH
         else:
             final_pixel_pos = initial_pixel_pos  # car will not move
             final_angle = initial_angle
@@ -306,7 +307,7 @@ class Robot(object):
 
         self.set_velocity(0, -self.speed)
         while not self.check_if_turned(initial_angle, final_pixel_pos):
-            if constants.HEADLESS:
+            if mdp_constants.HEADLESS:
                 break
             turning_radius = THREE_CELL
             angular_velocity = self.velocity.y / turning_radius
@@ -325,18 +326,18 @@ class Robot(object):
         initial_pixel_pos = self.get_pixel_pos()
         initial_angle = self.angle
         # Set position to stop moving
-        if self.angle == constants.NORTH:  # CAR FACING NORTH
+        if self.angle == mdp_constants.NORTH:  # CAR FACING NORTH
             final_pixel_pos = Vector2(initial_pixel_pos[0] - THREE_CELL, initial_pixel_pos[1] + THREE_CELL)
-            final_angle = constants.EAST
-        elif self.angle == constants.SOUTH:  # CAR FACING SOUTH
+            final_angle = mdp_constants.EAST
+        elif self.angle == mdp_constants.SOUTH:  # CAR FACING SOUTH
             final_pixel_pos = Vector2(initial_pixel_pos[0] + THREE_CELL, initial_pixel_pos[1] - THREE_CELL)
-            final_angle = constants.WEST
-        elif self.angle == constants.EAST:  # CAR FACING EAST
+            final_angle = mdp_constants.WEST
+        elif self.angle == mdp_constants.EAST:  # CAR FACING EAST
             final_pixel_pos = Vector2(initial_pixel_pos[0] - THREE_CELL, initial_pixel_pos[1] - THREE_CELL)
-            final_angle = constants.SOUTH
-        elif self.angle == constants.WEST:  # CAR FACING WEST
+            final_angle = mdp_constants.SOUTH
+        elif self.angle == mdp_constants.WEST:  # CAR FACING WEST
             final_pixel_pos = Vector2(initial_pixel_pos[0] + THREE_CELL, initial_pixel_pos[1] + THREE_CELL)
-            final_angle = constants.NORTH
+            final_angle = mdp_constants.NORTH
         else:
             final_pixel_pos = initial_pixel_pos  # car will not move
             final_angle = initial_angle
@@ -344,10 +345,10 @@ class Robot(object):
         if self.check_collision(final_pixel_pos):
             final_pixel_pos = initial_pixel_pos
             return False
-            
+
         self.set_velocity(0, -self.speed)
         while not self.check_if_turned(initial_angle, final_pixel_pos):
-            if constants.HEADLESS:
+            if mdp_constants.HEADLESS:
                 break
             turning_radius = THREE_CELL
             angular_velocity = self.velocity.y / turning_radius
@@ -375,9 +376,9 @@ class Robot(object):
         return self.check_movement_complete(final_pixel_pos) and abs(self.angle - initial_angle) > 80
 
     def reset(self):
-        self.angle = constants.ROBOT_STARTING_ANGLE
-        self.grid_x = constants.ROBOT_STARTING_X
-        self.grid_y = constants.ROBOT_STARTING_Y
+        self.angle = mdp_constants.ROBOT_STARTING_ANGLE
+        self.grid_x = mdp_constants.ROBOT_STARTING_X
+        self.grid_y = mdp_constants.ROBOT_STARTING_Y
         self.pixel_pos = Vector2(self.grid.grid_to_pixel((self.grid_x, self.grid_y)))
         self.redraw_car_refresh_screen()
 

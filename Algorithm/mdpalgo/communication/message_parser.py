@@ -4,9 +4,7 @@ Parse the raw message from RPi and return a convenient data structure
 from enum import Enum
 import parse
 import base64
-import cv2
 import numpy as np
-from PIL import Image
 
 class MessageType(Enum):
     """Message type is determined by the first token
@@ -138,6 +136,9 @@ class MessageParser:
 
         return data_dict
 
+'''
+GRP14: MINI-PROGRAM TO TEST MESSAGE PARSING
+'''
 if __name__ == "__main__":
     parser = MessageParser()
 

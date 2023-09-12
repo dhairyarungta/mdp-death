@@ -1,9 +1,10 @@
 import logging
-from mdpalgo.robot.robot import Robot
-from mdpalgo.algorithm.astar_planner import AutoPlanner, RobotMovement
-from mdpalgo import constants
-from mdpalgo.map.configuration import Pose
-from mdpalgo.map.grid import Grid
+
+from Algorithm.mdpalgo.constants import mdp_constants
+from Algorithm.mdpalgo.robot.robot import Robot
+from Algorithm.mdpalgo.algorithm.astar_planner import AutoPlanner, RobotMovement
+from Algorithm.mdpalgo.map.configuration import Pose
+from Algorithm.mdpalgo.map.grid import Grid
 
 MARGIN = 2
 
@@ -47,7 +48,7 @@ class PathPlan(object):
             self.plan_full_path_to(target)
 
             if count_of_obs >= 1:
-                if constants.RPI_CONNECTED:
+                if mdp_constants.RPI_CONNECTED:
                     self.send_to_rpi()
 
         self.restart_robot()
@@ -82,7 +83,7 @@ class PathPlan(object):
                 return target[3].id
             else:
                 return ''
-    
+
 
     def get_target_pose_obstacle_cell_from(self, target: list):
         """Get the target pose and obstacle cell from a list of [x, y, dir, Cell]
@@ -149,7 +150,7 @@ class PathPlan(object):
 
     def reset_collection_of_movements(self):
         self.collection_of_movements.clear()
-    
+
     def reset_movement_string(self):
         self.movement_string.clear()
 
@@ -221,7 +222,7 @@ class PathPlan(object):
         self.full_path.append(self.movement_string)
         self.robot_pos_string.append(",".join(self.robot.robot_pos))
         self.robot.robot_pos.clear()
-        
+
 
     def set_total_num_move_from_movement_message(self, message: str):
         """Extract the number of moves from the movement message

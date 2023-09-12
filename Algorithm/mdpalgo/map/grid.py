@@ -12,22 +12,22 @@ Explanation on coordinate system:
 
 
 import logging
-
-from mdpalgo import constants
 import pygame
-from mdpalgo.map.cell import Cell, CellStatus
+
+from Algorithm.mdpalgo.constants import mdp_constants
+from Algorithm.mdpalgo.map.cell import Cell, CellStatus
 import numpy as np
 
 # This sets the margin between each Cell
 MARGIN = 2
 
 COLOR_DICT = {
-    CellStatus.EMPTY: constants.WHITE,
-    CellStatus.START: constants.BLUE,
-    CellStatus.BOUNDARY: constants.LIGHT_RED,
-    CellStatus.OBS: constants.BLACK,
-    CellStatus.VISITED_OBS: constants.GREEN,
-    CellStatus.PATH: constants.GRAY,
+    CellStatus.EMPTY: mdp_constants.WHITE,
+    CellStatus.START: mdp_constants.BLUE,
+    CellStatus.BOUNDARY: mdp_constants.LIGHT_RED,
+    CellStatus.OBS: mdp_constants.BLACK,
+    CellStatus.VISITED_OBS: mdp_constants.GREEN,
+    CellStatus.PATH: mdp_constants.GRAY,
 }
 
 class Grid(object):
@@ -94,18 +94,18 @@ class Grid(object):
             # Get target grid positions and NSEW direction that car's centre has to reach for image rec
             target_grid_x, target_grid_y = obstacle_cell.get_xcoord(), obstacle_cell.get_ycoord()
             obstacle_direction = obstacle_cell.get_obstacle_direction()
-            target_direction = constants.NORTH
-            if obstacle_direction == constants.NORTH:
-                target_direction = constants.SOUTH
+            target_direction = mdp_constants.NORTH
+            if obstacle_direction == mdp_constants.NORTH:
+                target_direction = mdp_constants.SOUTH
                 target_grid_x, target_grid_y = obstacle_cell.get_xcoord(), obstacle_cell.get_ycoord() + 4
-            elif obstacle_direction == constants.SOUTH:
-                target_direction = constants.NORTH
+            elif obstacle_direction == mdp_constants.SOUTH:
+                target_direction = mdp_constants.NORTH
                 target_grid_x, target_grid_y = obstacle_cell.get_xcoord(), obstacle_cell.get_ycoord() - 4
-            elif obstacle_direction == constants.EAST:
-                target_direction = constants.WEST
+            elif obstacle_direction == mdp_constants.EAST:
+                target_direction = mdp_constants.WEST
                 target_grid_x, target_grid_y = obstacle_cell.get_xcoord() + 4, obstacle_cell.get_ycoord()
-            elif obstacle_direction == constants.WEST:
-                target_direction = constants.EAST
+            elif obstacle_direction == mdp_constants.WEST:
+                target_direction = mdp_constants.EAST
                 target_grid_x, target_grid_y = obstacle_cell.get_xcoord() - 4, obstacle_cell.get_ycoord()
 
             target_loc = (target_grid_x, target_grid_y, target_direction, obstacle_cell)
@@ -168,7 +168,7 @@ class Grid(object):
 
         else:
             print("Clicked on a cell that cannot be chosen as obstacle cell.")
-        
+
     def get_boundary_cells_coords(self, cell: Cell):
         """Return a list of coordinates [x_coord, y_coord] of the cells
         surrounding a given cell, within a 2 cell radius (1 for diagonal)."""
@@ -228,10 +228,10 @@ class Grid(object):
         obstacle_cell.set_obstacle_visited_status()
 
     def get_updated_grid_surface(self) -> pygame.Surface:
-        if constants.HEADLESS:
+        if mdp_constants.HEADLESS:
             return
         self.grid_surface = pygame.Surface(self.get_total_pixel_size())
-        self.grid_surface.fill(constants.BLACK)
+        self.grid_surface.fill(mdp_constants.BLACK)
         # Draw the grid
         for grid_x in range(self.size_x):
             for grid_y in range(self.size_y):
@@ -245,7 +245,7 @@ class Grid(object):
                     obstacle_direction = cell.get_obstacle_direction()
                     pygame.draw.rect(
                         cell_surface,
-                        constants.RED,
+                        mdp_constants.RED,
                         pygame.Rect(0, 0, self.block_size, 8))
                     cell_surface = pygame.transform.rotate(cell_surface, obstacle_direction)
 

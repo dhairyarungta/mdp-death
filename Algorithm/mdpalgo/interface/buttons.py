@@ -1,5 +1,5 @@
 import pygame
-from mdpalgo import constants
+from Algorithm.mdpalgo.constants import mdp_constants
 
 
 class Button:
@@ -38,7 +38,7 @@ class Button:
         return self.x, self.y, self.length, self.height
 
     def draw_button(self, surface, color, length, height, x, y, width):
-        if constants.HEADLESS:
+        if mdp_constants.HEADLESS:
             return
         for i in range(1, 3):
             s = pygame.Surface((length + (i * 2), height + (i * 2)))
@@ -54,7 +54,7 @@ class Button:
         return surface
 
     def write_text(self, surface, text, text_color, length, height, x, y):
-        if constants.HEADLESS:
+        if mdp_constants.HEADLESS:
             return
         font_size = 16
         my_font = pygame.font.SysFont("Calibri", font_size)

@@ -1,10 +1,10 @@
 from queue import PriorityQueue
 import numpy as np
 
-from mdpalgo import constants
-from mdpalgo.map.cell import CellStatus
-from mdpalgo.map.configuration import Pose
-from mdpalgo.robot.robot import RobotMovement
+from Algorithm.mdpalgo.constants import mdp_constants
+from Algorithm.mdpalgo.map.cell import CellStatus
+from Algorithm.mdpalgo.map.configuration import Pose
+from Algorithm.mdpalgo.robot.robot import RobotMovement
 
 class ImprovedNode:
     """
@@ -38,7 +38,7 @@ class Distance:
 
 class AutoPlanner():
     def __init__(self):
-        self.TURNING_RADIUS = constants.TURNING_RADIUS
+        self.TURNING_RADIUS = mdp_constants.TURNING_RADIUS
         # if robot node is at this distance away from obstacle, safe!
         self.safe_squared_distance = 8
         # map movement to a relative vector wrt the current direction
@@ -51,12 +51,12 @@ class AutoPlanner():
             RobotMovement.BACKWARD_LEFT: [-self.TURNING_RADIUS, -self.TURNING_RADIUS],
         }
         self.map_move_to_relative_direction = {
-            RobotMovement.FORWARD: constants.NORTH,
-            RobotMovement.BACKWARD: constants.NORTH,
-            RobotMovement.FORWARD_RIGHT: constants.EAST,
-            RobotMovement.FORWARD_LEFT: constants.WEST,
-            RobotMovement.BACKWARD_RIGHT: constants.WEST,
-            RobotMovement.BACKWARD_LEFT: constants.EAST,
+            RobotMovement.FORWARD: mdp_constants.NORTH,
+            RobotMovement.BACKWARD: mdp_constants.NORTH,
+            RobotMovement.FORWARD_RIGHT: mdp_constants.EAST,
+            RobotMovement.FORWARD_LEFT: mdp_constants.WEST,
+            RobotMovement.BACKWARD_RIGHT: mdp_constants.WEST,
+            RobotMovement.BACKWARD_LEFT: mdp_constants.EAST,
         }
         self.turning_moves = {
             RobotMovement.FORWARD_RIGHT,
@@ -69,21 +69,21 @@ class AutoPlanner():
 
         # change the current direction to rotation matrix
         self.direction_to_rotation_matrixes = {
-            constants.NORTH: np.array([[1, 0],
+            mdp_constants.NORTH: np.array([[1, 0],
                                        [0, 1]]),
-            constants.SOUTH: np.array([[-1, 0],
+            mdp_constants.SOUTH: np.array([[-1, 0],
                                        [0, -1]]),
-            constants.EAST: np.array([[0, 1],
+            mdp_constants.EAST: np.array([[0, 1],
                                       [-1, 0]]),
-            constants.WEST: np.array([[0, -1],
+            mdp_constants.WEST: np.array([[0, -1],
                                       [1, 0]]),
         }
 
         self.direction_to_unit_forward_vector = {
-            constants.NORTH: np.array([0, 1]),
-            constants.SOUTH: np.array([0, -1]),
-            constants.EAST: np.array([1, 0]),
-            constants.WEST: np.array([-1, 0]),
+            mdp_constants.NORTH: np.array([0, 1]),
+            mdp_constants.SOUTH: np.array([0, -1]),
+            mdp_constants.EAST: np.array([1, 0]),
+            mdp_constants.WEST: np.array([-1, 0]),
         }
 
         # turning cost = straight cost * turning factor
@@ -189,7 +189,7 @@ class AutoPlanner():
             corner_displacement = np.matmul(unit_forward_vector, displacement_from_current) * unit_forward_vector
             corner_node = ImprovedNode(None, [corner_displacement[0] + parent_node.pose.x,
                                               corner_displacement[1] + parent_node.pose.y,
-                                              constants.NORTH]) # the direction is not important since we only checking collision
+                                              mdp_constants.NORTH]) # the direction is not important since we only checking collision
             return self.is_in_collision(corner_node)
 
 
@@ -204,7 +204,7 @@ class AutoPlanner():
 
     def set_boundary_for_nodes(self):
         """The node can be slightly outside of the maze"""
-        self.buffer_zone_size = constants.BOUNDARY_BUFFER
+        self.buffer_zone_size = mdp_constants.BOUNDARY_BUFFER
         self.right_boundary = self.size_x - 1 - self.buffer_zone_size # right most node that robot is not out of maze
         self.top_boundary = self.size_y - 1 - self.buffer_zone_size # top most node that robot is not out of maze
 
@@ -304,16 +304,16 @@ class AutoPlanner():
         target_direction = self.end_node.pose.direction
 
         # Get the coordinates of other neighbour potential target cells
-        if target_direction == constants.NORTH:
+        if target_direction == mdp_constants.NORTH:
             neighbour_coords = [(target_x - 1, target_y),
                                 (target_x + 1, target_y)]
-        elif target_direction == constants.SOUTH:
+        elif target_direction == mdp_constants.SOUTH:
             neighbour_coords = [(target_x + 1, target_y),
                                 (target_x - 1, target_y)]
-        elif target_direction == constants.EAST:
+        elif target_direction == mdp_constants.EAST:
             neighbour_coords = [(target_x, target_y + 1),
                                 (target_x, target_y - 1)]
-        elif target_direction == constants.WEST:
+        elif target_direction == mdp_constants.WEST:
             neighbour_coords = [(target_x, target_y - 1),
                                 (target_x, target_y + 1)]
 
@@ -447,7 +447,7 @@ class AutoPlanner():
 
         # Print the tagged array
         return tagged_arr
-    
+
     def get_path_from_parent(self, node) -> list:
         parent_node = node.parent
         move = node.move_from_parent
@@ -505,11 +505,11 @@ if __name__ == "__main__":
                      [_, _, _, _, _, _, _, _, _, _],
                      [_, _, _, _, _, _, _, _, _, _],])
     cost = 10
-    start = [1, 1, constants.NORTH]
-    end = [3, 4, constants.NORTH]
+    start = [1, 1, mdp_constants.NORTH]
+    end = [3, 4, mdp_constants.NORTH]
     auto_planner = AutoPlanner()
     auto_planner.set_maze(maze)
-    auto_planner.current_node = ImprovedNode(None, [6, 1, constants.EAST])
+    auto_planner.current_node = ImprovedNode(None, [6, 1, mdp_constants.EAST])
     auto_planner.get_children_of_current_node()
     for node in auto_planner.children_current_node:
         print(f"Child: (x, y, dir) = ({node.pose.x}, {node.pose.y}, {node.pose.direction})")
@@ -519,22 +519,22 @@ if __name__ == "__main__":
     # test the transformation methods
     relative_vector = auto_planner.map_move_to_relative_displacement[RobotMovement.FORWARD]
 
-    abs_vector = auto_planner.get_absolute_vector(relative_vector, constants.NORTH)
+    abs_vector = auto_planner.get_absolute_vector(relative_vector, mdp_constants.NORTH)
     assert (abs_vector == np.array([0, 1])).all()
-    abs_vector = auto_planner.get_absolute_vector(relative_vector, constants.SOUTH)
+    abs_vector = auto_planner.get_absolute_vector(relative_vector, mdp_constants.SOUTH)
     assert (abs_vector == np.array([0, -1])).all()
-    abs_vector = auto_planner.get_absolute_vector(relative_vector, constants.WEST)
+    abs_vector = auto_planner.get_absolute_vector(relative_vector, mdp_constants.WEST)
     assert (abs_vector == np.array([-1, 0])).all()
-    abs_vector = auto_planner.get_absolute_vector(relative_vector, constants.EAST)
+    abs_vector = auto_planner.get_absolute_vector(relative_vector, mdp_constants.EAST)
     assert (abs_vector == np.array([1, 0])).all()
 
     relative_vector = auto_planner.map_move_to_relative_displacement[RobotMovement.BACKWARD_LEFT]
 
-    abs_vector = auto_planner.get_absolute_vector(relative_vector, constants.NORTH)
+    abs_vector = auto_planner.get_absolute_vector(relative_vector, mdp_constants.NORTH)
     assert (abs_vector == np.array([-3, -3])).all()
-    abs_vector = auto_planner.get_absolute_vector(relative_vector, constants.SOUTH)
+    abs_vector = auto_planner.get_absolute_vector(relative_vector, mdp_constants.SOUTH)
     assert (abs_vector == np.array([3, 3])).all()
-    abs_vector = auto_planner.get_absolute_vector(relative_vector, constants.WEST)
+    abs_vector = auto_planner.get_absolute_vector(relative_vector, mdp_constants.WEST)
     assert (abs_vector == np.array([3, -3])).all()
-    abs_vector = auto_planner.get_absolute_vector(relative_vector, constants.EAST)
+    abs_vector = auto_planner.get_absolute_vector(relative_vector, mdp_constants.EAST)
     assert (abs_vector == np.array([-3, 3])).all()
