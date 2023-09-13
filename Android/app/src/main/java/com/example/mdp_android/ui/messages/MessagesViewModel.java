@@ -4,14 +4,16 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 public class MessagesViewModel extends ViewModel {
-    private MutableLiveData<String> text;
+    private MutableLiveData<String> deviceName;
+
 
     public MessagesViewModel() {
-        text = new MutableLiveData<>();
-        text.setValue("messages fragment");
+        if (deviceName == null) {
+            deviceName = new MutableLiveData<>();
+            deviceName.setValue("Bluetooth: Not Connected");
+        }
     }
 
-    public LiveData<String> getText() {
-        return text;
-    }
+    public LiveData<String> getDeviceName() { return deviceName; }
+    public void setDeviceName(String text) { deviceName.setValue(text);}
 }

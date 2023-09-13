@@ -4,14 +4,19 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 public class BluetoothViewModel extends ViewModel{
-    private MutableLiveData<String> text;
+    private MutableLiveData<String> device;
 
     public BluetoothViewModel() {
-        text = new MutableLiveData<>();
-        text.setValue("bluetooth fragment");
+        device = new MutableLiveData<>();
+        device.setValue("Bluetooth: Not Connected");
     }
 
-    public LiveData<String> getText() {
-        return text;
+    public LiveData<String> getDevice() {
+        return device;
     }
+
+    public void setDevice(String device) {
+        this.device.setValue(device);
+    }
+
 }

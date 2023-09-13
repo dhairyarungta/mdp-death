@@ -1,15 +1,24 @@
 package com.example.mdp_android;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
+import android.util.Log;
+
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 import com.example.mdp_android.databinding.ActivityMainBinding;
 public class MainActivity extends AppCompatActivity {
+        private String TAG = "main";
         private ActivityMainBinding binding;
+        private String connectedDevice;
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
@@ -27,5 +36,13 @@ public class MainActivity extends AppCompatActivity {
             R.id.navigation_home, R.id.navigation_bluetooth, R.id.navigation_messages).build();
             NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
             NavigationUI.setupWithNavController(binding.navView, navController);
+
+//            // register receiver for connected devices
+//            LocalBroadcastManager.getInstance(this).registerReceiver(
+//                    mNameReceiver,
+//                    new IntentFilter("getConnectedDevice")
+//            );
         }
+
+
 }
