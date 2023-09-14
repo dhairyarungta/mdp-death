@@ -7,7 +7,7 @@ import pygame
 
 from Algorithm.mdpalgo.constants import mdp_constants
 import pygame
-from Algorithm.mdpalgo.algorithm.astar import AStar
+from Algorithm.mdpalgo.algorithm.UNUSED_astar import AStar
 from Algorithm.mdpalgo.algorithm.astar_hamiltonian import AStarHamiltonian
 from Algorithm.mdpalgo.algorithm.hamiltonian_path_planners import ExhaustiveHamiltonianPathPlanner
 from Algorithm.mdpalgo.algorithm.path_planning import PathPlan
@@ -274,14 +274,19 @@ class Simulator:
             else:
                 pass
 
+    # called either when you:
+    #   - manually click the start button
+    #   - receive a message to do the pathfinding
     def start_button_clicked(self):
         print("START button clicked!")
 
         # Get the fastest route (currently not using this)
-        self.astar = AStar(self.grid, self.car.grid_x, self.car.grid_y)
+        # self.astar = AStar(self.grid, self.car.grid_x, self.car.grid_y)
 
         # Get the fastest route using AStar Hamiltonian
         if len(self.grid.get_target_locations()) != 0:
+            print("== PATHS: ", self.grid.get_target_locations())
+
             self.astar_hamiltonian = AStarHamiltonian(self.grid, self.car.grid_x, self.car.grid_y)
             graph = self.astar_hamiltonian.create_graph()
             self.hamiltonian_path_planner = ExhaustiveHamiltonianPathPlanner(graph, "start")

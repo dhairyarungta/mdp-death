@@ -6,7 +6,7 @@ This script has the following main functions:
 """
 
 import networkx as nx
-from Algorithm.mdpalgo.algorithm.astar import AStar
+from Algorithm.mdpalgo.algorithm.UNUSED_astar import AStar
 
 
 class Node(object):

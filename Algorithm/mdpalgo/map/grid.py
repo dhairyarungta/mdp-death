@@ -90,6 +90,7 @@ class Grid(object):
 
     def get_target_locations(self):
         target_locations = []
+        BUFFER_LENGTH = 4
         for obstacle_cell in self.obstacle_cells.values():
             # Get target grid positions and NSEW direction that car's centre has to reach for image rec
             target_grid_x, target_grid_y = obstacle_cell.get_xcoord(), obstacle_cell.get_ycoord()
@@ -97,16 +98,16 @@ class Grid(object):
             target_direction = mdp_constants.NORTH
             if obstacle_direction == mdp_constants.NORTH:
                 target_direction = mdp_constants.SOUTH
-                target_grid_x, target_grid_y = obstacle_cell.get_xcoord(), obstacle_cell.get_ycoord() + 4
+                target_grid_x, target_grid_y = obstacle_cell.get_xcoord(), obstacle_cell.get_ycoord() + BUFFER_LENGTH
             elif obstacle_direction == mdp_constants.SOUTH:
                 target_direction = mdp_constants.NORTH
-                target_grid_x, target_grid_y = obstacle_cell.get_xcoord(), obstacle_cell.get_ycoord() - 4
+                target_grid_x, target_grid_y = obstacle_cell.get_xcoord(), obstacle_cell.get_ycoord() - BUFFER_LENGTH
             elif obstacle_direction == mdp_constants.EAST:
                 target_direction = mdp_constants.WEST
-                target_grid_x, target_grid_y = obstacle_cell.get_xcoord() + 4, obstacle_cell.get_ycoord()
+                target_grid_x, target_grid_y = obstacle_cell.get_xcoord() + BUFFER_LENGTH, obstacle_cell.get_ycoord()
             elif obstacle_direction == mdp_constants.WEST:
                 target_direction = mdp_constants.EAST
-                target_grid_x, target_grid_y = obstacle_cell.get_xcoord() - 4, obstacle_cell.get_ycoord()
+                target_grid_x, target_grid_y = obstacle_cell.get_xcoord() - BUFFER_LENGTH, obstacle_cell.get_ycoord()
 
             target_loc = (target_grid_x, target_grid_y, target_direction, obstacle_cell)
             target_locations.append(target_loc)
