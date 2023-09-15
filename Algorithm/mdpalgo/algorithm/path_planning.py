@@ -57,7 +57,7 @@ class PathPlan(object):
         """target is a list [x, y, dir, Cell] where Cell is the obstacle cell
         and (x, y, dir) is the target pose for the car to view the image tag
         """
-        print("Current Target: ", target)
+        print(f"== PATH_PLAN > plan_f_p_t() | Current target is {target}")
 
         self.get_target_pose_obstacle_cell_from(target)
         self.robot_pose = self.robot.get_robot_pose()
@@ -103,18 +103,25 @@ class PathPlan(object):
         ]
         self.collection_of_movements, self.path_according_to_movements, self.movement_string = self.auto_planner.get_movements_and_path_to_goal(
             maze, cost, start, end, obstacle_coords)
+        print(f"== PATH_PLAN > auto_search() | Collection of movements is {self.collection_of_movements}")
+        print(f"== PATH_PLAN > auto_search() | path according to movements is {self.path_according_to_movements}")
+        print(f"== PATH_PLAN > auto_search() | MOVEMENT STRING IS {self.movement_string}")
 
     def execute_auto_search_result(self):
         for move_index in range(len(self.collection_of_movements)):
             move = self.collection_of_movements[move_index]
+            # print(f"== PATH_PLAN > execute_a_s_r | Performing the move: {move}")
             self.robot.perform_move(move)
 
             path = self.path_according_to_movements[move_index]
             self.draw_path_of_move_on_grid(path)
+            # print(f"== PATH_PLAN > execute_a_s_r | Drawing the path: {path}")
 
         self.collection_of_robot_pos.append(self.get_robot_pos())
+        print(f"== PATH_PLAN > execute_a_s_r | Appending position {self.get_robot_pos()}")
         try:
             self.grid.set_obstacle_as_visited(self.obstacle_cell)
+            print(f"== PATH_PLAN > execute_a_s_r | Cell {self.obstacle_cell} has been visited")
         except Exception as e:
              logging.exception(e)
              pass

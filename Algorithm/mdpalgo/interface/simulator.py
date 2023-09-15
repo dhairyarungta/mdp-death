@@ -7,9 +7,8 @@ import pygame
 
 from Algorithm.mdpalgo.constants import mdp_constants
 import pygame
-from Algorithm.mdpalgo.algorithm.UNUSED_astar import AStar
 from Algorithm.mdpalgo.algorithm.astar_hamiltonian import AStarHamiltonian
-from Algorithm.mdpalgo.algorithm.hamiltonian_path_planners import ExhaustiveHamiltonianPathPlanner
+from Algorithm.mdpalgo.algorithm.hamiltonian_path_planners import BruteForcePermutationHamiltonianPathPlanner, GreedyHamiltonianPathPlanner
 from Algorithm.mdpalgo.algorithm.path_planning import PathPlan
 from Algorithm.mdpalgo.communication.comms import AlgoClient
 from Algorithm.mdpalgo.communication.message_parser import MessageParser, MessageType, TaskType
@@ -280,26 +279,18 @@ class Simulator:
     def start_button_clicked(self):
         print("START button clicked!")
 
-        # Get the fastest route (currently not using this)
-        # self.astar = AStar(self.grid, self.car.grid_x, self.car.grid_y)
-
         # Get the fastest route using AStar Hamiltonian
         if len(self.grid.get_target_locations()) != 0:
-            print("== PATHS: ", self.grid.get_target_locations())
-
             self.astar_hamiltonian = AStarHamiltonian(self.grid, self.car.grid_x, self.car.grid_y)
             graph = self.astar_hamiltonian.create_graph()
-            self.hamiltonian_path_planner = ExhaustiveHamiltonianPathPlanner(graph, "start")
+
+            self.hamiltonian_path_planner = BruteForcePermutationHamiltonianPathPlanner(graph, "start")
             shortest_path, path_length = self.hamiltonian_path_planner.find_path()
-            optimized_fastest_route = self.astar_hamiltonian.convert_shortest_path_to_ordered_targets(shortest_path)
-            logging.info("Astar route: " + str(optimized_fastest_route))
+            shortest_path_implementation = self.astar_hamiltonian.convert_shortest_path_to_ordered_targets(shortest_path)
+            self.car.optimized_target_locations = shortest_path_implementation[1:]
+            print(f"== SIMULATOR > start_b_c() | Final shortest route is {str(shortest_path)}")
+            self.path_planner = PathPlan(self, self.grid, self.car, shortest_path_implementation)
 
-            self.car.optimized_target_locations = optimized_fastest_route[1:]
-            logging.info("Optimized Astar route: " + str(optimized_fastest_route))
-
-            # Path finding
-            self.path_planner = PathPlan(self, self.grid, self.car, optimized_fastest_route)
-            logging.debug("Fastest Route: ", optimized_fastest_route)
             self.path_planner.start_robot()
 
     def reset_button_clicked(self):

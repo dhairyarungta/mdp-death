@@ -52,8 +52,9 @@ class GreedyHamiltonianPathPlanner(AbstractHamiltonianPathPlanner):
         return path, path_length
 
 
-class ExhaustiveHamiltonianPathPlanner(AbstractHamiltonianPathPlanner):
-    """Compute shortest hamiltonian path for a complete graph by exhaustive search
+class BruteForcePermutationHamiltonianPathPlanner(AbstractHamiltonianPathPlanner):
+    """
+    Compute shortest hamiltonian path for a complete graph by exhaustive search
     """
 
     def find_path(self):
@@ -63,14 +64,19 @@ class ExhaustiveHamiltonianPathPlanner(AbstractHamiltonianPathPlanner):
         shortest_path = ()
 
         for path in itertools.permutations(other_nodes):
+            print(f"== HAMIL_P_P | Considering path {path}")
             path_length = sum(
                 (self.graph[path[i]][path[i + 1]]["weight"] for i in range(num_nodes - 2)),
                 start=self.graph[self.starting_node][path[0]]["weight"])
+            print(f"== HAMIL_P_P | > This path {path} has length of {path_length}")
             if path_length < shortest_length:
+                print(f"== HAMIL_P_P | > This path {path} is the new shortest path")
                 shortest_path = path
                 shortest_length = path_length
+
         shortest_path = [self.starting_node] + list(shortest_path)
 
+        print(f"== HAMIL_P_P | Final shortest path is {shortest_path}")
         return shortest_path, shortest_length
 
 
@@ -84,7 +90,7 @@ def get_graph_path_planner(planner_type: HamiltonianPathPlannerType
     if planner_type is HamiltonianPathPlannerType.GREEDY:
         return GreedyHamiltonianPathPlanner
     elif planner_type is HamiltonianPathPlannerType.EXHAUSTIVE:
-        return ExhaustiveHamiltonianPathPlanner
+        return BruteForcePermutationHamiltonianPathPlanner
 
 
 # Unittest the algorithms on some small inputs
@@ -108,7 +114,7 @@ if __name__ == "__main__":
     assert path == [0, 4, 2, 1, 3]
     assert path_length == 16
 
-    exhaustive_planner = ExhaustiveHamiltonianPathPlanner(G)
+    exhaustive_planner = BruteForcePermutationHamiltonianPathPlanner(G)
     path, path_length = exhaustive_planner.find_path()
     assert path == [0, 2, 4, 1, 3]
     assert path_length == 14
@@ -116,4 +122,4 @@ if __name__ == "__main__":
     assert get_graph_path_planner(
         HamiltonianPathPlannerType.GREEDY) == GreedyHamiltonianPathPlanner
     assert get_graph_path_planner(
-        HamiltonianPathPlannerType.EXHAUSTIVE) == ExhaustiveHamiltonianPathPlanner
+        HamiltonianPathPlannerType.EXHAUSTIVE) == BruteForcePermutationHamiltonianPathPlanner

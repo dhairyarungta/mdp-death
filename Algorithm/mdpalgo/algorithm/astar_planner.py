@@ -269,7 +269,7 @@ class AutoPlanner():
     def is_node_already_visited(self, node: ImprovedNode):
         return node.pose.to_tuple() in self.visited_list
 
-    def heuristics(self, node: ImprovedNode):
+    def manhattan_heuristic(self, node: ImprovedNode):
         """Return estimated cost to go to the end node"""
         xA, yA = node.pose.x, node.pose.y
         xB, yB = self.end_node.pose.x, self.end_node.pose.y
@@ -332,9 +332,12 @@ class AutoPlanner():
         self.set_maze(maze)
         self.set_straight_cost(cost)
         # Create start and end node with initialized values for g, h and f
+        print(f"== ASTAR_P > get_movements_a_p_t_g() | Have to go from {start} to {end}")
         self.start_node = self.initialize_node(start)
         self.end_node = self.initialize_node(end)
-        self.obs_coords = obs_coords # list of coordinates of obstacle cell
+
+        # list of coordinates of obstacles
+        self.obs_coords = obs_coords
         self.reset_potential_goal_nodes()
         self.add_potential_goal_node(self.end_node)
         self.initialize_yet_to_visit()
@@ -348,9 +351,7 @@ class AutoPlanner():
         self.set_max_iterations()
 
         # Loop until you find the end
-
         while not self.is_yet_to_visit_empty():
-
             # Every time any node is referred from yet_to_visit list, counter of limit operation incremented
             self.increment_counters()
 
@@ -380,8 +381,9 @@ class AutoPlanner():
                 child.g = self.current_node.g + self.get_cost_current_node_to_child(child)
 
                 # Heuristic costs calculated here, this is using MANHATTAN distance
-                child.h = self.heuristics(child)
+                child.h = self.manhattan_heuristic(child)
 
+                # astar
                 child.f = child.g + child.h
 
                 # Child is already in the yet_to_visit list and child has
@@ -390,6 +392,7 @@ class AutoPlanner():
                     continue
 
                 # Add the child to the yet_to_visit list
+                # print(f"== ASTAR_P > get_movements_a_p_t_g() | adding {child.pose.x, child.pose.y}")
                 self.add_node_to_yet_to_visit(child)
         raise Exception("no path found to goal")
 
