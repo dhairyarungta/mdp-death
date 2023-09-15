@@ -1,6 +1,5 @@
 package com.example.mdp_android.ui.grid;
 
-import android.content.ClipData;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -13,9 +12,6 @@ import android.util.Log;
 import android.view.DragEvent;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.Button;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -23,8 +19,8 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 
 import com.example.mdp_android.R;
+import com.example.mdp_android.controllers.RpiController;
 import com.example.mdp_android.ui.home.HomeFragment;
-import com.example.mdp_android.ui.home.RecyclerAdapter;
 
 import java.util.ArrayList;
 
@@ -33,23 +29,30 @@ public class Map extends View {
     private static final int NUM_COLS = 20, NUM_ROWS = 20;
     private static final float WALL_THICKNESS = 5;
     private static final String DEFAULT_DIRECTION = "N";
-    private boolean mapDrawn = false;
-    private Map.Cell[][] cells;
-    private float cellSize;
-    private Paint start, obstacleFace, obstacle, robotPaint, path, explored, blackPaint, cellPaint, linePaint, whitePaint;
+    private static boolean mapDrawn = false;
+    private static Cell[][] cells;
+    private static float cellSize;
+    private Paint startPaint, obstacleFacePaint, obstaclePaint, robotPaint, exploredPaint, cellPaint, linePaint, whitePaint, targetTextPaint, imageIdentifiedPaint;
 
-    private int currentSelected = -1;
+    private static int currentSelected = -1;
     private static ArrayList<Obstacle> obstacleCoor = new ArrayList<>();
 
     // robot start coordinates
     private static Robot robot = new Robot();
     private Bitmap robotDirectionBitmap;
-    private boolean robotSelected = false;
     private static boolean canDrawRobot = false;
-    private int[] startCoor = new int[]{3,3};
+    private static boolean canSetDirection = false;
 
+    private static boolean taskType = false;
+
+    public void setCanSetDirection(boolean setDir) { canSetDirection = setDir; }
     public void setCanDrawRobot(boolean draw) {
         canDrawRobot = draw;
+    }
+    public void setTaskType(boolean task) { taskType = task; }
+    public String getTaskType() {
+        if (taskType) return "FASTEST_PATH";
+        else return "EXPLORATION";
     }
 
     // initialize map
@@ -57,33 +60,45 @@ public class Map extends View {
         super(context, attributes);
 
         // create objects
-        start = new Paint();
-        obstacleFace = new Paint();
-        obstacle = new Paint();
+        startPaint = new Paint();
+        obstacleFacePaint = new Paint();
+        obstaclePaint = new Paint();
         robotPaint = new Paint();
-        path = new Paint();
-        explored = new Paint();
-        blackPaint = new Paint();
+        exploredPaint = new Paint();
         cellPaint = new Paint();
         linePaint = new Paint();
         whitePaint = new Paint();
+        targetTextPaint = new Paint();
+        imageIdentifiedPaint = new Paint();
 
-        // initialize colors and style of objects
-        start.setColor(Color.GREEN);
-        obstacleFace.setColor(Color.RED);
-        obstacle.setColor(Color.BLACK);
-        robotPaint.setColor(Color.CYAN);
-        path.setColor(Color.GREEN);
-        explored.setColor(Color.parseColor("#A4FEFF"));
-        blackPaint.setColor(Color.BLACK);
-        blackPaint.setStyle(Paint.Style.FILL_AND_STROKE);
+        // TODO: use these paints
+        // paint for paths
+        startPaint.setColor(Color.GREEN);
+        exploredPaint.setColor(Color.parseColor("#A4FEFF"));
+
+        // paint for grid cells
         cellPaint.setColor(Color.WHITE);
         linePaint.setColor(ContextCompat.getColor(context, R.color.background));
         linePaint.setStrokeWidth(WALL_THICKNESS);
         linePaint.setStyle(Paint.Style.FILL_AND_STROKE);
+
+        // paint for robot
+        robotPaint.setColor(Color.CYAN);
+
+        // paint for obstacle
+        obstaclePaint.setColor(Color.BLACK);
+        obstacleFacePaint.setColor(Color.RED);
         whitePaint.setColor(Color.WHITE);
         whitePaint.setStyle(Paint.Style.FILL_AND_STROKE);
-        whitePaint.setTextSize(12);
+        whitePaint.setTextSize(11);
+
+        // paint for images
+        targetTextPaint.setColor(Color.WHITE);
+        targetTextPaint.setStyle(Paint.Style.FILL_AND_STROKE);
+        targetTextPaint.setFakeBoldText(true);
+        targetTextPaint.setTextSize(16);
+        targetTextPaint.setTextAlign(Paint.Align.CENTER);
+        imageIdentifiedPaint.setColor(Color.parseColor("#30D5C8"));
 
     }
 
@@ -122,32 +137,30 @@ public class Map extends View {
         public void setType(String type) {
             this.type = type;
             switch (type) {
+                case "image":
+                    this.paint = imageIdentifiedPaint;
+                    break;
                 case "obstacle":
-                    this.paint = blackPaint;
+                    this.paint = obstaclePaint;
                     break;
                 case "robot":
                     this.paint = robotPaint;
                     break;
                 case "start":
-                    this.paint = start;
+                    this.paint = startPaint;
                     break;
                 case "unexplored":
-                    this.paint = whitePaint;
+                    this.paint = cellPaint;
                     break;
                 case "explored":
-                    this.paint = explored;
+                    this.paint = exploredPaint;
                     break;
-//                case "fastestPath":
-//                    this.paint = fas;
-//                    break;
-//                case "image":
-//                    this.paint = obstacleColor;
             }
         }
      }
 
     // obstacle object
-    private class Obstacle {
+    public class Obstacle {
         // coordinates of position
         public int x, y, obsID, targetID;
         public String direction = DEFAULT_DIRECTION;
@@ -160,6 +173,7 @@ public class Map extends View {
             this.x = x;
             this.y = y;
             this.obsID = obsID;
+            this.targetID = -1;
         }
 
         public int getObsID() {
@@ -197,9 +211,10 @@ public class Map extends View {
         public void setDirection(String d) {
             this.direction = d;
         }
+
     }
 
-    private static class Robot {
+    public static class Robot {
         public int x, y;
         public String direction = "N";
 
@@ -273,6 +288,7 @@ public class Map extends View {
         drawGridNumbers(canvas);
         drawObstacle(canvas);
         if (robot.getX() != -1 && robot.getY() != -1) drawRobot(canvas);
+        drawIdentifiedImage(canvas);
         log("map drawn successfully");
 
     }
@@ -329,7 +345,7 @@ public class Map extends View {
                 int obsID = obstacleCoor.get(i).getObsID();
                 String direction = obstacleCoor.get(i).getDirection();
                 rect = new RectF(col * cellSize, row * cellSize, (col + 1) * cellSize, (row + 1) * cellSize);
-                canvas.drawRect(rect, obstacle);
+                canvas.drawRect(rect, cells[col][row].paint);
                 canvas.drawText(obsID + "", col * cellSize + cellSize/2.5f, row * cellSize + cellSize/1.5f, whitePaint);
                 // draw direction
                 drawDirection(canvas, col, row, direction);
@@ -342,20 +358,40 @@ public class Map extends View {
         float top = row * cellSize;
         float right = (col + 1) * cellSize;
         float bottom = (row + 1) * cellSize;
-        float dWidth = 0.2f;
+        float dWidth = 0.1f;
         switch (direction) {
             case "N":
-                canvas.drawRect(left, top, right, (row+dWidth) * cellSize, obstacleFace);
+                canvas.drawRect(left, top, right, (row+dWidth) * cellSize, obstacleFacePaint);
                 break;
             case "S":
-                canvas.drawRect(left, (row + 1 - dWidth) * cellSize, right, bottom, obstacleFace);
+                canvas.drawRect(left, (row + 1 - dWidth) * cellSize, right, bottom, obstacleFacePaint);
                 break;
             case "E":
-                canvas.drawRect((col + 1 - dWidth) * cellSize, top, right, bottom, obstacleFace);
+                canvas.drawRect((col + 1 - dWidth) * cellSize, top, right, bottom, obstacleFacePaint);
                 break;
             case "W":
-                canvas.drawRect(left, top, (col + dWidth) * cellSize, bottom, obstacleFace);
+                canvas.drawRect(left, top, (col + dWidth) * cellSize, bottom, obstacleFacePaint);
                 break;
+        }
+    }
+
+    private void drawIdentifiedImage(Canvas canvas) {
+        log("drawing identified target ids on map");
+        RectF rect = null;
+        if (obstacleCoor.size() > 0) {
+            for (int i = 0; i < obstacleCoor.size(); i++) {
+                int col = obstacleCoor.get(i).getObsXCoor();
+                int row = this.convertRow(obstacleCoor.get(i).getObsYCoor());
+                int targetID = obstacleCoor.get(i).getTargetID();
+                if (targetID != -1) {
+                    String direction = obstacleCoor.get(i).getDirection();
+                    rect = new RectF(col * cellSize, row * cellSize, (col + 1) * cellSize, (row + 1) * cellSize);
+                    canvas.drawRect(rect, cells[col][row].paint);
+                    canvas.drawText(targetID + "", col * cellSize + cellSize / 2f, row * cellSize + cellSize / 1.4f, targetTextPaint);
+                    // draw direction
+                    drawDirection(canvas, col, row, direction);
+                }
+            }
         }
     }
 
@@ -364,7 +400,6 @@ public class Map extends View {
         RectF rect;
         int col = robot.getX();
         int row = this.convertRow(robot.getY());
-        log("robot coordinates: "+robot.getX()+","+robot.getY());
         rect = new RectF(col * cellSize, row * cellSize , (col + 1) * cellSize, (row + 1) * cellSize);
         switch (robot.getDirection()) {
                 case "N":
@@ -388,7 +423,7 @@ public class Map extends View {
             canvas.drawBitmap(robotDirectionBitmap, null, rect, null);
     }
 
-    public void setRobotCoor(int x, int y) {
+    public void setRobotCoor(int x, int y, String d) {
         log("setting robot coordinates: (" +x +y+")");
         int oldX = robot.getX();
         int oldY = this.convertRow(robot.getY());
@@ -401,7 +436,7 @@ public class Map extends View {
 
         robot.setX(x);
         robot.setY(y);
-//        robot.setDirection(d);
+        robot.setDirection(d);
 //        this.updateRobotAxis(col, row, direction.toUpperCase());
         int col = x;
         int row = this.convertRow(y);
@@ -410,13 +445,19 @@ public class Map extends View {
                 if (isWithinCanvasRegion(i,j)) cells[i][j].setType("robot");
 
         log("robot set");
+
+        this.invalidate();
     }
 
 
     // checks if the cell is occupied
     private boolean checkGridEmpty(int x, int y) {
-        if (cells[x][y].getType() != "robot" && cells[x][y].getType() != "obstacle") return true;
-        else return false;
+//        if (cells[x][y].getType() != "robot" && cells[x][y].getType() != "obstacle") return true;
+//        else return false;
+        if (isWithinCanvasRegion(x, y)) {
+            if (cells[x][y].getType() == "robot" || cells[x][y].getType() == "obstacle") return false;
+            else return true;
+        } else return true;
     }
 
     // checks if there is sufficient space to place a robot
@@ -448,7 +489,9 @@ public class Map extends View {
                     // handle drop event (place obstacle in grid cell)
                     String obsID = event.getClipData().getItemAt(0).getText().toString();
                     setObstacleCoor(cellX, cellY, obsID);
-
+                    // ADDED: send to RPI obstacle details
+                    RpiController.sendToRpi(RpiController.getObstacleDetails(obstacleCoor.get(obstacleCoor.size() - 1)));
+                    HomeFragment.modifyObstacleVisibility(Integer.parseInt(obsID)-1, false);
                     this.invalidate();
                 } else {
                     log("out of boundary");
@@ -472,12 +515,30 @@ public class Map extends View {
             case MotionEvent.ACTION_DOWN:
                 // initiate the drag operation
                 if (isWithinCanvasRegion(cellX, cellY)) {
-                    if (canDrawRobot) {
+                    if (canSetDirection) {
+                        String d;
+                        if (cells[cellX][cellY].getType() == "obstacle") {
+                            d = getNewDirection(obstacleCoor.get(cells[cellX][cellY].getObsIndex()).getDirection());
+                            obstacleCoor.get(cells[cellX][cellY].getObsIndex()).setDirection(d);
+                            // ADDED: send to RPI obstacle details
+                            RpiController.sendToRpi(RpiController.getObstacleDetails(obstacleCoor.get(cells[cellX][cellY].getObsIndex())));
+                            this.invalidate();
+                        } else if (cells[cellX][cellY].getType() == "robot") {
+                            d = getNewDirection(robot.getDirection());
+                            robot.setDirection(d);
+                            // ADDED: send to RPI robot details
+                            RpiController.sendToRpi(RpiController.getRobotDetails(robot));
+                            this.invalidate();
+                        }
+                    }
+                    else if (canDrawRobot) {
                         // draw robot at touched position
                         log("draw robot");
                         if (checkSpaceEnough(cellX, cellY)) {
-                            setRobotCoor(cellX, this.convertRow(cellY));
-                            this.invalidate();
+                            setRobotCoor(cellX, this.convertRow(cellY), DEFAULT_DIRECTION);
+                            // ADDED: send to RPI robot details
+                            RpiController.sendToRpi(RpiController.getRobotDetails(robot));
+//                            this.invalidate();
                         } else {
                             log("already have an object here");
                         }
@@ -490,39 +551,31 @@ public class Map extends View {
                         cells[oldX][oldY].setObsIndex(-1);
                         this.invalidate();
                     }
-//                else if (cells[cellX][cellY].getType() == "robot") {
-//                        log("robot selected");
-//                        robotSelected = true;
-//                        int oldX = robot.getX();
-//                        int oldY = this.convertRow(robot.getY());
-//                        cells[oldX][oldY].setType("unexplored");
-//                        this.invalidate();
-//                    }
                 }
                     break;
                 case MotionEvent.ACTION_MOVE:
                     // Update the position of the dragged TextView
-                    if (isWithinCanvasRegion(cellX, cellY) && checkGridEmpty(cellX, cellY)) {
-                        if (!(currentSelected == -1)) {
+                    if (!(currentSelected == -1) && checkGridEmpty(cellX, cellY)) {
+//                        if (isWithinCanvasRegion(cellX, cellY) && checkGridEmpty(cellX, cellY)) {
+//                        if (!(currentSelected == -1)) {
                             log("within boundary, can move");
                             obstacleCoor.get(currentSelected).setObsXCoor(cellX);
                             obstacleCoor.get(currentSelected).setObsYCoor(this.convertRow(cellY));
                             this.invalidate();
-                        }
-                    } else {
-                        log("out of boundary");
+//                        }
+//                        } else {
+//                            log("out of boundary");
+//                            HomeFragment.modifyObstacleVisibility(currentSelected, true);
+//                        }
                     }
                     break;
                 case MotionEvent.ACTION_UP:
                     // Handle drop
                     log("ACTION_UP: ("+cellX + " , "+cellY+")");
                     if (isWithinCanvasRegion(cellX, cellY) && checkGridEmpty(cellX, cellY)) {
-//                        if (robotSelected) {
-//                            cells[cellX][cellY].setType("robot");
-//                            robotSelected = false;
-//                            this.invalidate();
-//                        } else
                         if (!(currentSelected == -1)) {
+                            // ADDED: send to RPI obstacle details
+                            RpiController.sendToRpi(RpiController.getObstacleDetails(obstacleCoor.get(currentSelected)));
                             cells[cellX][cellY].setObsIndex(currentSelected);
                             cells[cellX][cellY].setType("obstacle");
                             currentSelected = -1;
@@ -530,27 +583,45 @@ public class Map extends View {
                         }
                     } else {
                         log("out of boundary");
+                        if (!(currentSelected == -1)) {
+                            HomeFragment.modifyObstacleVisibility(obstacleCoor.get(currentSelected).getObsID() - 1, true);
+                            obstacleCoor.remove(currentSelected);
+                            updateObstacleCoor(currentSelected);
+                            currentSelected = -1;
+                        }
                     }
                     break;
             }
         return true;
     }
 
-    private boolean isWithinCanvasRegion(int x, int y) {
+    public boolean isWithinCanvasRegion(int x, int y) {
         // check if (x, y) falls within specific bounds of the canvas
         if (x >= 1 && x <= NUM_COLS && y >= 0 && y < NUM_ROWS) return true;
         else return false;
     }
 
     private void setObstacleCoor(int x, int y, String obsID) {
-        log("Entering setObstacleCoor");
+        log("Setting new obstacle coordinates");
         Obstacle obstacle = new Obstacle(x, y, Integer.parseInt(obsID));
         Map.obstacleCoor.add(obstacle);
         int row = this.convertRow(y);
         cells[x][row].setObsIndex(obstacleCoor.size()-1);
         cells[x][row].setType("obstacle");
-        log("setObstacleCoor: "+x+","+row+","+cells[x][row].getType());
-        log("Exiting setObstacleCoor");
+    }
+
+    private String getNewDirection(String currentDir) {
+        switch(currentDir) {
+            case "N":
+                return "E";
+            case "E":
+                return "S";
+            case "S":
+                return "W";
+            case "W":
+                return "N";
+        }
+        return "N";
     }
 
     private void log(String message) {
@@ -571,7 +642,6 @@ public class Map extends View {
         currentSelected = -1;
 
         // reset robot
-        robotSelected = false;
         robot.setX(-1);
         robot.setY(-1);
 
@@ -581,16 +651,127 @@ public class Map extends View {
                 if (!cells[x][y].type.equals("unexplored")) {
                     cells[x][y].setType("unexplored");
                 }
+                if (cells[x][y].getObsIndex() != -1) {
+                    cells[x][y].setObsIndex(-1);
+                }
             }
         }
 
-        // clear grids
-//        for (int x = 1; x <= NUM_COLS; x++) {
-//            for (int y = 0; y < NUM_ROWS; y++) {
-//                cells[x][y].setType("unexplored");
-//            }
-//        }
         this.invalidate();
+    }
+
+    private void updateObstacleCoor(int start) {
+        int x, y, index;
+        log("updating obstacle arraylist...");
+        for (int i=start; i<obstacleCoor.size();i++) {
+            x = obstacleCoor.get(i).getObsXCoor();
+            y = this.convertRow(obstacleCoor.get(i).getObsYCoor());
+            index = cells[x][y].getObsIndex();
+            cells[x][y].setObsIndex(index - 1);
+        }
+    }
+
+    public void sendMapToRpi() {
+        String task = this.getTaskType();
+        RpiController.sendToRpi(RpiController.getMapDetails(task, robot, obstacleCoor));
+    }
+
+    public void setObsTargetID(int obsID, int imgID) {
+        log("updating identified image id to obstacle");
+        for (int i=0;i<obstacleCoor.size();i++) {
+            if (obstacleCoor.get(i).getObsID() == obsID) {
+                obstacleCoor.get(i).setTargetID(imgID);
+                int x = obstacleCoor.get(i).getObsXCoor();
+                int y = this.convertRow(obstacleCoor.get(i).getObsYCoor());
+                log("initial cell type: "+cells[x][y].getType());
+                cells[x][y].setType("image");
+                log("updated cell type: "+cells[x][y].getType());
+                this.invalidate();
+                return;
+            }
+        }
+    }
+
+    public Obstacle getObstacle(int obsID) {
+        for (int i=0;i<obstacleCoor.size();i++) {
+            if (obstacleCoor.get(i).getObsID() == obsID) {
+                return obstacleCoor.get(i);
+            }
+        }
+        return null;
+    }
+
+    // TODO: update robot movements on map for manual navigation (only if robot in map)
+    public void moveForward() {
+        String currentDir = robot.getDirection();
+        switch (currentDir) {
+            case "N":
+                log("N");
+                break;
+            case "S":
+                log("S");
+                break;
+            case "E":
+                log("E");
+                break;
+            case "W":
+                log("W");
+                break;
+        }
+    }
+
+    public void turnLeft() {
+        String currentDir = robot.getDirection();
+        switch (currentDir) {
+            case "N":
+                log("N");
+                break;
+            case "S":
+                log("S");
+                break;
+            case "E":
+                log("E");
+                break;
+            case "W":
+                log("W");
+                break;
+        }
+    }
+
+    public void turnRight() {
+        String currentDir = robot.getDirection();
+        switch (currentDir) {
+            case "N":
+                log("N");
+                break;
+            case "S":
+                log("S");
+                break;
+            case "E":
+                log("E");
+                break;
+            case "W":
+                log("W");
+                break;
+        }
+    }
+
+    public void moveBack() {
+        String currentDir = robot.getDirection();
+        switch (currentDir) {
+            case "N":
+                log("N");
+                break;
+            case "S":
+                log("S");
+                break;
+            case "E":
+                log("E");
+                break;
+            case "W":
+                log("W");
+                break;
+        }
     }
 
 }

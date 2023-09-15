@@ -37,6 +37,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.example.mdp_android.R;
 import com.example.mdp_android.controllers.BluetoothController;
 import com.example.mdp_android.controllers.BluetoothControllerSingleton;
+import com.example.mdp_android.controllers.DeviceSingleton;
 import com.example.mdp_android.databinding.FragmentBluetoothBinding;
 
 import java.util.Set;
@@ -59,6 +60,7 @@ public class BluetoothFragment extends Fragment {
 
     // bluetooth indicators
     private String connectedDevice = "";
+    DeviceSingleton deviceSingleton;
 
     @Override
     public View onCreateView(
@@ -84,6 +86,8 @@ public class BluetoothFragment extends Fragment {
 
         lvPairedDevices.setOnItemClickListener(handleDeviceClicked);
         lvAvailableDevices.setOnItemClickListener(handleDeviceClicked);
+
+        deviceSingleton = DeviceSingleton.getInstance();
 
         // register broadcast receivers to monitor changes
         registerReceivers();
@@ -134,6 +138,7 @@ public class BluetoothFragment extends Fragment {
         String info = ((TextView) view).getText().toString();
         String address = info.substring(info.length() - 17);
         String currentDevice = info.substring(0, info.length() - address.length());
+        deviceSingleton.setDeviceName(currentDevice);
         connectDevice(address, currentDevice);
     };
 
@@ -155,10 +160,10 @@ public class BluetoothFragment extends Fragment {
                             Log.d(TAG +" Handler Log: ", "STATE_NONE");
                             // Set empty string since no device is connected currently
                             connectedDevice = "";
-//                            singletonDevice.setDeviceName(currentDevice);
+                            deviceSingleton.setDeviceName(connectedDevice);
                             if (binding.getRoot().getContext() != null) {
                                 bluetoothViewModel.setDevice(binding.getRoot().getContext().getString(R.string.bluetooth_device_connected_not));
-                                // Send string to MainActivity that no devices connected currently
+                                // Send string to fragments that no devices connected currently
                                 sendBluetoothStatus(connectedDevice);
                             }
                             break;
@@ -166,31 +171,35 @@ public class BluetoothFragment extends Fragment {
                             Log.d(TAG + " Handler Log: ", "STATE_LISTEN");
                             // Set empty string since no device is connected currently
                             connectedDevice = "";
-//                            singletonDevice.setDeviceName(currentDevice);
+                            deviceSingleton.setDeviceName(connectedDevice);
                           if (binding.getRoot().getContext() != null) {
                                 bluetoothViewModel.setDevice(binding.getRoot().getContext().getString(R.string.bluetooth_device_connected_not));
-                                // Send string to MainActivity that no devices connected currently
-                                sendBluetoothStatus(connectedDevice);
+                              // Send string to fragments that no devices connected currently
+                              sendBluetoothStatus(connectedDevice);
                             }
+
                             break;
                         case BluetoothController.StateConstants.STATE_CONNECTING:
                             Log.d(TAG+" Handler Log: ", "STATE_CONNECTING");
                             // Set empty string since no device is connected currently
-                            toast("Connecting...Please wait", Toast.LENGTH_LONG);
+                            toast("Connecting...Please wait", Toast.LENGTH_SHORT);
                             connectedDevice = "";
+                            deviceSingleton.setDeviceName(connectedDevice);
                             if (binding.getRoot().getContext() != null) {
                                 bluetoothViewModel.setDevice(binding.getRoot().getContext().getString(R.string.bluetooth_device_connected_not));
-                                // Send string to MainActivity that no devices connected currently
+                                // Send string to fragments that no devices connected currently
                                 sendBluetoothStatus(connectedDevice);
                             }
+
                             break;
                         case BluetoothController.StateConstants.STATE_CONNECTED:
                             Log.d(TAG+" Handler Log: ", "STATE_CONNECTED");
                             toast("connected to: "+connectedDevice, Toast.LENGTH_SHORT);
 //                            registerLocalReceivers();
                             if (binding.getRoot().getContext() != null) {
+                                Log.d(TAG, "update bluetooth status");
                                 bluetoothViewModel.setDevice(binding.getRoot().getContext().getString(R.string.bluetooth_device_connected)+connectedDevice);
-                                // Send device name to MainActivity
+                                // Send device name to other fragments
                                 sendBluetoothStatus(connectedDevice);
                             }
                             break;
@@ -220,12 +229,19 @@ public class BluetoothFragment extends Fragment {
                     Log.d(TAG+ " Handler Log: ", "MESSAGE_DEVICE_NAME");
                     // Save the connected device's name
                     connectedDevice = message.getData().getString("device_name");
+                    if (connectedDevice != null) {
+                        deviceSingleton.setDeviceName(connectedDevice);
+//                        sendBluetoothStatus(connectedDevice);
+                    }
                     break;
                 case BluetoothController.MessageConstants.MESSAGE_TOAST:
                     Log.d(TAG +" Handler Log: ", "MESSAGE_TOAST");
                     if (binding.getRoot().getContext() != null) {
                         String error = message.getData().getString("toast");
-                        toast(error, Toast.LENGTH_LONG);
+                        toast(error, Toast.LENGTH_SHORT);
+//                        connectedDevice = "";
+//                        deviceSingleton.setDeviceName(connectedDevice);
+//                        sendBluetoothStatus(connectedDevice);
                     }
                     break;
 
@@ -349,6 +365,7 @@ public class BluetoothFragment extends Fragment {
 
     // Method: Pass bluetooth status to other fragments
     private void sendBluetoothStatus(String msg) {
+        updateDeviceName();
         Log.d(TAG, "sending device name, " + msg);
         Intent intent = new Intent("getConnectedDevice");
         intent.putExtra("name", msg);
@@ -362,4 +379,11 @@ public class BluetoothFragment extends Fragment {
         intent.putExtra("received", msg);
         LocalBroadcastManager.getInstance(binding.getRoot().getContext()).sendBroadcast(intent);
     }
+
+    private void updateDeviceName() {
+        if (!deviceSingleton.getDeviceName().equals("")) {
+            connectedDevice = deviceSingleton.getDeviceName();
+        }
+    }
+
 }

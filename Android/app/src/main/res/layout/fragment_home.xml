@@ -91,7 +91,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="40dp"
-                android:layout_marginRight="30dp"
+                android:layout_marginRight="25dp"
                 android:orientation="vertical">
 
                 <Button
@@ -125,6 +125,14 @@
                     android:textOff="@string/text_robotStartPoint"
                     android:textOn="Cancel"/>
 
+                <ToggleButton
+                    android:id="@+id/button_setDirection"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:textOff="@string/text_setDirection"
+                    android:textOn="Cancel"/>
+
             </LinearLayout>
 
         </LinearLayout>
@@ -135,11 +143,11 @@
             android:layout_marginBottom="20dp">
 
             <Button
-                android:id="@+id/button_imagerec"
+                android:id="@+id/button_start"
                 android:layout_width="250dp"
                 android:layout_height="wrap_content"
                 android:padding="10dp"
-                android:text="@string/button_imagerec"
+                android:text="@string/button_start"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.106"
@@ -147,13 +155,29 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintVertical_bias="1.0" />
 
-            <Button
-                android:id="@+id/button_fastest"
+            <TextView
+                android:id="@+id/textView_taskType"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/text_taskType"
+                android:textColor="@color/white"
+                app:layout_constraintBottom_toTopOf="@+id/button_fastest"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.087"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/textView_bluetooth"
+                app:layout_constraintVertical_bias="0.94" />
+
+            <ToggleButton
+                android:id="@+id/button_taskType"
                 android:layout_width="250dp"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="88dp"
                 android:padding="10dp"
-                android:text="@string/button_fastest"
-                app:layout_constraintBottom_toTopOf="@+id/button_imagerec"
+                android:textOff="@string/button_imagerec"
+                android:textOn="@string/button_fastest"
+                app:layout_constraintBottom_toTopOf="@+id/button_start"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.106"
                 app:layout_constraintStart_toStartOf="parent"
@@ -223,7 +247,7 @@
                 android:text="@string/bluetooth_device_connected_not"
                 android:textColor="@color/white"
                 android:textSize="20sp"
-                app:layout_constraintBottom_toTopOf="@+id/button_fastest"
+                app:layout_constraintBottom_toTopOf="@+id/button_taskType"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.12"
                 app:layout_constraintStart_toStartOf="parent"

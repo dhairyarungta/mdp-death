@@ -31,8 +31,16 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mdp_android.R;
+import com.example.mdp_android.controllers.DeviceSingleton;
+import com.example.mdp_android.controllers.RpiController;
 import com.example.mdp_android.databinding.FragmentHomeBinding;
 import com.example.mdp_android.ui.grid.Map;
+
+import org.json.JSONObject;
+
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.List;
 
 public class HomeFragment extends Fragment {
     private static final String TAG = "HomeFragment";
@@ -40,17 +48,17 @@ public class HomeFragment extends Fragment {
     private FragmentHomeBinding binding;
     private HomeViewModel homeViewModel;
     private String connectedDevice = "";
+    DeviceSingleton deviceSingleton;
 
     public Map map;
 
     private ImageButton up, down, left, right;
-    private Button resetBtn;
-    private TextView robotStatus, targetCoor, bluetoothStatus, obsData;
+    private Button resetBtn, startBtn;
+    private TextView robotStatus, targetStatus, bluetoothTextView, obsData;
     private RecyclerView obsList;
-    private RecyclerAdapter obsItems;
+    private static RecyclerAdapter obsItems;
     private RecyclerView.LayoutManager layoutManager;
-    private TextView bluetoothTextView;
-    private ToggleButton setRobot;
+    private ToggleButton setRobot, setDirection, setTaskType;
 
 
     @Override
@@ -72,6 +80,13 @@ public class HomeFragment extends Fragment {
                 new IntentFilter("getConnectedDevice")
         );
 
+        // register receiver for robot status
+        LocalBroadcastManager.getInstance(requireActivity()).registerReceiver(
+                mTextReceiver,
+                new IntentFilter("getReceived")
+        );
+
+
         return root;
     }
 
@@ -82,13 +97,57 @@ public class HomeFragment extends Fragment {
             String deviceName = intent.getStringExtra("name");
             if (deviceName.equals("")) {
                 connectedDevice = "";
-                homeViewModel.setReceivedText(context.getString(
-                        R.string.bluetooth_device_connected_not));
+                deviceSingleton.setDeviceName(connectedDevice);
+                updateBluetoothStatus();
             } else {
                 connectedDevice = deviceName;
+                deviceSingleton.setDeviceName(connectedDevice);
                 Log.d(TAG, "onReceive: -msg- " + connectedDevice);
-                homeViewModel.setReceivedText(context.getString(
-                        R.string.bluetooth_device_connected)+connectedDevice);
+                updateBluetoothStatus();
+            }
+//            if (deviceName.equals("")) {
+//                connectedDevice = "";
+//                homeViewModel.setReceivedText(context.getString(
+//                        R.string.bluetooth_device_connected_not));
+//            } else {
+//                connectedDevice = deviceName;
+//                Log.d(TAG, "onReceive: -msg- " + connectedDevice);
+//                homeViewModel.setReceivedText(context.getString(
+//                        R.string.bluetooth_device_connected)+connectedDevice);
+//            }
+        }
+    };
+
+    // update robot coordinates whenever new coordinates are received
+    private BroadcastReceiver mTextReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "receiving messages");
+            String status;
+            String textReceived = intent.getStringExtra("received");
+            JSONObject response = RpiController.readRpiMessages(textReceived);
+            String messageType = RpiController.getRpiMessageTyoe(textReceived);
+            if (messageType == "robot" ) {
+                status = RpiController.getRobotStatus(response);
+                homeViewModel.setRobotStatus(status);
+                updateRobotPosition(response);
+            } else if (messageType == "image") {
+                status = RpiController.getTargetStatus(response);
+                try {
+                    Map.Obstacle o = map.getObstacle(Integer.parseInt(response.getString("obs_id")));
+                    if (o != null) {
+                        int x = o.getObsXCoor() - 1;
+                        int y = o.getObsYCoor() - 1;
+                        status = status + " at (" + x + ", " + y + ") facing " + o.getDirection();
+                    } else {
+                        status = "Invalid ID received";
+                        Toast.makeText(getContext(), "Invalid Obstacle ID received", Toast.LENGTH_SHORT).show();
+                    }
+                } catch (Exception e) {
+                    log("Failed to parse JSON: "+e);
+                }
+                homeViewModel.setTargetStatus(status);
+                updateObstacle(response);
             }
         }
     };
@@ -98,8 +157,14 @@ public class HomeFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
-        // below line causes broadcast to not be received
-//        LocalBroadcastManager.getInstance(requireActivity()).unregisterReceiver(mNameReceiver);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        // remove receiver
+        LocalBroadcastManager.getInstance(requireActivity()).unregisterReceiver(mNameReceiver);
+        LocalBroadcastManager.getInstance(requireActivity()).unregisterReceiver(mTextReceiver);
     }
 
     @Override
@@ -113,13 +178,24 @@ public class HomeFragment extends Fragment {
         right = getView().findViewById(R.id.imageButton_right);
         resetBtn = getView().findViewById(R.id.button_reset);
         robotStatus = getView().findViewById(R.id.textView_robotStatus);
-        targetCoor = getView().findViewById(R.id.textView_targetCoor);
+        targetStatus = getView().findViewById(R.id.textView_targetCoor);
         obsData = getView().findViewById(R.id.textView_obsData);
         obsList = getView().findViewById(R.id.recyclerView_obsList);
         map = getView().findViewById(R.id.mapView);
         setRobot = getView().findViewById(R.id.button_startpoint);
+        setDirection = getView().findViewById(R.id.button_setDirection);
+        startBtn = getView().findViewById(R.id.button_start);
+        setTaskType = getView().findViewById(R.id.button_taskType);
 
         createObstacleList();
+
+        startBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // sends task and robot and obstacles coordinates to rpi
+                map.sendMapToRpi();
+            }
+        });
 
         resetBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -132,28 +208,63 @@ public class HomeFragment extends Fragment {
         up.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                log("move up");
+                Toast.makeText(getContext(), "move forward", Toast.LENGTH_SHORT).show();
+//                ArrayList<String> commands = new ArrayList<>();
+//                commands.add("SF010");
+//                RpiController.sendToRpi(RpiController.getNavDetails(commands));
+
+                // checklist
+                //RpiController.sendToRpi2("SF050");
+                RpiController.sendToRpi2("f");
+
+                log("move forward");
             }
         });
 
         down.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                log("move down");
+                Toast.makeText(getContext(), "move backwards", Toast.LENGTH_SHORT).show();
+//                ArrayList<String> commands = new ArrayList<>();
+//                commands.add("SB010");
+//                RpiController.sendToRpi(RpiController.getNavDetails(commands));
+
+                // checklist
+                //RpiController.sendToRpi2("SB050");
+                RpiController.sendToRpi2("r");
+                log("move backwards");
             }
         });
 
         left.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                log("move left");
+                Toast.makeText(getContext(), "turn left", Toast.LENGTH_SHORT).show();
+//                ArrayList<String> commands = new ArrayList<>();
+//                commands.add("LF090");
+////                commands.add("SF010");
+//                RpiController.sendToRpi(RpiController.getNavDetails(commands));
+
+                // checklist
+                //RpiController.sendToRpi2("LF090");
+                RpiController.sendToRpi2("tl");
+                log("turn left");
             }
         });
 
         right.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                log("move right");
+                Toast.makeText(getContext(), "turn right", Toast.LENGTH_SHORT).show();
+//                ArrayList<String> commands = new ArrayList<>();
+//                commands.add("RF090");
+////                commands.add("SF010");
+//                RpiController.sendToRpi(RpiController.getNavDetails(commands));
+
+                // checklist
+                //RpiController.sendToRpi2("RF090");
+                RpiController.sendToRpi2("tr");
+                log("turn right");
             }
         });
 
@@ -166,8 +277,39 @@ public class HomeFragment extends Fragment {
                 } else {
                     toast = "Cancel";
                 }
-                Toast.makeText(getContext(), toast, Toast.LENGTH_LONG).show();
+                Toast.makeText(getContext(), toast, Toast.LENGTH_SHORT).show();
                 map.setCanDrawRobot(b);
+                if (setDirection.isChecked()) setDirection.setChecked(!b);
+            }
+        });
+
+        setDirection.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                String toastStr;
+                if (b) {
+                    toastStr = "Select object to change direction";
+                } else {
+                    toastStr = "cancel";
+                }
+                Toast.makeText(getContext(), toastStr, Toast.LENGTH_SHORT).show();
+                map.setCanSetDirection(b);
+                if (setRobot.isChecked()) setRobot.setChecked(!b);
+            }
+        });
+
+        setTaskType.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                String toastStr;
+                if (b) {
+                    toastStr = "Task type: Fastest Car";
+                } else {
+                    toastStr = "Task type: Image Recognition";
+                }
+                Toast.makeText(getContext(), toastStr, Toast.LENGTH_SHORT).show();
+                // set task type in map
+                map.setTaskType(b);
             }
         });
 
@@ -186,6 +328,22 @@ public class HomeFragment extends Fragment {
                 bluetoothTextView.setText(s);
             }
         });
+
+        robotStatus.setText(homeViewModel.getRobotStatus().getValue());
+        homeViewModel.getRobotStatus().observe(getViewLifecycleOwner(), new Observer<String>() {
+            @Override
+            public void onChanged(String s) {
+                robotStatus.setText(s);
+            }
+        });
+
+        targetStatus.setText(homeViewModel.getTargetStatus().getValue());
+        homeViewModel.getTargetStatus().observe(getViewLifecycleOwner(), new Observer<String>() {
+            @Override
+            public void onChanged(String s) {
+                targetStatus.setText(s);
+            }
+        });
     }
 
 
@@ -197,12 +355,48 @@ public class HomeFragment extends Fragment {
 
     }
 
+    public void updateBluetoothStatus() {
+        log("updating bluetooth status in home fragment...");
+        deviceSingleton = DeviceSingleton.getInstance();
 
-    public void createObstacleDir() {
+        if (!deviceSingleton.getDeviceName().equals("")) {
+            connectedDevice = deviceSingleton.getDeviceName();
+            homeViewModel.setReceivedText(getContext().getString(
+                    R.string.bluetooth_device_connected)+connectedDevice);
 
+        } else {
+            homeViewModel.setReceivedText(getContext().getString(
+                    R.string.bluetooth_device_connected_not));
+        }
     }
 
-    public void modifyObstacleVisibility(int position, boolean visible) {
+    public void updateRobotPosition(JSONObject robot) {
+        try {
+            int x = Integer.parseInt(robot.getString("x"));
+            int y = Integer.parseInt(robot.getString("y"));
+            String d = robot.getString("dir");
+            if (map.isWithinCanvasRegion(x+1, y+1)) {
+                map.setRobotCoor(x + 1, y + 1, d);
+            } else {
+                Toast.makeText(getContext(), "Invalid coordinates received", Toast.LENGTH_SHORT).show();
+            }
+
+        } catch (Exception e) {
+            log("Failed to parse JSON: " + e);
+        }
+    }
+
+    public void updateObstacle(JSONObject target) {
+        try {
+            int obsID = Integer.parseInt(target.getString("obs_id"));
+            int imgID = Integer.parseInt(target.getString("img_id"));
+            map.setObsTargetID(obsID, imgID);
+        } catch (Exception e) {
+            log("Failed to parse JSON: " + e);
+        }
+    }
+
+    public static void modifyObstacleVisibility(int position, boolean visible) {
         obsItems.setItemVisibility(position, visible);
         Log.d(TAG, "set obstacle "+position+" to "+visible);
     }

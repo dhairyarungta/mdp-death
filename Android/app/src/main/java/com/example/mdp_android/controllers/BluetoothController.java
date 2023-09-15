@@ -27,7 +27,8 @@ public class BluetoothController {
     // variables
     private static final String TAG = "BluetoothController";
     public static final String DEVICE_NAME = "MDP_DEATH";
-    private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
+//    private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
+    private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     private final BluetoothAdapter mAdapter;
     private AcceptThread mAcceptThread;
     private ConnectThread mConnectThread;
@@ -115,7 +116,7 @@ public class BluetoothController {
             mAcceptThread = new AcceptThread();
             mAcceptThread.start();
         }
-        // Update UI bluetooth status
+        // Update bluetooth status
         updateUIBluetoothStatus();
     }
 
@@ -146,7 +147,8 @@ public class BluetoothController {
         mConnectThread = new ConnectThread(device);
         mConnectThread.start();
         Log.d(TAG, "starting connect thread...");
-        // Update UI bluetooth status
+
+        // Update bluetooth status
         updateUIBluetoothStatus();
     }
 
@@ -215,7 +217,8 @@ public class BluetoothController {
         }
 
         mState = StateConstants.STATE_NONE;
-        // Update UI bluetooth status
+
+        // Update bluetooth status
         updateUIBluetoothStatus();
     }
 
@@ -270,7 +273,7 @@ public class BluetoothController {
         msg.setData(bundle);
         mHandler.sendMessage(msg);
 
-        mState = StateConstants.STATE_NONE;
+        mState = StateConstants.STATE_DISCONNECTED;
         // Update UI bluetooth status
         updateUIBluetoothStatus();
 
@@ -306,9 +309,7 @@ public class BluetoothController {
             // Keep listening until exception occurs or a socket is returned.
             while (mState != StateConstants.STATE_CONNECTED) {
                 try {
-                    Log.d(TAG, "trying to accept socket...");
                     socket = mmServerSocket.accept();
-                    Log.d(TAG, "socket accepted");
                 } catch (IOException e) {
                     Log.e(TAG, "Socket's accept() method failed", e);
                     break;
@@ -395,7 +396,6 @@ public class BluetoothController {
             } catch (IOException connectException) {
                 // Unable to connect; close the socket and return.
                 Log.e(TAG, "error:" + connectException);
-                connectException.printStackTrace();
                 try {
                     mmSocket.close();
                 } catch (IOException closeException) {
@@ -468,6 +468,7 @@ public class BluetoothController {
                     // TODO: this line causing error: java.io.IOException: bt socket closed, read return: -1
                     Log.d(TAG, "trying to read from buffer");
                     numBytes = mmInStream.read(mmBuffer);
+//                    String inputBuffer = new String(mmBuffer, 0, numBytes);
                     Log.d(TAG, "buffer length: " + numBytes);
                     // Send the obtained bytes to the UI activity.
                     Message readMsg = mHandler.obtainMessage(
@@ -475,7 +476,7 @@ public class BluetoothController {
                             mmBuffer);
                     readMsg.sendToTarget();
                 } catch (IOException e) {
-                    Log.d(TAG, "Input stream was disconnected", e);
+                    Log.e(TAG, "Input stream was disconnected", e);
                     connectionLost();
                     break;
                 }

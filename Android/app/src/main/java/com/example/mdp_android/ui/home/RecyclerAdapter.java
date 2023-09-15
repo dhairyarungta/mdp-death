@@ -104,6 +104,8 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
         viewHolder.getTextView().setText(mDataSet[position]);
         if (itemVisibility[position]) {
             viewHolder.getTextView().setVisibility(View.VISIBLE);
+        } else {
+            viewHolder.getTextView().setVisibility(View.INVISIBLE);
         }
     }
     // END_INCLUDE(recyclerViewOnBindViewHolder)
@@ -118,8 +120,9 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
         // Set the visibility of the item at the specified position.
         if (position >= 0 && position < itemVisibility.length) {
             itemVisibility[position] = isVisible;
+            Log.d(TAG, "setting item visibility");
             // Notify the adapter that the item at the specified position has changed.
-            notifyItemChanged(position);
+            this.notifyItemChanged(position);
         }
     }
 

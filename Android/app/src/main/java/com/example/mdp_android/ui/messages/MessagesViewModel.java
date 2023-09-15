@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModel;
 public class MessagesViewModel extends ViewModel {
     private MutableLiveData<String> deviceName;
 
-
     public MessagesViewModel() {
         if (deviceName == null) {
             deviceName = new MutableLiveData<>();

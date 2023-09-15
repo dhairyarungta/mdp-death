@@ -92,7 +92,7 @@
         <EditText
             android:id="@+id/editText_sendMessage"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:ems="10"
             android:gravity="start|top"
             android:inputType="textMultiLine"
