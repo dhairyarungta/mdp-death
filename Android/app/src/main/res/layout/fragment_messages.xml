@@ -13,8 +13,8 @@
         android:paddingTop="40dp"
         android:layout_marginBottom="?attr/actionBarSize"
 
-        android:paddingLeft="?attr/actionBarSize"
-        android:paddingRight="?attr/actionBarSize"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
         android:orientation="vertical">
 
         <TextView

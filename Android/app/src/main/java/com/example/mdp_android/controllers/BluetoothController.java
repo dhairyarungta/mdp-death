@@ -307,12 +307,12 @@ public class BluetoothController {
             Log.d(TAG, "BEGIN mAcceptThread" + this);
             BluetoothSocket socket = null;
             // Keep listening until exception occurs or a socket is returned.
-            while (mState != StateConstants.STATE_CONNECTED) {
+//            while (mState != StateConstants.STATE_CONNECTED) {
                 try {
                     socket = mmServerSocket.accept();
                 } catch (IOException e) {
                     Log.e(TAG, "Socket's accept() method failed", e);
-                    break;
+//                    break;
                 }
 
                 if (socket != null) {
@@ -340,7 +340,7 @@ public class BluetoothController {
                         }
                     }
                 }
-            }
+//            }
             Log.i(TAG, "END mAcceptThread");
         }
 

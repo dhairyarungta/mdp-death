@@ -345,7 +345,7 @@ public class Map extends View {
                 int obsID = obstacleCoor.get(i).getObsID();
                 String direction = obstacleCoor.get(i).getDirection();
                 rect = new RectF(col * cellSize, row * cellSize, (col + 1) * cellSize, (row + 1) * cellSize);
-                canvas.drawRect(rect, cells[col][row].paint);
+                canvas.drawRect(rect, obstaclePaint);
                 canvas.drawText(obsID + "", col * cellSize + cellSize/2.5f, row * cellSize + cellSize/1.5f, whitePaint);
                 // draw direction
                 drawDirection(canvas, col, row, direction);

@@ -128,6 +128,7 @@ public class MessagesFragment extends Fragment {
         return root;
     }
 
+
     @Override
     public void onDestroyView() {
         super.onDestroyView();
@@ -171,19 +172,6 @@ public class MessagesFragment extends Fragment {
                 Log.d(TAG, "onReceive: -msg- " + connectedDevice);
                 updateBluetoothStatus();
             }
-//            if (deviceName.equals("")) {
-//                connectedDevice = "";
-//                messagesViewModel.setDeviceName(context.getString(
-//                        R.string.bluetooth_device_connected_not));
-//                // TODO: test below (clearing message history)
-////                aSentMessages.clear();
-////                aReceivedMessages.clear();
-//            } else {
-//                connectedDevice = deviceName;
-//                Log.d(TAG, "onReceive: -msg- " + connectedDevice);
-//                messagesViewModel.setDeviceName(context.getString(
-//                        R.string.bluetooth_device_connected)+connectedDevice);
-//            }
         }
     };
 
