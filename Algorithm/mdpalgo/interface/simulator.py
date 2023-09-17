@@ -7,9 +7,9 @@ import pygame
 
 from Algorithm.mdpalgo.constants import mdp_constants
 import pygame
-from Algorithm.mdpalgo.algorithm.astar_hamiltonian import AStarHamiltonian
-from Algorithm.mdpalgo.algorithm.hamiltonian_path_planners import BruteForcePermutationHamiltonianPathPlanner, GreedyHamiltonianPathPlanner
-from Algorithm.mdpalgo.algorithm.path_planning import PathPlan
+from Algorithm.mdpalgo.algorithm.hamiltonian_planner_controller_euclidean_and_angle import HamiltonianPlannerController
+from Algorithm.mdpalgo.algorithm.hamiltonian_planner_service_nearest_or_greedy import BruteForcePermutationHamiltonianPathPlanner, GreedyHamiltonianPathPlanner
+from Algorithm.mdpalgo.algorithm.a_to_b_planner_controller import AtoBPathPlan
 from Algorithm.mdpalgo.communication.comms import AlgoClient
 from Algorithm.mdpalgo.communication.message_parser import MessageParser, MessageType, TaskType
 from Algorithm.mdpalgo.interface.panel import Panel
@@ -41,11 +41,11 @@ class Simulator:
         # Astar class
         self.astar = None
         # Path planner class
-        self.path_planner = None
+        self.a_to_b_path_planner = None
         # Astar hamiltonian class
-        self.astar_hamiltonian = None
+        self.hamiltonian_planner_ctlr = None
         # Hamiltonian path planner class
-        self.hamiltonian_path_planner = None
+        self.hamiltonian_planner_svc = None
 
         # This is the margin around the left and top of the grid on screen display
         self.grid_from_screen_top_left = (120, 120)
@@ -223,7 +223,7 @@ class Simulator:
         print("Received updated robot pose")
         status = message_data["status"]
         if status == "DONE":
-            self.path_planner.update_num_move_completed(message_data["num_move"])
+            self.a_to_b_path_planner.update_num_move_completed(message_data["num_move"])
         else:
             raise ValueError("Unimplemented response for updated robot pose")
 
@@ -281,17 +281,17 @@ class Simulator:
 
         # Get the fastest route using AStar Hamiltonian
         if len(self.grid.get_target_locations()) != 0:
-            self.astar_hamiltonian = AStarHamiltonian(self.grid, self.car.grid_x, self.car.grid_y)
-            graph = self.astar_hamiltonian.create_graph()
+            self.hamiltonian_planner_ctlr = HamiltonianPlannerController(self.grid, self.car.grid_x, self.car.grid_y)
+            graph = self.hamiltonian_planner_ctlr.create_graph()
 
-            self.hamiltonian_path_planner = BruteForcePermutationHamiltonianPathPlanner(graph, "start")
-            shortest_path, path_length = self.hamiltonian_path_planner.find_path()
-            shortest_path_implementation = self.astar_hamiltonian.convert_shortest_path_to_ordered_targets(shortest_path)
+            self.hamiltonian_planner_svc = BruteForcePermutationHamiltonianPathPlanner(graph, "start")
+            shortest_path, path_length = self.hamiltonian_planner_svc.find_path()
+            shortest_path_implementation = self.hamiltonian_planner_ctlr.convert_shortest_path_to_ordered_targets(shortest_path)
             self.car.optimized_target_locations = shortest_path_implementation[1:]
             print(f"== SIMULATOR > start_b_c() | Final shortest route is {str(shortest_path)}")
-            self.path_planner = PathPlan(self, self.grid, self.car, shortest_path_implementation)
+            self.a_to_b_path_planner = AtoBPathPlan(self, self.grid, self.car, shortest_path_implementation)
 
-            self.path_planner.start_robot()
+            self.a_to_b_path_planner.start_robot()
 
     def reset_button_clicked(self):
         self.grid.reset_data()

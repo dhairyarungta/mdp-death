@@ -6,6 +6,7 @@ from Algorithm.mdpalgo.map.cell import CellStatus
 from Algorithm.mdpalgo.map.configuration import Pose
 from Algorithm.mdpalgo.robot.robot import RobotMovement
 
+
 class ImprovedNode:
     """
         A node class for A* Pathfinding
@@ -16,7 +17,7 @@ class ImprovedNode:
         f is total cost of present node i.e. :  f = g + h
     """
 
-    def __init__(self, parent=None, pose:list=None):
+    def __init__(self, parent=None, pose: list = None):
         self.parent = parent
         self.pose = Pose(pose)
         self.move_from_parent: RobotMovement = None
@@ -26,15 +27,12 @@ class ImprovedNode:
         self.h = 0
         self.f = 0
 
+
 class Distance:
     """
         A class with implementation of distances between two 2D points
     """
-    def manhattan(self, xA: int, yA: int, xB: int, yB: int) -> int:
-        return abs(xA-xB) + abs(yA-yB)
 
-    def squared_euclidean(self, xA: int, yA: int, xB: int, yB: int) -> int:
-        return (xA - xB) ** 2 + (yA - yB) ** 2
 
 class AutoPlanner():
     def __init__(self):
@@ -42,7 +40,7 @@ class AutoPlanner():
         # if robot node is at this distance away from obstacle, safe!
         self.safe_squared_distance = 8
         # map movement to a relative vector wrt the current direction
-        self.map_move_to_relative_displacement =  {
+        self.map_move_to_relative_displacement = {
             RobotMovement.FORWARD: [0, 1],
             RobotMovement.BACKWARD: [0, -1],
             RobotMovement.FORWARD_RIGHT: [self.TURNING_RADIUS, self.TURNING_RADIUS],
@@ -70,13 +68,13 @@ class AutoPlanner():
         # change the current direction to rotation matrix
         self.direction_to_rotation_matrixes = {
             mdp_constants.NORTH: np.array([[1, 0],
-                                       [0, 1]]),
+                                           [0, 1]]),
             mdp_constants.SOUTH: np.array([[-1, 0],
-                                       [0, -1]]),
+                                           [0, -1]]),
             mdp_constants.EAST: np.array([[0, 1],
-                                      [-1, 0]]),
+                                          [-1, 0]]),
             mdp_constants.WEST: np.array([[0, -1],
-                                      [1, 0]]),
+                                          [1, 0]]),
         }
 
         self.direction_to_unit_forward_vector = {
@@ -87,12 +85,13 @@ class AutoPlanner():
         }
 
         # turning cost = straight cost * turning factor
-        self.turning_factor = 5 # assume perfect circle, about 4.71
+        self.turning_factor = 5  # assume perfect circle, about 4.71
 
         self.node_index_in_yet_to_visit = 2
         self.distance_calculator = Distance()
         self.obs_coords = []
         self.full_path = []
+
     def initialize_node(self, node_position: list) -> ImprovedNode:
         """f, h, g are all initialized to 0"""
         return ImprovedNode(None, tuple(node_position))
@@ -120,7 +119,7 @@ class AutoPlanner():
     def initialize_visited_nodes(self):
         # we will put all node those already explored so that we
         # don't explore it again
-        self.visited_list = set() # set of tuples (x, y, dir)
+        self.visited_list = set()  # set of tuples (x, y, dir)
 
     def add_node_to_yet_to_visit(self, node: ImprovedNode):
         self.yet_to_visit.put((node.f, self.get_id(), node))
@@ -153,6 +152,9 @@ class AutoPlanner():
     def get_maze_sizes(self):
         self.size_x, self.size_y = np.shape(self.maze)
 
+    def squared_euclidean(self, xA: int, yA: int, xB: int, yB: int) -> int:
+        return (xA - xB) ** 2 + (yA - yB) ** 2
+
     def is_in_collision(self, node: ImprovedNode) -> bool:
         if self.is_robot_within_maze_at_node(node):
             return self.maze[node.pose.x][node.pose.y] in self.collision_statuses
@@ -163,11 +165,11 @@ class AutoPlanner():
 
         # check that manhattan distance to any obstacle is
         # above a certain threshold
-        if not self.obs_coords: # the obstacle information is not provided
+        if not self.obs_coords:  # the obstacle information is not provided
             return True
 
         for obs_x, obs_y in self.obs_coords:
-            distance = self.distance_calculator.squared_euclidean(
+            distance = self.squared_euclidean(
                 node.pose.x, node.pose.y,
                 obs_x, obs_y)
             if distance < self.safe_squared_distance:
@@ -189,9 +191,8 @@ class AutoPlanner():
             corner_displacement = np.matmul(unit_forward_vector, displacement_from_current) * unit_forward_vector
             corner_node = ImprovedNode(None, [corner_displacement[0] + parent_node.pose.x,
                                               corner_displacement[1] + parent_node.pose.y,
-                                              mdp_constants.NORTH]) # the direction is not important since we only checking collision
+                                              mdp_constants.NORTH])  # the direction is not important since we only checking collision
             return self.is_in_collision(corner_node)
-
 
     def is_goal_reached(self) -> bool:
         for potential_goal_node in self.potential_goal_nodes:
@@ -205,8 +206,8 @@ class AutoPlanner():
     def set_boundary_for_nodes(self):
         """The node can be slightly outside of the maze"""
         self.buffer_zone_size = mdp_constants.BOUNDARY_BUFFER
-        self.right_boundary = self.size_x - 1 - self.buffer_zone_size # right most node that robot is not out of maze
-        self.top_boundary = self.size_y - 1 - self.buffer_zone_size # top most node that robot is not out of maze
+        self.right_boundary = self.size_x - 1 - self.buffer_zone_size  # right most node that robot is not out of maze
+        self.top_boundary = self.size_y - 1 - self.buffer_zone_size  # top most node that robot is not out of maze
 
     def is_robot_within_maze_at_node(self, node: ImprovedNode):
         """Check if the robot will be within maze if staying in this
@@ -265,15 +266,17 @@ class AutoPlanner():
         rotation_matrix = self.direction_to_rotation_matrixes[current_direction]
         return np.matmul(rotation_matrix, relative_vector).astype(int)
 
-
     def is_node_already_visited(self, node: ImprovedNode):
         return node.pose.to_tuple() in self.visited_list
+
+    def manhattan(self, xA: int, yA: int, xB: int, yB: int) -> int:
+        return abs(xA - xB) + abs(yA - yB)
 
     def manhattan_heuristic(self, node: ImprovedNode):
         """Return estimated cost to go to the end node"""
         xA, yA = node.pose.x, node.pose.y
         xB, yB = self.end_node.pose.x, self.end_node.pose.y
-        return self.distance_calculator.manhattan(xA, yA, xB, yB)
+        return self.manhattan(xA, yA, xB, yB)
 
     def is_node_higher_cost_than_yet_to_visit(self, node: ImprovedNode):
         """Check if node is already in yet to visit and has higher cost than
@@ -325,14 +328,14 @@ class AutoPlanner():
     def reset_potential_goal_nodes(self):
         self.potential_goal_nodes = list()
 
-    def add_potential_goal_node(self, node: ImprovedNode=None):
+    def add_potential_goal_node(self, node: ImprovedNode = None):
         self.potential_goal_nodes.append(node)
 
     def get_movements_and_path_to_goal(self, maze, cost, start, end, obs_coords: list):
         self.set_maze(maze)
         self.set_straight_cost(cost)
         # Create start and end node with initialized values for g, h and f
-        print(f"== ASTAR_P > get_movements_a_p_t_g() | Have to go from {start} to {end}")
+        print(f"== A_TO_B_ASTAR > get_movements_a_p_t_g() | Have to go from {start} to {end}")
         self.start_node = self.initialize_node(start)
         self.end_node = self.initialize_node(end)
 
@@ -392,7 +395,7 @@ class AutoPlanner():
                     continue
 
                 # Add the child to the yet_to_visit list
-                # print(f"== ASTAR_P > get_movements_a_p_t_g() | adding {child.pose.x, child.pose.y}")
+                # print(f"== A_TO_B_ASTAR > get_movements_a_p_t_g() | adding {child.pose.x, child.pose.y}")
                 self.add_node_to_yet_to_visit(child)
         raise Exception("no path found to goal")
 
@@ -410,14 +413,14 @@ class AutoPlanner():
             path.append(self.get_path_from_parent(node))
             node = node.parent
 
-        movements.reverse() # reverse the path from start to goal
+        movements.reverse()  # reverse the path from start to goal
         movements_str.reverse()
         path.reverse()
         movements_str = self.process_movement_string(movements_str)
         self.full_path.append(movements_str)
         return movements, path, movements_str
 
-    def process_movement_string(self,arr):
+    def process_movement_string(self, arr):
         if not arr:
             return []
         # Initialize variables to keep track of current tag and count
@@ -434,18 +437,18 @@ class AutoPlanner():
                 current_count += 1
             # If the current element is different from the previous element, add the tagged version of the previous tag and count to the tagged array
             else:
-                if current_tag in ['FR','FL','BR','BL']:
-                    current_count_str = str(current_count*90).zfill(3)
+                if current_tag in ['FR', 'FL', 'BR', 'BL']:
+                    current_count_str = str(current_count * 90).zfill(3)
                 else:
-                    current_count_str = str(current_count*10).zfill(3)
+                    current_count_str = str(current_count * 10).zfill(3)
                 tagged_arr.append(current_tag + current_count_str)
                 # Reset current tag and count to the new element
                 current_tag = arr[i]
                 current_count = 1
-        if current_tag in ['FR','FL','BR','BL']:
-            current_count_str = str(current_count*90).zfill(3)
+        if current_tag in ['FR', 'FL', 'BR', 'BL']:
+            current_count_str = str(current_count * 90).zfill(3)
         else:
-            current_count_str = str(current_count*10).zfill(3)
+            current_count_str = str(current_count * 10).zfill(3)
         tagged_arr.append(current_tag + current_count_str)
 
         # Print the tagged array
@@ -461,40 +464,40 @@ class AutoPlanner():
         if move in self.turning_moves:
             unit_forward_vector = self.direction_to_unit_forward_vector[parent_node.pose.direction]
             straight_displacement = np.matmul(unit_forward_vector, displacement_from_parent) * unit_forward_vector
-            unit_straight_vector = (straight_displacement/self.TURNING_RADIUS).astype(int)
+            unit_straight_vector = (straight_displacement / self.TURNING_RADIUS).astype(int)
 
             corner_x = straight_displacement[0] + parent_node.pose.x
             corner_y = straight_displacement[1] + parent_node.pose.y
 
             sideward_displacement = displacement_from_parent - straight_displacement
-            unit_sideward_vector = (sideward_displacement/self.TURNING_RADIUS).astype(int)
+            unit_sideward_vector = (sideward_displacement / self.TURNING_RADIUS).astype(int)
 
             # add the path to the corner of the turn
             for i in range(1, self.TURNING_RADIUS + 1):
                 path.append(
-                [
-                    parent_node.pose.x + i * unit_straight_vector[0],
-                    parent_node.pose.y + i * unit_straight_vector[1],
-                ])
+                    [
+                        parent_node.pose.x + i * unit_straight_vector[0],
+                        parent_node.pose.y + i * unit_straight_vector[1],
+                    ])
 
             # add the path from the corner to the end of the turn
             for i in range(1, self.TURNING_RADIUS + 1):
                 path.append(
-                [
-                    corner_x + i * unit_sideward_vector[0],
-                    corner_y + i * unit_sideward_vector[1],
-                ])
+                    [
+                        corner_x + i * unit_sideward_vector[0],
+                        corner_y + i * unit_sideward_vector[1],
+                    ])
 
-        else: # straight moves are straight forward
+        else:  # straight moves are straight forward
             path.append([node.pose.x, node.pose.y])
         return path
 
 
 if __name__ == "__main__":
     _ = CellStatus.EMPTY
-    c = CellStatus.EMPTY # current node
-    s = CellStatus.EMPTY # start node
-    t = CellStatus.EMPTY # target node
+    c = CellStatus.EMPTY  # current node
+    s = CellStatus.EMPTY  # start node
+    t = CellStatus.EMPTY  # target node
     o = CellStatus.OBS
     b = CellStatus.BOUNDARY
     maze = np.array([[_, _, _, _, _, _, _, _, _, _],
@@ -506,7 +509,7 @@ if __name__ == "__main__":
                      [_, c, _, _, _, _, _, _, _, _],
                      [_, _, _, _, _, _, _, _, _, _],
                      [_, _, _, _, _, _, _, _, _, _],
-                     [_, _, _, _, _, _, _, _, _, _],])
+                     [_, _, _, _, _, _, _, _, _, _], ])
     cost = 10
     start = [1, 1, mdp_constants.NORTH]
     end = [3, 4, mdp_constants.NORTH]
@@ -517,7 +520,7 @@ if __name__ == "__main__":
     for node in auto_planner.children_current_node:
         print(f"Child: (x, y, dir) = ({node.pose.x}, {node.pose.y}, {node.pose.direction})")
     movements = auto_planner.get_movements_and_path_to_goal(maze, cost, start, end)[0]
-    #assert movements == ['F', 'F', 'F', 'BR', 'B', 'B', 'FR']
+    # assert movements == ['F', 'F', 'F', 'BR', 'B', 'B', 'FR']
 
     # test the transformation methods
     relative_vector = auto_planner.map_move_to_relative_displacement[RobotMovement.FORWARD]

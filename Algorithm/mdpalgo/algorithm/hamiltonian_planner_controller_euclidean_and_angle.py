@@ -1,12 +1,13 @@
 """
 This script has the following main functions:
 1) converts target locations on grid to graph nodes and edges (node: image_id, edge: id1, id2, cost)
-2) computes the A star heuristics for the edge cost
-3) converts shortest path nodes back to target locations on grid
+2) computes heuristics for the edge cost
+3) converts the shortest path nodes back to target locations on grid
 """
 import math
 
 import networkx as nx
+
 
 class Node(object):
     def __init__(self, target):
@@ -19,7 +20,7 @@ class Node(object):
         self.y = target[1]
 
 
-class AStarHamiltonian(object):
+class HamiltonianPlannerController(object):
     def __init__(self, grid, start_cell_x, start_cell_y):
         self.grid = grid
         self.cells = grid.get_cells()
@@ -27,7 +28,7 @@ class AStarHamiltonian(object):
         self.start_cell = (start_cell_x, start_cell_y, 0, None)
         self.start_node = Node(self.start_cell)
 
-        print(f"== ASTAR_HAMIL > init() | Locations to visit are {self.grid.get_target_locations()}")
+        print(f"== HAMIL_P_CTLR > init() | Locations to visit are {self.grid.get_target_locations()}")
         self.target_grid_locations = self.grid.get_target_locations()
         self.G = nx.Graph()
 
@@ -45,21 +46,18 @@ class AStarHamiltonian(object):
         self.graph_nodes.append(start_node)
 
     def compute_edge_cost(self, node1, node2):
-        """
-        Computes edge cost between two nodes using AStar heuristics
-        """
         cost_total = 0
 
         # cost based on displacement
         weight_displacement_multiplier = 3
-        cost_displacement = weight_displacement_multiplier * self.get_straight_line_displacement(
+        cost_displacement = weight_displacement_multiplier * self.get_euclidean_displacement_between(
             [node1.x, node1.y],
             [node2.x, node2.y])
         cost_total += cost_displacement
 
         # cost based on the difference in the direction of the target and the robot
         weight_turn_multiplier = 0.5
-        cost_turn = weight_turn_multiplier * self.direction_diff_heuristic_multiplier(node2.cell, node1.cell)
+        cost_turn = weight_turn_multiplier * self.get_direction_diff_heuristic_multiplier_for(node2.cell, node1.cell)
         cost_total += cost_turn
 
         # cost based on the number of obstacles in the box created with the robot position and the target
@@ -82,7 +80,7 @@ class AStarHamiltonian(object):
             other_nodes = [x for x in self.graph_nodes if x != node]
             for other_node in other_nodes:
                 distance = self.compute_edge_cost(node, other_node)
-                print(f"== ASTAR_HAMIL > create_graph() | LINKING {node.image_id} TO {other_node.image_id} WITH DISTANCE {distance}")
+                print(f"== HAMIL_P_CTLR > create_graph() | LINKING {node.image_id} TO {other_node.image_id} WITH DISTANCE {distance}")
                 self.graph_edges.append((node.image_id, other_node.image_id,
                                          {"weight": distance}))
 
@@ -97,13 +95,13 @@ class AStarHamiltonian(object):
         for location in shortest_path[1:]:
             curr_target = next(filter(lambda x: x[3].obstacle.obstacle_id == location, self.target_grid_locations))
             self.ordered_targets.append(curr_target)
-        print(f"== ASTAR_HAMIL > convert_s_p_t_o_t() | Before is {shortest_path} and after is {self.ordered_targets}")
+        print(f"== HAMIL_P_CTLR > convert_s_p_t_o_t() | Before is {shortest_path} and after is {self.ordered_targets}")
         return self.ordered_targets
 
-    def get_straight_line_displacement(self, pos1, pos2):
-        return math.sqrt((abs(pos1[0] - pos2[0])**2 + abs(pos1[1] - pos2[1])**2))
+    def get_euclidean_displacement_between(self, pos1, pos2):
+        return math.sqrt((abs(pos1[0] - pos2[0]) ** 2 + abs(pos1[1] - pos2[1]) ** 2))
 
-    def direction_diff_heuristic_multiplier(self, target_direction, robot_direction):
+    def get_direction_diff_heuristic_multiplier_for(self, target_direction, robot_direction):
         if min(abs(target_direction[2] - robot_direction[2]), abs(robot_direction[2] - target_direction[2])) == 0:
             if robot_direction[2] == 0:
                 if target_direction[1] < robot_direction[1]:
