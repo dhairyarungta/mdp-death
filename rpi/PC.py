@@ -69,13 +69,13 @@ class PCInterface:
                 type = parsedMsg["type"]
                 
                 # PC -> Rpi -> STM
-                # Not sure for each command, an array or just a string
+                # an array 
                 if type == 'NAVIGATION':
-                    self.RPiMain.STM.send(parsedMsg["data"]["commands"]) # ["LF090", "SB005"]
+                    self.RPiMain.STM.send(message) # bytes
 
                 # PC -> Rpi -> Android
                 if type == 'IMAGE_RESULTS':
-                    self.RPiMain.Android.send(decodedMsg) #As Android needs type
+                    self.RPiMain.Android.send(message) # bytes
 
                 # PC -> Rpi -> PC
                 if type == 'GET_IMAGE':
@@ -107,11 +107,10 @@ class PCInterface:
         self.connected = False
 
 
-    def send(self, message):
+    def send(self, message): # here message is in bytes
         try:
-            encoded_string = message.encode("utf-8")
-            self.client_socket.send(encoded_string)
-            print("Send to PC: " + message)
+            self.client_socket.send(message)
+            print("Send to PC: " + message.decode("utf-8"))
         except ConnectionResetError:
             print("Failed to send to PC: ConnectionResetError")
             self.disconnect()
