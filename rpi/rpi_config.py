@@ -1,0 +1,17 @@
+RPI_IP = "192.168.14.1"
+
+# PC Interface
+PC_PORT = 8888
+PC_BUFFER_SIZE = 1024
+
+# Android Interface
+BT_UUID = "00001101-0000-1000-8000-00805f9b34fb" 
+BT_BUFFER_SIZE = 1024
+
+# STM Interface
+STM_BAUDRATE = 115200
+SERIAL_BUFFER_SIZE = 10
+STM_ACK_MSG = "A"
+STM_COMMAND_FORMAT = '^[SLR][FB][0-9]{3}$'
+
+# Image recognition
