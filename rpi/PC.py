@@ -1,10 +1,14 @@
 import socket
 import sys
-import json
+import json 
+import cv2
+import os
+import base64
+from .capture import capture, preprocess_img
 
 class PCInterface:
     
-    def __init__(self, RPiMain):
+    def __init__(self, RPiMain=None):
         self.RPiMain = RPiMain
         self.host = "192.168.14.1"
         self.port = 8888
@@ -80,7 +84,23 @@ class PCInterface:
                 # PC -> Rpi -> PC
                 if type == 'GET_IMAGE':
                     obs_id = parsedMsg["data"]["obs_id_"]
-                    # TODO: integrate Charles code; can directly convert image to bytes
+                    # capture img to img_pth 
+                    img_pth = "img.jpg"
+                    capture(img_pth)
+                    # preprocessing image
+                    preprocess_img(img_pth)
+                    
+                    # send image
+                    if os.path.isfile(img_pth):
+                        with open(img_pth, "rb") as img:
+                            encoded_string = base64.b64encode(img.read()).decode('utf-8')
+                            message = {
+                                "type": "IMAGE_TAKEN",
+                                "data":{
+                                    "obs_id_": obs_id,                                                                                                                                                                       "image": encoded_string,
+                                    }
+                                }
+                            self.send(json.dumps(message))
                     
             except socket.error as e:
                 print("Socket Error. Failed to read from PC: %s" %str(e))
@@ -110,7 +130,11 @@ class PCInterface:
     def send(self, message):
         try:
             encoded_string = message.encode("utf-8")
-            self.client_socket.send(encoded_string)
+            # add the first 4 bytes is length of the 
+            message_len = len(encoded_string)
+            length_bytes = message_len.to_bytes(4, byteorder="big")
+            result_bytes = length_bytes + encoded_string
+            self.client_socket.send(result_bytes)
             print("Send to PC: " + message)
         except ConnectionResetError:
             print("Failed to send to PC: ConnectionResetError")
@@ -121,5 +145,10 @@ class PCInterface:
         except IOError as e:
             print("Failed to send to PC: %s" %str(e))
             self.disconnect()
+
+if __name__ == "__main__":
+    pc = PCInterface()
+    pc.connect()
+    pc.listen()
 
 

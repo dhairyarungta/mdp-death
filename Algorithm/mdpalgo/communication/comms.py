@@ -1,10 +1,16 @@
 """
 Algorithm Socket to connect with RPi.
 """
+from mdpalgo.constants import mdp_constants
+from mdpalgo.image_rec import image_rec
+
 import socket
 import struct
-
-from Algorithm.mdpalgo.constants import mdp_constants
+import json
+import cv2
+import numpy as np
+import base64
+import os
 
 FORMAT = "UTF-8"
 ALGO_SOCKET_BUFFER_SIZE = 1024
@@ -53,7 +59,6 @@ class AlgoClient:
         try:
             # Decode : Converting from Byte to UTF-8 format.
             raw_bytes = self.receive_message_with_size()
-            print(raw_bytes)
             if raw_bytes is not None:
                 message = self.decode(raw_bytes)
                 if (len(message) <= MAX_MESSAGE_LENGTH_PRINT):
@@ -118,20 +123,33 @@ if __name__ == '__main__':
     from message_parser import MessageParser, MessageType
 
     parser = MessageParser()
+    obs_id = "00"
 
-    while True:
-        message = input("[Client] Input message to send to server: ")
-        client.send(message)
-        received = client.recv()
-
-        # test the photo data
-        message_data = parser.parse(received)
-        # todo find out if image_taken is removed
-        if message_data["type"] == MessageType.IMAGE_TAKEN:
-            import cv2
-
-            img = message_data["data"]["image"]
-            cv2.imwrite("catimage.jpg", img)
-            cv2.imshow("preview", img)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
+    message = {
+        "type": "GET_IMAGE",
+        "data":{
+            "obs_id_": obs_id
+        }
+    }
+    client.send(json.dumps(message))
+    all_data = client.recv()
+    
+    # test the photo data
+    message_data = json.loads(all_data)
+    if message_data["type"] == "IMAGE_TAKEN":
+        image_data = message_data["data"]["image"]
+        image_data = image_data.encode('utf-8')
+        image_data = base64.b64decode(image_data)
+        with open("test.jpg", "wb") as fh:
+            fh.write(image_data)
+        
+        if os.path.isfile("test.jpg"):
+            result = image_rec("test.jpg", save_path="output.jpg")
+            result_message ={
+                "type": "IMAGE_RESULTS",
+                "data":{
+                    "obs_id_": obs_id,
+                    "img_id": result["predictions"][0]["class"]
+                }
+            }
+            client.send(json.dumps(result_message))
