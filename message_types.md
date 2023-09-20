@@ -135,7 +135,7 @@
 1. movement instructions for STM
     ```
     {
-        "type": "NAVIGATION",
+        "type": "",
         "data": {
            "commands": ["W10", "A5", "S2"]
         }
