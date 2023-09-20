@@ -128,7 +128,7 @@ if __name__ == '__main__':
     message = {
         "type": "GET_IMAGE",
         "data":{
-            "obs_id_": obs_id
+            "obs_id": obs_id
         }
     }
     client.send(json.dumps(message))

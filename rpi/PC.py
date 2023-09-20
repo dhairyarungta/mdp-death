@@ -83,7 +83,7 @@ class PCInterface:
 
                 # PC -> Rpi -> PC
                 if type == 'GET_IMAGE':
-                    obs_id = parsedMsg["data"]["obs_id_"]
+                    obs_id = parsedMsg["data"]["obs_id"]
                     # capture img to img_pth 
                     img_pth = "img.jpg"
                     capture(img_pth)
@@ -95,9 +95,9 @@ class PCInterface:
                         with open(img_pth, "rb") as img:
                             encoded_string = base64.b64encode(img.read()).decode('utf-8')
                             message = {
-                                "type": "IMAGE_TAKEN",
+                                "type": "IMAGE",
                                 "data":{
-                                    "obs_id_": obs_id,
+                                    "obs_id": obs_id,
                                     "image": encoded_string                                                                                                                                                                      "image": encoded_string,
                                     }
                                 }

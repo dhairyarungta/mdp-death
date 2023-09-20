@@ -219,11 +219,11 @@
         "type": "IMAGE",
         "data": {
             "obs_id": "00", 
-            "img_bytes": b'...'
+            "image": "..."
         }
     }
     ```
     - `obs_id` is the unique `id` of the obstacle
-    - `img_bytes` is the encoded image of the obstacle, to be identified by image recognition algorithms running on PC
+    - `image` is base64 encoded string representation of the image.
 
 
