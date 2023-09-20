@@ -4,7 +4,7 @@ import sys
 import subprocess
 import json
 
-from RPi_config import *
+from rpi_config import *
 
 class AndroidInterface:
     def __init__(self, RPiMain):
