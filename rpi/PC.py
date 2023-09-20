@@ -97,7 +97,8 @@ class PCInterface:
                             message = {
                                 "type": "IMAGE_TAKEN",
                                 "data":{
-                                    "obs_id_": obs_id,                                                                                                                                                                       "image": encoded_string,
+                                    "obs_id_": obs_id,
+                                    "image": encoded_string                                                                                                                                                                      "image": encoded_string,
                                     }
                                 }
                             self.send(json.dumps(message))
