@@ -12,7 +12,7 @@
 2. **PR1, RS1:** PC tells STM movement instructions after calculating path
 3. **SR1, RP2:** STM acknowledges end of movement sequence by sending ultrasonic sensor feedback
 4. optionally repeat steps 2-3 if not at planned coordinates/distance from obstacle
-5. **PR4, RA1:** pass curernt coordinates at end of movement sequence to Android for display
+5. **PR4, RA1:** pass current coordinates at end of movement sequence to Android for display
 6. **PR2, RP3:** PC requests image from RPi, RPi returns image
 7. **PR3, RA2:** PC returns image recognition results to Android
 8. repeat steps 2-7 until all obstacles/images identified
@@ -44,7 +44,7 @@
     {
         "type": "NAVIGATION",
         "data": {
-           "commands": ["W10", "A5", "S2"]
+           "commands": ["SF010", "RF090", "SB050", "LB090"]
         }
     }
     ```
@@ -101,7 +101,7 @@
     - RA2 and PR3 are consistent
 
 ## SR: STM to RPi
-1. ultrasonic sensor info
+1. ultrasonic sensor info // TODO: this might not be feasible
    ```
     {
         "type": "ULTRASONIC",
@@ -112,6 +112,10 @@
     ```
     - `distance` is the distance in cm from an obstacle, measured by the ultrasonic sensor
     - SR1 and RP2 are consistent
+2. Acknowledgement of command
+   ```A```
+   - acknowledges that command has been received and completed
+   - TODO: do we need a way to show WHICH command was received and completed, like should it echo?
 
 ## RS: RPi to STM 
 1. movement instructions from PC/Android: WASD + distance
@@ -119,7 +123,7 @@
     {
         "type": "NAVIGATION",
         "data": {
-           "commands": ["W10", "A5", "S2"]
+           "commands": ["SF010", "RF090", "SB050", "LB090"]
         }
     }
     ```
@@ -130,14 +134,15 @@
       - XXX: the last 3 digits indicate distance in cm for S, or rotation angle for L/R
       - e.g. SB010 is move backwards 10cm, LF090 is turn 90 degrees to the left in the forward direction
     - AR1, RS1, and PR1 are consistent
+2. trigger ultrasonic sensor
 
 ## PR: PC to RPi
 1. movement instructions for STM
     ```
     {
-        "type": "",
+        "type": "NAVIGATION",
         "data": {
-           "commands": ["W10", "A5", "S2"]
+           "commands": ["SF010", "RF090", "SB050", "LB090"]
         }
     }
     ```

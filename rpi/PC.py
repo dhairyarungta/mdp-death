@@ -5,7 +5,7 @@ from Camera import capture, preprocess_img
 import os
 import base64
 
-from RPi_config import *
+from rpi_config import *
 
 class PCInterface:
     
