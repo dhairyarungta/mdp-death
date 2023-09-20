@@ -4,11 +4,13 @@ import sys
 import subprocess
 import json
 
+from RPi_config import *
+
 class AndroidInterface:
     def __init__(self, RPiMain):
         self.RPiMain = RPiMain
-        self.host = "192.168.14.1"
-        self.uuid = "" # TODO
+        self.host = RPI_IP
+        self.uuid = BT_UUID # typical uuid
         self.connected = False
         self.threadListening = False
 
@@ -28,7 +30,7 @@ class AndroidInterface:
             subprocess.call(['sudo', 'hciconfig', 'hci0', 'piscan'])
             self.socket.listen(128)
             
-            bt.advertise_service(self.socket, "MDP-Server", service_id = self.uuid, service_classes = [self.uuid, bt.SERIAL_PORT_CLASS], profiles = [bt.SERIAL_PORT_PROFILE],)
+            bt.advertise_service(self.socket, "Group14-Server", service_id = self.uuid, service_classes = [self.uuid, bt.SERIAL_PORT_CLASS], profiles = [bt.SERIAL_PORT_PROFILE],)
         
         except socket.error as e:
             print("Android socket binding failed: %s" %str(e))
@@ -63,7 +65,7 @@ class AndroidInterface:
             print("Disconnected from Android successfully.")
         except Exception as e:
             print("Failed to disconnect from Android: %s" %str(e))
-        sys.exit(0)
+        sys.exit(0) # TODO: later
 
     def listen(self):
     
@@ -71,7 +73,7 @@ class AndroidInterface:
         
         while True:
             try:
-                message = self.client_socket.recv(1024) 
+                message = self.client_socket.recv(BT_BUFFER_SIZE) 
 
                 if not message:
                     print("Android disconnected remotely.")

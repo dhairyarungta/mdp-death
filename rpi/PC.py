@@ -1,13 +1,18 @@
 import socket
 import sys
 import json
+from Camera import capture, preprocess_img 
+import os
+import base64
+
+from RPi_config import *
 
 class PCInterface:
     
     def __init__(self, RPiMain):
         self.RPiMain = RPiMain
-        self.host = "192.168.14.1"
-        self.port = 8888
+        self.host = RPI_IP
+        self.port = PC_PORT
         self.connected = False
         self.threadListening = False
 
@@ -54,7 +59,7 @@ class PCInterface:
         # 2. Loop for listening
         while True:
             try:
-                message = self.client_socket.recv(1024) # the maximum number of bytes to be received
+                message = self.client_socket.recv(PC_BUFFER_SIZE) # the maximum number of bytes to be received
 
                 if not message:
                     print("PC disconnected remotely.")
@@ -80,8 +85,28 @@ class PCInterface:
                 # PC -> Rpi -> PC
                 if type == 'GET_IMAGE':
                     obs_id = parsedMsg["data"]["obs_id_"]
-                    # TODO: integrate Charles code; can directly convert image to bytes
                     
+                    # capture img to img_pth 
+                    img_pth = "img.jpg" 
+                    capture(img_pth)
+                    # preprocessing image
+                    preprocess_img(img_pth)
+                    
+                    # send image
+                    if os.path.isfile(img_pth):
+                        with open(img_pth, "rb") as img:
+                            encoded_bytes_image = base64.b64encode(img.read())
+                            message_dic = {"type":"IMAGE","data":{
+                                "obs_id": obs_id,
+                                "img_bytes": encoded_bytes_image
+                            }}
+                            msg_json_string = json.dumps(message_dic)
+                            msg_bytes = json.dumps(msg_json_string, ensure_ascii=False).encode()
+                            self.send(msg_bytes)
+                
+                if type == 'COORDINATES':
+                    self.RPiMain.Android.send(message)
+           
             except socket.error as e:
                 print("Socket Error. Failed to read from PC: %s" %str(e))
                 break
