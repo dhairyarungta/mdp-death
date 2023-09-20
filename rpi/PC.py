@@ -98,10 +98,10 @@ class PCInterface:
                                 "type": "IMAGE",
                                 "data":{
                                     "obs_id": obs_id,
-                                    "image": encoded_string                                                                                                                                                                      "image": encoded_string,
+                                    "image": encoded_string
                                     }
                                 }
-                            self.send(json.dumps(message))
+                            self.send(json.dumps(message).encode("utf-8"))
                     
             except socket.error as e:
                 print("Socket Error. Failed to read from PC: %s" %str(e))
@@ -129,12 +129,12 @@ class PCInterface:
 
 
     def send(self, message):
+        # message is expected to be a byte object
         try:
-            encoded_string = message.encode("utf-8")
             # add the first 4 bytes is length of the 
-            message_len = len(encoded_string)
+            message_len = len(message)
             length_bytes = message_len.to_bytes(4, byteorder="big")
-            result_bytes = length_bytes + encoded_string
+            result_bytes = length_bytes + message
             self.client_socket.send(result_bytes)
             print("Send to PC: " + message)
         except ConnectionResetError:
