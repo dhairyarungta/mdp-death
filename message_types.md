@@ -36,7 +36,7 @@
 - `GET_IMAGE`: PR2
 - `IMAGE_RESULTS`: RA2 and PR3 
 - `ULTRASONIC`: SR1 and RP2
-- `IMAGE`: RP3
+- `IMAGE_TAKEN`: RP3
 
 ## AR: Android to RPi
 1. directions to directly control STM 
@@ -189,6 +189,7 @@
     - RA1 and PR4 are consistent
 
 ## RP: RPi to PC
+NOTE: messages sent to PC are prepended with message length
 1. start task (exploration / fastest path)
     ```
     {
@@ -221,14 +222,13 @@
 3. raw image for image recognition
     ```
     {
-        "type": "IMAGE",
+        "type": "IMAGE_TAKEN",
         "data": {
             "obs_id": "00", 
-            "img_bytes": b'...'
+            "image": "..."
         }
     }
     ```
     - `obs_id` is the unique `id` of the obstacle
-    - `img_bytes` is the encoded image of the obstacle, to be identified by image recognition algorithms running on PC
-
+    - `image` is base64 encoded string representation of the image.
 

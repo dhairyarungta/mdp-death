@@ -8,7 +8,6 @@ import base64
 from rpi_config import *
 
 class PCInterface:
-    
     def __init__(self, RPiMain):
         self.RPiMain = RPiMain
         self.host = RPI_IP
@@ -17,7 +16,6 @@ class PCInterface:
         self.threadListening = False
 
     def connect(self):
-
         # 1. Solution for thread-related issues: always attempt to disconnect first before connecting
         self.disconnect()
 
@@ -74,20 +72,18 @@ class PCInterface:
                 type = parsedMsg["type"]
                 
                 # PC -> Rpi -> STM
-                # an array 
                 if type == 'NAVIGATION':
                     self.RPiMain.STM.send(message) # bytes
 
                 # PC -> Rpi -> Android
-                if type == 'IMAGE_RESULTS':
+                elif type == 'IMAGE_RESULTS':
                     self.RPiMain.Android.send(message) # bytes
 
                 # PC -> Rpi -> PC
-                if type == 'GET_IMAGE':
-                    obs_id = parsedMsg["data"]["obs_id_"]
-                    
+                elif type == 'GET_IMAGE':
+                    obs_id = parsedMsg["data"]["obs_id"]
                     # capture img to img_pth 
-                    img_pth = "img.jpg" 
+                    img_pth = "img.jpg"
                     capture(img_pth)
                     # preprocessing image
                     preprocess_img(img_pth)
@@ -95,34 +91,35 @@ class PCInterface:
                     # send image
                     if os.path.isfile(img_pth):
                         with open(img_pth, "rb") as img:
-                            encoded_bytes_image = base64.b64encode(img.read())
-                            message_dic = {"type":"IMAGE","data":{
-                                "obs_id": obs_id,
-                                "img_bytes": encoded_bytes_image
-                            }}
-                            msg_json_string = json.dumps(message_dic)
-                            msg_bytes = json.dumps(msg_json_string, ensure_ascii=False).encode()
-                            self.send(msg_bytes)
-                
-                if type == 'COORDINATES':
+                            encoded_string = base64.b64encode(img.read()).decode('utf-8')
+                            message = {
+                                "type": "IMAGE_TAKEN",
+                                "data":{
+                                    "obs_id": obs_id,
+                                    "image": encoded_string
+                                    }
+                                }
+                            self.send(json.dumps(message).encode("utf-8"))
+                    
+                # PC -> Rpi -> Android
+                elif type == 'COORDINATES':
                     self.RPiMain.Android.send(message)
+
+                else:
+                    print("ERROR: Received message with unknown type from PC.", message)
            
             except socket.error as e:
                 print("Socket Error. Failed to read from PC: %s" %str(e))
                 break
-
             except IOError as ie:
                 print("IO Error. Failed to read from PC: %s" %str(ie))
                 break
-
             except Exception as e2:
                 print("Failed to read from PC: %s" %str(e2))
                 break
-
             except ConnectionResetError:
                 print("ConnectionResetError")
                 break
-
             except:
                 print("Unknown error")
                 break
@@ -132,10 +129,16 @@ class PCInterface:
         self.connected = False
 
 
-    def send(self, message): # here message is in bytes
+    def send(self, message):
+        # message is expected to be a byte object
         try:
-            self.client_socket.send(message)
-            print("Send to PC: " + message.decode("utf-8"))
+            # add the first 4 bytes is length of the 
+            message_len = len(message)
+            length_bytes = message_len.to_bytes(4, byteorder="big")
+            result_bytes = length_bytes + message
+            self.client_socket.send(result_bytes)
+            print("Send to PC: " + message)
+        
         except ConnectionResetError:
             print("Failed to send to PC: ConnectionResetError")
             self.disconnect()
@@ -145,5 +148,4 @@ class PCInterface:
         except IOError as e:
             print("Failed to send to PC: %s" %str(e))
             self.disconnect()
-
 

@@ -11,6 +11,7 @@ class MessageType(Enum):
     """
     START_TASK = "START" # first token is "START"
     UPDATE_ROBOT_POSE = "DONE" # current pose of the robot
+    IMAGE_TAKEN = "IMAGE_TAKEN"
 
 class TaskType(Enum):
     """Type of tasks"""
