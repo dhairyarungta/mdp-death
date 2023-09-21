@@ -64,19 +64,19 @@ class BruteForcePermutationHamiltonianPathPlanner(AbstractHamiltonianPathPlanner
         shortest_path = ()
 
         for path in itertools.permutations(other_nodes):
-            print(f"== HAMIL_P_P | Considering path {path}")
+            print(f"== HAMIL_P_SVC | Considering path {path}")
             path_length = sum(
                 (self.graph[path[i]][path[i + 1]]["weight"] for i in range(num_nodes - 2)),
                 start=self.graph[self.starting_node][path[0]]["weight"])
-            print(f"== HAMIL_P_P | > This path {path} has length of {path_length}")
+            print(f"== HAMIL_P_SVC | > This path {path} has length of {path_length}")
             if path_length < shortest_length:
-                print(f"== HAMIL_P_P | > This path {path} is the new shortest path")
+                print(f"== HAMIL_P_SVC | > This path {path} is the new shortest path")
                 shortest_path = path
                 shortest_length = path_length
 
         shortest_path = [self.starting_node] + list(shortest_path)
 
-        print(f"== HAMIL_P_P | Final shortest path is {shortest_path}")
+        print(f"== HAMIL_P_SVC | Final shortest path is {shortest_path}")
         return shortest_path, shortest_length
 
 
