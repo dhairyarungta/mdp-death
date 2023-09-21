@@ -196,7 +196,7 @@ class Simulator:
     def on_receive_start_task_message(self, message_data: dict):
         task = message_data["task"]
 
-        if task == TaskType.TASK_EXPLORE:  # Week 8 Task
+        if task == TaskType.TASK_NAVIGATION:  # Week 8 Task
             # Reset first
             self.reset_button_clicked()
             # Set robot starting pos

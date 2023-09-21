@@ -132,6 +132,7 @@ if __name__ == '__main__':
             "obs_id": obs_id
         }
     }
+    print(f"==SENDING {json.dumps(message)}")
     client.send(json.dumps(message))
     all_data = client.recv()
 

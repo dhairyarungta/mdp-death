@@ -34,26 +34,26 @@ class AutoPlanner:
         self.safe_squared_distance = 8
         # map movement to a relative vector wrt the current direction
         self.map_move_to_relative_displacement = {
-            RobotMovement.FORWARD: [0, 1],
-            RobotMovement.BACKWARD: [0, -1],
-            RobotMovement.FORWARD_RIGHT: [self.TURNING_RADIUS, self.TURNING_RADIUS],
-            RobotMovement.FORWARD_LEFT: [-self.TURNING_RADIUS, self.TURNING_RADIUS],
-            RobotMovement.BACKWARD_RIGHT: [self.TURNING_RADIUS, -self.TURNING_RADIUS],
-            RobotMovement.BACKWARD_LEFT: [-self.TURNING_RADIUS, -self.TURNING_RADIUS],
+            RobotMovement.STRAIGHT_FORWARD: [0, 1],
+            RobotMovement.STRAIGHT_BACKWARD: [0, -1],
+            RobotMovement.RIGHT_FORWARD: [self.TURNING_RADIUS, self.TURNING_RADIUS],
+            RobotMovement.LEFT_FORWARD: [-self.TURNING_RADIUS, self.TURNING_RADIUS],
+            RobotMovement.RIGHT_BACKWARD: [self.TURNING_RADIUS, -self.TURNING_RADIUS],
+            RobotMovement.LEFT_BACKWARD: [-self.TURNING_RADIUS, -self.TURNING_RADIUS],
         }
         self.map_move_to_relative_direction = {
-            RobotMovement.FORWARD: mdp_constants.NORTH,
-            RobotMovement.BACKWARD: mdp_constants.NORTH,
-            RobotMovement.FORWARD_RIGHT: mdp_constants.EAST,
-            RobotMovement.FORWARD_LEFT: mdp_constants.WEST,
-            RobotMovement.BACKWARD_RIGHT: mdp_constants.WEST,
-            RobotMovement.BACKWARD_LEFT: mdp_constants.EAST,
+            RobotMovement.STRAIGHT_FORWARD: mdp_constants.NORTH,
+            RobotMovement.STRAIGHT_BACKWARD: mdp_constants.NORTH,
+            RobotMovement.RIGHT_FORWARD: mdp_constants.EAST,
+            RobotMovement.LEFT_FORWARD: mdp_constants.WEST,
+            RobotMovement.RIGHT_BACKWARD: mdp_constants.WEST,
+            RobotMovement.LEFT_BACKWARD: mdp_constants.EAST,
         }
         self.turning_moves = {
-            RobotMovement.FORWARD_RIGHT,
-            RobotMovement.FORWARD_LEFT,
-            RobotMovement.BACKWARD_RIGHT,
-            RobotMovement.BACKWARD_LEFT,
+            RobotMovement.RIGHT_FORWARD,
+            RobotMovement.LEFT_FORWARD,
+            RobotMovement.RIGHT_BACKWARD,
+            RobotMovement.LEFT_BACKWARD,
         }
 
         self.collision_statuses = [CellStatus.BOUNDARY, CellStatus.OBS, CellStatus.VISITED_OBS]
@@ -358,12 +358,14 @@ class AutoPlanner:
         movements.reverse()  # reverse the path from start to goal
         movements_str.reverse()
         path.reverse()
-        movements_str = self.process_movement_string(movements_str)
+        movements_str = self.parse_raw_movements_into_movement_string(movements_str)
         self.full_path.append(movements_str)
         return movements, path, movements_str
 
-    def process_movement_string(self, arr):
-        print(f"== A_TO_B_PLAN_SVC > process_movement_string() | {arr}")
+    def parse_raw_movements_into_movement_string(self, arr):
+        # print(f"== A_TO_B_PLAN_SVC > process_movement_string() | {arr}")
+        TURNING_MOVEMENTS = [RobotMovement.RIGHT_FORWARD, RobotMovement.LEFT_FORWARD, RobotMovement.RIGHT_BACKWARD, RobotMovement.LEFT_BACKWARD]
+
         if not arr:
             return []
         # Initialize variables to keep track of current tag and count
@@ -380,7 +382,7 @@ class AutoPlanner:
                 current_count += 1
             # If the current element is different from the previous element, add the tagged version of the previous tag and count to the tagged array
             else:
-                if current_tag in ['FR', 'FL', 'BR', 'BL']:
+                if current_tag in TURNING_MOVEMENTS:
                     current_count_str = str(current_count * 90).zfill(3)
                 else:
                     current_count_str = str(current_count * 10).zfill(3)
@@ -388,7 +390,7 @@ class AutoPlanner:
                 # Reset current tag and count to the new element
                 current_tag = arr[i]
                 current_count = 1
-        if current_tag in ['FR', 'FL', 'BR', 'BL']:
+        if current_tag in TURNING_MOVEMENTS:
             current_count_str = str(current_count * 90).zfill(3)
         else:
             current_count_str = str(current_count * 10).zfill(3)
@@ -466,7 +468,7 @@ if __name__ == "__main__":
     # assert movements == ['F', 'F', 'F', 'BR', 'B', 'B', 'FR']
 
     # test the transformation methods
-    relative_vector = auto_planner.map_move_to_relative_displacement[RobotMovement.FORWARD]
+    relative_vector = auto_planner.map_move_to_relative_displacement[RobotMovement.STRAIGHT_FORWARD]
 
     abs_vector = auto_planner.get_absolute_vector(relative_vector, mdp_constants.NORTH)
     assert (abs_vector == np.array([0, 1])).all()
@@ -477,7 +479,7 @@ if __name__ == "__main__":
     abs_vector = auto_planner.get_absolute_vector(relative_vector, mdp_constants.EAST)
     assert (abs_vector == np.array([1, 0])).all()
 
-    relative_vector = auto_planner.map_move_to_relative_displacement[RobotMovement.BACKWARD_LEFT]
+    relative_vector = auto_planner.map_move_to_relative_displacement[RobotMovement.LEFT_BACKWARD]
 
     abs_vector = auto_planner.get_absolute_vector(relative_vector, mdp_constants.NORTH)
     assert (abs_vector == np.array([-3, -3])).all()

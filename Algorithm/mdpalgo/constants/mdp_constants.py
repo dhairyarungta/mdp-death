@@ -1,4 +1,6 @@
 # Collection of colours
+from enum import Enum
+
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
@@ -38,7 +40,6 @@ RPI_CONNECTED = False
 # if Headless = True, this NSWE "+" sign will stay the same throughout the bot's operation, fixed when the robot starts. Even if the bot turns left/right or changes direction, it will stay in the same orientation.
 # if Headless = False, this NSWE "+" sign will rotate together with the front of the bot when it turns left/right or changes direction.
 HEADLESS = False
-
 
 GRP_14 = "192.168.14.1"
 PORT = 8888

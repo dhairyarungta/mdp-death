@@ -14,12 +14,12 @@ ONE_CELL = 20 + MARGIN
 THREE_CELL = 3 * ONE_CELL
 dt = 0.2     # Max without messing up is 0.8
 class RobotMovement(Enum):
-    FORWARD = "F"
-    BACKWARD = "B"
-    FORWARD_RIGHT = "FR"
-    FORWARD_LEFT = "FL"
-    BACKWARD_RIGHT = "BR"
-    BACKWARD_LEFT = "BL"
+    STRAIGHT_FORWARD = "SF"
+    STRAIGHT_BACKWARD = "SB"
+    RIGHT_FORWARD = "RF"
+    LEFT_FORWARD = "LF"
+    RIGHT_BACKWARD = "RB"
+    LEFT_BACKWARD = "LB"
 
 class Robot(object):
 
@@ -96,17 +96,17 @@ class Robot(object):
             self.get_pixel_pos()[1] - final_pixel_pos[1]) < 4
 
     def perform_move(self, move: RobotMovement):
-        if move == RobotMovement.FORWARD:
+        if move == RobotMovement.STRAIGHT_FORWARD:
             self.move_forward()
-        elif move == RobotMovement.BACKWARD:
+        elif move == RobotMovement.STRAIGHT_BACKWARD:
             self.move_backward()
-        elif move == RobotMovement.FORWARD_RIGHT:
+        elif move == RobotMovement.RIGHT_FORWARD:
             self.move_forward_steer_right()
-        elif move == RobotMovement.FORWARD_LEFT:
+        elif move == RobotMovement.LEFT_FORWARD:
             self.move_forward_steer_left()
-        elif move == RobotMovement.BACKWARD_RIGHT:
+        elif move == RobotMovement.RIGHT_BACKWARD:
             self.move_backward_steer_right()
-        elif move == RobotMovement.BACKWARD_LEFT:
+        elif move == RobotMovement.LEFT_BACKWARD:
             self.move_backward_steer_left()
         else:
             raise NotImplementedError(f"Robot is not implemented to perform {move} yet")

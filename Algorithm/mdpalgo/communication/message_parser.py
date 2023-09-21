@@ -15,7 +15,7 @@ class MessageType(Enum):
 
 class TaskType(Enum):
     """Type of tasks"""
-    TASK_EXPLORE = "EXPLORE" # task for exploring all images (week 8)
+    TASK_NAVIGATION = "NAVIGATION" # task for exploring all images (week 8)
     TASK_PATH = "PATH" # task for fastest path (week 9)
 
 class MessageParser:
@@ -77,7 +77,7 @@ class MessageParser:
         data_dict = {"task": task}
         if task == TaskType.TASK_PATH:
             pass
-        elif task == TaskType.TASK_EXPLORE: # task for week 8
+        elif task == TaskType.TASK_NAVIGATION: # task for week 8
             data_dict = {**data_dict, **self.parse_explore_task(message)}
         else: # redundancy, just to make sure
             raise ValueError(f"Start task type not yet implemented: {task}")
@@ -148,7 +148,7 @@ if __name__ == "__main__":
     assert parser.parse(message) == {
         'type': MessageType.START_TASK,
         'data': {
-            'task': TaskType.TASK_EXPLORE,
+            'task': TaskType.TASK_NAVIGATION,
             'robot': {'id': 'R', 'x': 1, 'y': 1, 'dir': 0},
             'obs': [{'id': '00', 'x': 4, 'y': 15, 'dir': -90},
                     {'id': '01', 'x': 16, 'y': 17, 'dir': 90},

@@ -1,5 +1,6 @@
 import logging
 
+from Algorithm.mdpalgo.communication.message_parser import TaskType
 from Algorithm.mdpalgo.constants import mdp_constants
 from Algorithm.mdpalgo.robot.robot import Robot
 from Algorithm.mdpalgo.algorithm.a_to_b_planner_service_astar import AutoPlanner, RobotMovement
@@ -25,7 +26,6 @@ class AtoBPathPlan(object):
         self.collection_of_robot_pos = []
         self.path_according_to_movements = []  # trail of cells
         self.all_movements_dict = {}
-        self.all_robot_pos_dict = {}
         self.all_take_photo_dict = {}
         self.obstacle_list_rpi = []
         self.skipped_obstacles = []
@@ -45,7 +45,7 @@ class AtoBPathPlan(object):
         while len(self.fastest_route) != 0:
             count_of_obs += 1
             target = self.fastest_route.pop(0)
-            self.plan_full_path_to(target)
+            self.plan_path_to(target)
 
             if count_of_obs >= 1:
                 if mdp_constants.RPI_CONNECTED:
@@ -53,7 +53,7 @@ class AtoBPathPlan(object):
 
         self.restart_robot()
 
-    def plan_full_path_to(self, target):
+    def plan_path_to(self, target):
         """target is a list [x, y, dir, Cell] where Cell is the obstacle cell
         and (x, y, dir) is the target pose for the car to view the image tag
         """
@@ -67,7 +67,18 @@ class AtoBPathPlan(object):
         self.reset_robot_pos_list()
         # else, plan a path using astar search on virtual grid
         try:
-            self.auto_search()
+            start = list(self.robot.get_robot_pose().to_tuple())
+            end = list(self.target_pose.to_tuple())
+            cost = 10  # cost per movement
+            maze = self.grid.get_virtual_map()
+            obstacle_coords = [
+                (cell.x_coordinate, cell.y_coordinate) for cell in self.grid.obstacle_cells.values()
+            ]
+            self.collection_of_movements, self.path_according_to_movements, self.movement_string = self.auto_planner.get_movements_and_path_to_goal(
+                maze, cost, start, end, obstacle_coords)
+            print(f"== A_TO_B_PLAN_CTLR > auto_search() | Collection of movements is {self.collection_of_movements}")
+            print(f"== A_TO_B_PLAN_CTLR > auto_search() | path according to movements is {self.path_according_to_movements}")
+            print(f"== A_TO_B_PLAN_CTLR > auto_search() | MOVEMENT STRING IS {self.movement_string}")
         except Exception as e:
             logging.exception(e)
             # Skip this obstacle first
@@ -76,7 +87,7 @@ class AtoBPathPlan(object):
             return
 
         # execute gray route
-        self.execute_auto_search_result()
+        self.execute_planned_path()
 
     def get_target_id(self, target: list):
         if target[3].id != None:
@@ -91,21 +102,7 @@ class AtoBPathPlan(object):
         self.target_pose.set_pose(target[:3])
         self.obstacle_cell = target[3]
 
-    def auto_search(self):
-        start = list(self.robot.get_robot_pose().to_tuple())
-        end = list(self.target_pose.to_tuple())
-        cost = 10  # cost per movement
-        maze = self.grid.get_virtual_map()
-        obstacle_coords = [
-            (cell.x_coordinate, cell.y_coordinate) for cell in self.grid.obstacle_cells.values()
-        ]
-        self.collection_of_movements, self.path_according_to_movements, self.movement_string = self.auto_planner.get_movements_and_path_to_goal(
-            maze, cost, start, end, obstacle_coords)
-        print(f"== A_TO_B_PLAN_CTLR > auto_search() | Collection of movements is {self.collection_of_movements}")
-        print(f"== A_TO_B_PLAN_CTLR > auto_search() | path according to movements is {self.path_according_to_movements}")
-        print(f"== A_TO_B_PLAN_CTLR > auto_search() | MOVEMENT STRING IS {self.movement_string}")
-
-    def execute_auto_search_result(self):
+    def execute_planned_path(self):
         for move_index in range(len(self.collection_of_movements)):
             move = self.collection_of_movements[move_index]
             # print(f"== A_TO_B_PLAN_CTLR > execute_a_s_r | Performing the move: {move}")
@@ -125,7 +122,7 @@ class AtoBPathPlan(object):
             pass
         self.robot.redraw_car_refresh_screen()
         try:
-            self.save_search_info()
+            self.save_path_for_rpi()
         except Exception as e:
             logging.exception(e)
             pass
@@ -146,7 +143,7 @@ class AtoBPathPlan(object):
         print("Restart robot to go to skipped obstacles")
         while len(self.skipped_obstacles) != 0:
             target = self.skipped_obstacles.pop(0)
-            self.plan_full_path_to(target)
+            self.plan_path_to(target)
             self.send_to_rpi()
 
     def set_path_status_to_xy_cell(self, x: int, y: int):
@@ -165,13 +162,20 @@ class AtoBPathPlan(object):
     def reset_robot_pos_list(self):
         self.collection_of_robot_pos.clear()
 
-    def get_movements_string(self):
-        movement_list = [
-            "MOVEMENTS",
-            self.obstacle_cell.get_obstacle().get_obstacle_id(),
-            [move.value for move in self.collection_of_movements]
-        ]
-        return '/'.join([str(elem) for elem in movement_list])
+    def parse_movements_string_EDITME(self):
+        res = {'type': TaskType.TASK_NAVIGATION.value}
+        tmp = {'commands': self.movement_string}
+        res['data'] = tmp
+        # print(self.obstacle_cell.get_obstacle().get_obstacle_id())
+
+        return res
+        # movement_list = [
+        #     "MOVEMENTS",
+        #     self.obstacle_cell.get_obstacle().get_obstacle_id(),
+        #     [move.value for move in self.collection_of_movements]
+        # ]
+        # print("returning", '/'.join([str(elem) for elem in movement_list]))
+        # return '/'.join([str(elem) for elem in movement_list])
 
     def get_current_obstacle_id(self):
         obstacle_id_list = ["OBSTACLE", self.obstacle_cell.get_obstacle().get_obstacle_id()]
@@ -196,18 +200,18 @@ class AtoBPathPlan(object):
         image_result_list = ["TARGET", target_id, self.obstacle_key]
         return '/'.join([str(elem) for elem in image_result_list]) + '/'
 
-    def save_search_info(self):
-        # Add into dictionary
-        self.all_movements_dict[self.get_current_obstacle_id()] = self.get_movements_string()
-        self.all_robot_pos_dict[self.get_current_obstacle_id()] = self.get_robot_pos_string()
+    def save_path_for_rpi(self):
+        # self.all_movements_dict[self.get_current_obstacle_id()] = self.parse_movements_string_EDITME()
+        self.all_movements_dict = self.parse_movements_string_EDITME();
         self.all_take_photo_dict[self.get_current_obstacle_id()] = self.get_take_photo_string()
         self.obstacle_list_rpi.append(self.get_current_obstacle_id())
+        print(f"== A_TO_B_PLAN_CTLR > save_path_for_rpi | {self.all_movements_dict, self.all_take_photo_dict}")
 
         self.reset_collection_of_movements()
         self.reset_robot_pos_list()
 
     def print_info(self):
-        print(self.get_movements_string())
+        print(self.parse_movements_string_EDITME())
         print(self.get_current_obstacle_id())
         print(self.get_robot_pos_string())
         print(self.get_take_photo_string())
@@ -219,7 +223,7 @@ class AtoBPathPlan(object):
 
         self.obstacle_key = self.obstacle_list_rpi.pop(0)
         self.reset_num_move_completed_rpi()
-        self.set_total_num_move_from_movement_message(self.all_movements_dict[self.obstacle_key])
+        print(f"== A_TO_B_PLAN_CTLR > send_to_rpi() | SENDING THIS TO RPI {self.all_movements_dict}")
         print("Remaining obstacles: ", self.obstacle_list_rpi)
         id = []
         id.append(str(self.get_target_id(self.target)))
@@ -227,16 +231,6 @@ class AtoBPathPlan(object):
         self.full_path.append(self.movement_string)
         self.robot_pos_string.append(",".join(self.robot.robot_pos))
         self.robot.robot_pos.clear()
-
-    def set_total_num_move_from_movement_message(self, message: str):
-        """Extract the number of moves from the movement message
-
-        Examples:
-            >>> message = "MOVEMENTS/3-14/F,F,F,F,F,F,F,FR,F,BR,F,F"
-            >>> get_num_move_from_movement_message(message)
-            12
-        """
-        self.total_num_move_required_rpi = len(message.split("/")[-1].split(","))
 
     def send_to_rpi_finish_task(self):
         full_path_string = "STM/" + str(self.full_path)
