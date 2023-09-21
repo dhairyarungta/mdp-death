@@ -75,7 +75,7 @@ class AtoBPathPlan(object):
             self.skip_current_target()
             return
 
-        # Else, execute gray route
+        # execute gray route
         self.execute_auto_search_result()
 
     def get_target_id(self, target: list):

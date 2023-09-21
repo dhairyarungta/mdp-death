@@ -27,14 +27,7 @@ class ImprovedNode:
         self.h = 0
         self.f = 0
 
-
-class Distance:
-    """
-        A class with implementation of distances between two 2D points
-    """
-
-
-class AutoPlanner():
+class AutoPlanner:
     def __init__(self):
         self.TURNING_RADIUS = mdp_constants.TURNING_RADIUS
         # if robot node is at this distance away from obstacle, safe!
@@ -88,7 +81,6 @@ class AutoPlanner():
         self.turning_factor = 5  # assume perfect circle, about 4.71
 
         self.node_index_in_yet_to_visit = 2
-        self.distance_calculator = Distance()
         self.obs_coords = []
         self.full_path = []
 
@@ -96,53 +88,20 @@ class AutoPlanner():
         """f, h, g are all initialized to 0"""
         return ImprovedNode(None, tuple(node_position))
 
-    def initialize_counters(self):
-        """Initialize the counters used to halt the algorithm"""
-        self.outer_iterations = 0
-
-    def increment_counters(self):
-        self.outer_iterations += 1
-
-    def set_max_iterations(self):
-        self.max_iterations = (len(self.maze) // 2) ** 10
-
-    def does_iterations_exceed_max(self):
-        return self.outer_iterations > self.max_iterations
-
-    def initialize_yet_to_visit(self):
-        # in this list we will put all node that are yet_to_visit for exploration.
-        # From here we will find the lowest cost node to expand next
-        self.yet_to_visit = PriorityQueue()
-        # map all nodes that ever appear in yet to visit to its lowest g
-        self.yet_to_visit_lowest_cost = {}
-
-    def initialize_visited_nodes(self):
-        # we will put all node those already explored so that we
-        # don't explore it again
-        self.visited_list = set()  # set of tuples (x, y, dir)
-
-    def add_node_to_yet_to_visit(self, node: ImprovedNode):
+    def yet_to_visit_add(self, node: ImprovedNode):
+        # print(f">>== adding {node.pose.to_tuple()} with astar cost {node.f} to yet_to_visit")
         self.yet_to_visit.put((node.f, self.get_id(), node))
-        lowest_g = min(
-            self.yet_to_visit_lowest_cost.get(
-                node.pose.to_tuple(), np.infty),
-            node.g)
-        self.yet_to_visit_lowest_cost[node.pose.to_tuple()] = lowest_g
 
-    def reset_id(self):
-        # id for the node in the yet_to_visit_queue
-        self.id = 0
+        # if we discover another method to get to this node that has lower g cost
+        lowest_g = min(
+            self.yet_to_visit_lowest_g_cost.get(node.pose.to_tuple(), np.infty),
+            node.g
+        )
+        self.yet_to_visit_lowest_g_cost[node.pose.to_tuple()] = lowest_g
 
     def get_id(self):
         self.id += 1
         return self.id
-
-    def get_node_from_yet_to_visit(self) -> ImprovedNode:
-        """Remove and return the node with lowest f from queue"""
-        return self.yet_to_visit.get()[self.node_index_in_yet_to_visit]
-
-    def is_yet_to_visit_empty(self):
-        return self.yet_to_visit.empty()
 
     def set_maze(self, maze):
         self.maze = maze
@@ -266,39 +225,26 @@ class AutoPlanner():
         rotation_matrix = self.direction_to_rotation_matrixes[current_direction]
         return np.matmul(rotation_matrix, relative_vector).astype(int)
 
-    def is_node_already_visited(self, node: ImprovedNode):
-        return node.pose.to_tuple() in self.visited_list
-
-    def manhattan(self, xA: int, yA: int, xB: int, yB: int) -> int:
-        return abs(xA - xB) + abs(yA - yB)
-
     def manhattan_heuristic(self, node: ImprovedNode):
         """Return estimated cost to go to the end node"""
         xA, yA = node.pose.x, node.pose.y
         xB, yB = self.end_node.pose.x, self.end_node.pose.y
-        return self.manhattan(xA, yA, xB, yB)
+        return abs(xA - xB) + abs(yA - yB)
 
-    def is_node_higher_cost_than_yet_to_visit(self, node: ImprovedNode):
-        """Check if node is already in yet to visit and has higher cost than
-        stored in yet to visit"""
-        if node.pose.to_tuple() in self.yet_to_visit_lowest_cost:
-            return node.g > self.yet_to_visit_lowest_cost[node.pose.to_tuple()]
+    def is_node_in_yet_to_visit_and_has_higher_cost(self, node: ImprovedNode):
+        """Check if node is already in yet to visit and has higher cost than stored in yet to visit"""
+        if node.pose.to_tuple() in self.yet_to_visit_lowest_g_cost:
+            return node.g > self.yet_to_visit_lowest_g_cost[node.pose.to_tuple()]
         return False
-
-    def set_straight_cost(self, cost):
-        self.straight_cost = cost
 
     def get_cost_current_node_to_child(self, child_node: ImprovedNode) -> int:
         move_to_child = child_node.move_from_parent
         weighted_cost = self.straight_cost
 
-        if self.is_turning_move(move_to_child):
+        if move_to_child in self.turning_moves:
             weighted_cost *= self.turning_factor
 
         return weighted_cost
-
-    def is_turning_move(self, move: RobotMovement):
-        return move in self.turning_moves
 
     def set_neighbours_as_potential_goal_nodes(self):
         """Set the neighbouring nodes of the end nodes as potential targets"""
@@ -323,61 +269,60 @@ class AutoPlanner():
         for neighbour_x, neighbour_y in neighbour_coords:
             neighbour_node = ImprovedNode(None, [neighbour_x, neighbour_y, target_direction])
             if self.is_robot_within_boundary_at_node(neighbour_node) and not self.is_in_collision(neighbour_node):
-                self.add_potential_goal_node(neighbour_node)
-
-    def reset_potential_goal_nodes(self):
-        self.potential_goal_nodes = list()
-
-    def add_potential_goal_node(self, node: ImprovedNode = None):
-        self.potential_goal_nodes.append(node)
+                self.potential_goal_nodes.append(neighbour_node)
 
     def get_movements_and_path_to_goal(self, maze, cost, start, end, obs_coords: list):
         self.set_maze(maze)
-        self.set_straight_cost(cost)
+        self.straight_cost = cost
         # Create start and end node with initialized values for g, h and f
-        print(f"== A_TO_B_ASTAR > get_movements_a_p_t_g() | Have to go from {start} to {end}")
+        print(f"== A_TO_B_PLAN_SVC > get_movements_a_p_t_g() | Have to go from {start} to {end}")
         self.start_node = self.initialize_node(start)
         self.end_node = self.initialize_node(end)
 
         # list of coordinates of obstacles
         self.obs_coords = obs_coords
-        self.reset_potential_goal_nodes()
-        self.add_potential_goal_node(self.end_node)
-        self.initialize_yet_to_visit()
-        self.initialize_visited_nodes()
-        self.reset_id()
-        self.add_node_to_yet_to_visit(self.start_node)
+        self.potential_goal_nodes = list()
+        self.potential_goal_nodes.append(self.end_node)
+
+        # in this list we will put all node that are yet_to_visit for exploration.
+        # From here we will find the lowest cost node to expand next
+        self.yet_to_visit = PriorityQueue()
+        # map all nodes that ever appear in yet_to_visit to its lowest g
+        self.yet_to_visit_lowest_g_cost = {}
+
+        # we will put all node those already explored so that we don't explore it again
+        self.visited_list = set()  # set of tuples (x, y, dir)
+
+        # id for the node in the yet_to_visit_queue
+        self.id = 0
+
+        self.yet_to_visit_add(self.start_node)
 
         # Adding a stop condition. This is to avoid any infinite loop and stop
         # execution after some reasonable number of steps
-        self.initialize_counters()
-        self.set_max_iterations()
+        self.outer_iterations = 0
+        self.max_iterations = (len(self.maze) // 2) ** 10
 
         # Loop until you find the end
-        while not self.is_yet_to_visit_empty():
+        while not self.yet_to_visit.empty():
             # Every time any node is referred from yet_to_visit list, counter of limit operation incremented
-            self.increment_counters()
-
-            self.current_node = self.get_node_from_yet_to_visit()
-
-            # if we hit this point return the path such as it may be no solution or
-            # computation cost is too high
-            if self.does_iterations_exceed_max():
+            self.outer_iterations += 1
+            # if we hit this point return the path such as it may be no solution or computation cost is too high
+            if self.outer_iterations > self.max_iterations:
                 print("Giving up on pathfinding too many iterations")
                 break
 
+            self.current_node = self.yet_to_visit.get()[self.node_index_in_yet_to_visit]
             self.add_node_to_visited(self.current_node)
+            # print(f"== A_TO_B_PLAN_SVC | current_node is {self.current_node.pose.to_tuple()}")
 
             # test if goal is reached or not, if yes then return the path
             if self.is_goal_reached():
-                return self.reconstruct_movements_and_path(self.current_node)
+                return self.reconstruct_movements_and_path_to_obtain_soln(self.current_node)
 
             self.get_children_of_current_node()
-
-            # Loop through children
             for child in self.children_current_node:
-                # Child is on the visited list (search entire visited list)
-                if self.is_node_already_visited(child):
+                if child.pose.to_tuple() in self.visited_list:
                     continue
 
                 # Create the f, g, and h values
@@ -389,17 +334,14 @@ class AutoPlanner():
                 # astar
                 child.f = child.g + child.h
 
-                # Child is already in the yet_to_visit list and child has
-                # higher g cost than that in yet_to_visit
-                if self.is_node_higher_cost_than_yet_to_visit(child):
+                # Child is already in the yet_to_visit list and has higher g cost than the lowest cost node in yet_to_visit
+                if self.is_node_in_yet_to_visit_and_has_higher_cost(child):
                     continue
 
-                # Add the child to the yet_to_visit list
-                # print(f"== A_TO_B_ASTAR > get_movements_a_p_t_g() | adding {child.pose.x, child.pose.y}")
-                self.add_node_to_yet_to_visit(child)
+                self.yet_to_visit_add(child)
         raise Exception("no path found to goal")
 
-    def reconstruct_movements_and_path(self, current_node: ImprovedNode) -> list:
+    def reconstruct_movements_and_path_to_obtain_soln(self, current_node: ImprovedNode) -> list:
         """Return a list of string of movements"""
         node = current_node
         movements = []
@@ -421,6 +363,7 @@ class AutoPlanner():
         return movements, path, movements_str
 
     def process_movement_string(self, arr):
+        print(f"== A_TO_B_PLAN_SVC > process_movement_string() | {arr}")
         if not arr:
             return []
         # Initialize variables to keep track of current tag and count

@@ -1,4 +1,6 @@
 import base64
+from typing import Dict, List
+
 import requests
 import cv2
 import json
@@ -9,7 +11,7 @@ import subprocess
 
 infer_server_url = "http://localhost:9001/mdp-project/1?api_key=3cR60WzeoK9LNrEVOyPT"
 
-def visualise_predictions(predictions: list[dict], input_path, output_path, stroke=2):
+def visualise_predictions(predictions: List[Dict], input_path, output_path, stroke=2):
         # Load image based on image path as an array
         image = cv2.imread(input_path)
         stroke_color = (255, 0, 0)
