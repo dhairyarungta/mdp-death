@@ -136,7 +136,7 @@ if __name__ == '__main__':
     
     # test the photo data
     message_data = json.loads(all_data)
-    if message_data["type"] == "IMAGE_TAKEN":
+    if message_data["type"] == "IMAGE":
         image_data = message_data["data"]["image"]
         image_data = image_data.encode('utf-8')
         image_data = base64.b64decode(image_data)
@@ -148,7 +148,7 @@ if __name__ == '__main__':
             result_message ={
                 "type": "IMAGE_RESULTS",
                 "data":{
-                    "obs_id_": obs_id,
+                    "obs_id": obs_id,
                     "img_id": result["predictions"][0]["class"]
                 }
             }
