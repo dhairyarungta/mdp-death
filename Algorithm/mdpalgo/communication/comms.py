@@ -132,13 +132,19 @@ if __name__ == '__main__':
             "obs_id": obs_id
         }
     }
+    # message = {
+    #     "type": "NAVIGATION",
+    #     "data": {
+    #         "commands":  ['RB090', 'SF050', 'SR090', 'SF010', 'SR090', 'SF010'],
+    #     }
+    # }
     print(f"==SENDING {json.dumps(message)}")
     client.send(json.dumps(message))
     all_data = client.recv()
 
     # test the photo data
     message_data = json.loads(all_data)
-    if message_data["type"] == "IMAGE_TAKEN":
+    if message_data["type"] == MessageType.IMAGE_TAKEN:
         image_data = message_data["data"]["image"]
         image_data = image_data.encode('utf-8')
         image_data = base64.b64decode(image_data)

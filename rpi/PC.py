@@ -1,6 +1,8 @@
 import socket
 import sys
 import json
+
+from Algorithm.mdpalgo.communication.message_parser import MessageParser, MessageType
 from Camera import capture, preprocess_img 
 import os
 import base64
@@ -93,7 +95,7 @@ class PCInterface:
                         with open(img_pth, "rb") as img:
                             encoded_string = base64.b64encode(img.read()).decode('utf-8')
                             message = {
-                                "type": "IMAGE_TAKEN",
+                                "type": MessageType.IMAGE_TAKEN,
                                 "data":{
                                     "obs_id": obs_id,
                                     "image": encoded_string
