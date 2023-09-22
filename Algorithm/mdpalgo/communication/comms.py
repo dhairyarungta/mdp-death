@@ -138,7 +138,7 @@ if __name__ == '__main__':
 
     # test the photo data
     message_data = json.loads(all_data)
-    if message_data["type"] == "IMAGE":
+    if message_data["type"] == "IMAGE_TAKEN":
         image_data = message_data["data"]["image"]
         image_data = image_data.encode('utf-8')
         image_data = base64.b64decode(image_data)

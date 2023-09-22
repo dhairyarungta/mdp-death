@@ -222,7 +222,7 @@ NOTE: messages sent to PC are prepended with message length
 3. raw image for image recognition
     ```
     {
-        "type": "IMAGE",
+        "type": "IMAGE_TAKEN",
         "data": {
             "obs_id": "00", 
             "image": "..."
