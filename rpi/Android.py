@@ -15,8 +15,10 @@ class AndroidInterface:
         self.threadListening = False
 
     def connect(self):
+        # for BluetoothError 'Permission denied'
+        subprocess.run("sudo chmod o+rw /var/run/sdp", shell=True) 
 
-        #Establish and bind socket
+        # Establish and bind socket
         self.socket = bt.BluetoothSocket(bt.RFCOMM)
         print("Android socket established successfully.")
     
@@ -26,8 +28,8 @@ class AndroidInterface:
             self.socket.bind((self.host, bt.PORT_ANY)) #bind to port
             print("Android socket binded successfully.")
             
-            #Turning advertisable
-            subprocess.call(['sudo', 'hciconfig', 'hci0', 'piscan'])
+            # Turning advertisable
+            subprocess.run("sudo hciconfig hci0 piscan", shell=True)
             self.socket.listen(128)
             
             bt.advertise_service(self.socket, "Group14-Server", service_id = self.uuid, service_classes = [self.uuid, bt.SERIAL_PORT_CLASS], profiles = [bt.SERIAL_PORT_PROFILE],)

@@ -4,7 +4,6 @@ from typing import Dict, List
 import requests
 import cv2
 import json
-import subprocess
 
 # Run this command in the terminal to start the server
 # docker run --mount source=roboflow,target=/tmp/cache -it --rm -p 9001:9001 roboflow/roboflow-inference-server-cpu
