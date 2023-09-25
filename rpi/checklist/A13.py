@@ -44,7 +44,7 @@ class STMInterface:
     def send(self, encoded_msg):
         try:
             self.serial.write(encoded_msg)
-            print("Write to STM: " + encoded_msg)
+#            print("Write to STM: " + encoded_msg)
         except Exception as e:
             print("Failed to write to STM: %s" %str(e))
             
@@ -55,8 +55,9 @@ def main():
     while True: 
         command = input("Enter command: ").strip().upper()
         if re.match('^[SLR][FB][0-9]{3}$', command):
-            print("Sending command:", command)
+#            print("Sending command:", command)
             stm.send(bytearray(command.encode()))
         else:
             print("Invalid command. Please use format <L/R/S><F/B>XXX.")
-main()
+
+#main()
