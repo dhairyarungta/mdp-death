@@ -112,6 +112,7 @@ class AlgoClient:
         except:
             return None
 
+
 '''
 GRP14: MINI-PROGRAM TO TEST CONNECTION BETWEEN RPI AND LAPTOP
 '''
@@ -126,18 +127,21 @@ if __name__ == '__main__':
     parser = MessageParser()
     obs_id = "00"
 
-    message = {
-        "type": "GET_IMAGE",
-        "data":{
-            "obs_id": obs_id
-        }
-    }
     # message = {
-    #     "type": "NAVIGATION",
-    #     "data": {
-    #         "commands":  ['RB090', 'SF050', 'SR090', 'SF010', 'SR090', 'SF010'],
+    #     "type": "GET_IMAGE",
+    #     "data":{
+    #         "obs_id": obs_id
     #     }
     # }
+    message = {
+        "type": "NAVIGATION",
+        "data": {
+            "commands": ['SF060',
+                         'RB090', 'SF065', 'RF180',
+                         'RB090', 'SF065', 'RF180',
+                         'RB090', 'SF065', 'RF180'],
+        }
+    }
     print(f"==SENDING {json.dumps(message)}")
     client.send(json.dumps(message))
     all_data = client.recv()
@@ -153,9 +157,9 @@ if __name__ == '__main__':
 
         if os.path.isfile("test.jpg"):
             result = image_rec("test.jpg", save_path="output.jpg")
-            result_message ={
+            result_message = {
                 "type": "IMAGE_RESULTS",
-                "data":{
+                "data": {
                     "obs_id": obs_id,
                     "img_id": result["predictions"][0]["class"]
                 }

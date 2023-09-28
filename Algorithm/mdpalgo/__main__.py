@@ -21,6 +21,7 @@ def main():
     mdp_constants.HEADLESS = False
     args = parser.parse_args()
     if args.hl:
+
         mdp_constants.HEADLESS = True
         print("Running in headless mode")
 
