@@ -2,8 +2,8 @@
 Algorithm Socket to connect with RPi.
 """
 
-from Algorithm.mdpalgo.constants import mdp_constants
-from Algorithm.mdpalgo.image_rec import image_rec
+from mdpalgo.constants import mdp_constants
+from mdpalgo.image_rec import image_rec
 
 import socket
 import struct
@@ -62,11 +62,11 @@ class AlgoClient:
             raw_bytes = self.receive_message_with_size()
             if raw_bytes is not None:
                 message = self.decode(raw_bytes)
-                if (len(message) <= MAX_MESSAGE_LENGTH_PRINT):
-                    print(f'[Algo] Received Message from Algo Server: {message}')
-                else:
-                    print(f'[Algo] Received Long Message (likely image) from Algo Server. '
-                          f'First {MAX_MESSAGE_LENGTH_PRINT} characters: {message[:MAX_MESSAGE_LENGTH_PRINT]}')
+                # if (len(message) <= MAX_MESSAGE_LENGTH_PRINT):
+                #     print(f'[Algo] Received Message from Algo Server: {message}')
+                # else:
+                #     print(f'[Algo] Received Long Message (likely image) from Algo Server. '
+                #           f'First {MAX_MESSAGE_LENGTH_PRINT} characters: {message[:MAX_MESSAGE_LENGTH_PRINT]}')
                 return message
             return None
         except Exception as error:
@@ -112,6 +112,30 @@ class AlgoClient:
         except:
             return None
 
+def send_message(message):
+    print(f"==SENDING {json.dumps(message)}")
+    client.send(json.dumps(message))
+
+
+def get_image_result(message_data): 
+    if message_data["type"] == "IMAGE_TAKEN":
+        image_data = message_data["data"]["image"]
+        image_data = image_data.encode('utf-8')
+        image_data = base64.b64decode(image_data)
+        with open("test.jpg", "wb") as fh:
+            fh.write(image_data)
+
+        if os.path.isfile("test.jpg"):
+            result = image_rec("test.jpg", save_path="output.jpg")
+            if len(result["predictions"]) > 0:
+                result_message = {
+                    "type": "IMAGE_RESULTS",
+                    "data": {
+                        "obs_id": obs_id,
+                        "img_id": result["predictions"][0]["class"]
+                    }
+                }
+                return(result_message)
 
 '''
 GRP14: MINI-PROGRAM TO TEST CONNECTION BETWEEN RPI AND LAPTOP
@@ -133,35 +157,29 @@ if __name__ == '__main__':
     #         "obs_id": obs_id
     #     }
     # }
-    message = {
+    forward_mess = {
         "type": "NAVIGATION",
         "data": {
-            "commands": ['SF060',
-                         'RB090', 'SF065', 'RF180',
-                         'RB090', 'SF065', 'RF180',
-                         'RB090', 'SF065', 'RF180'],
+            "commands": ['SF060'],
         }
     }
-    print(f"==SENDING {json.dumps(message)}")
-    client.send(json.dumps(message))
-    all_data = client.recv()
+    
+    send_message(forward_mess)
+    recv = client.recv()
+    result = get_image_result(json.loads(recv))
+    print("result:", result)
+    go_around_mess = {
+        "type": "NAVIGATION",
+        "data": {
+            "commands": ['RB090', 'SF065', 'RF180']
+        }
+    }
+    for i in range(3):
+        if result is None:
+            send_message(go_around_mess)
+            recv = client.recv()
+            result = get_image_result(json.loads(recv))
 
-    # test the photo data
-    message_data = json.loads(all_data)
-    if message_data["type"] == MessageType.IMAGE_TAKEN:
-        image_data = message_data["data"]["image"]
-        image_data = image_data.encode('utf-8')
-        image_data = base64.b64decode(image_data)
-        with open("test.jpg", "wb") as fh:
-            fh.write(image_data)
+    
 
-        if os.path.isfile("test.jpg"):
-            result = image_rec("test.jpg", save_path="output.jpg")
-            result_message = {
-                "type": "IMAGE_RESULTS",
-                "data": {
-                    "obs_id": obs_id,
-                    "img_id": result["predictions"][0]["class"]
-                }
-            }
-            client.send(json.dumps(result_message))
+
