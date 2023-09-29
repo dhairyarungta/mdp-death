@@ -70,9 +70,9 @@ class PCInterface:
             print("Failed to send to PC: %s" %str(e))
 
 
-def main():
-    pc = PCInterface()
-    pc.connect()
-    pc.send("hello from RPi to PC")
-    pc.listen()
-main()
+#def main():
+#    pc = PCInterface()
+#    pc.connect()
+#    pc.send("hello from RPi to PC")
+#    pc.listen()
+#main()

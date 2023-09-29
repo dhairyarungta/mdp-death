@@ -5,23 +5,22 @@ from A13 import STMInterface
 from bluetooth import *
 import subprocess
 
-subprocess.run("sudo chmod o+rw /var/run/sdp", shell=True) # for BluetoothError 'Permission denied'
+subprocess.call(['sudo', 'chmod', 'o+rw', '/var/run/sdp'])
 server_sock = BluetoothSocket(RFCOMM)
 server_sock.bind(("", PORT_ANY))
 
 server_sock.listen(1)
 print("getsockname:", server_sock.getsockname())
 port = server_sock.getsockname()[1]
+#subprocess.call(['sudo', 'sdptool', 'add', '--channel='+str(port), 'SP'])
 
 uuid = "00001101-0000-1000-8000-00805f9b34fb"
-subprocess.run("sudo hciconfig hci0 piscan", shell=True) # make discoverable
 advertise_service( server_sock, "MDP-Server",
  service_id = uuid,
  service_classes = [ uuid, SERIAL_PORT_CLASS ],
  profiles = [ SERIAL_PORT_PROFILE ],
 # protocols = [ OBEX_UUID ]
  )
-
 print("Waiting for connection on RFCOMM channel %d" % port)
 client_sock, client_info = server_sock.accept()
 print("Accepted connection from ", client_info)
@@ -50,7 +49,7 @@ if retry_count < 3:
       message_type = message_json["type"]
 
       if message_type == "NAVIGATION":
-        command = message_json["data"]["commands"][0]
+        command = message_json["data"][0] #["commands"][0]
         print("Sending command [%s] to STM" % command)
         encoded_string = command.encode()
         byte_array = bytearray(encoded_string)

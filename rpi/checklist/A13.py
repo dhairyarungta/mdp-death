@@ -27,7 +27,8 @@ class STMInterface:
         while True:
             print("Waiting for ACK from STM...")
             try:
-                message = self.serial.read(10)
+                print("reached here")
+                message = self.serial.read()
                 print('Read from STM: %s' %str(message))
                 message = str(message)
                 length = len(message)
@@ -43,7 +44,8 @@ class STMInterface:
         
     def send(self, encoded_msg):
         try:
-            self.serial.write(encoded_msg)
+            print(encoded_msg)
+            self.serial.write(encoded_msg) 
 #            print("Write to STM: " + encoded_msg)
         except Exception as e:
             print("Failed to write to STM: %s" %str(e))
@@ -59,5 +61,4 @@ def main():
             stm.send(bytearray(command.encode()))
         else:
             print("Invalid command. Please use format <L/R/S><F/B>XXX.")
-
 #main()
