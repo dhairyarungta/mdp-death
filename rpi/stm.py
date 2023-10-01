@@ -1,6 +1,5 @@
-# THIS FILE IS A WORK IN PROGRESS #
-
 import json
+from queue import Queue
 import re
 import serial
 
@@ -8,103 +7,108 @@ from rpi_config import *
 
 class STMInterface:
     def __init__(self, RPiMain):
-        self.RPiMain = RPiMain # TODO
+        self.RPiMain = RPiMain 
         self.baudrate = STM_BAUDRATE
         self.serial = None
         self.connected = False
         self.threadListening = False
+        self.msg_queue = Queue()
 
     def connect(self):
         try:
             self.serial = serial.Serial("/dev/ttyUSB0", self.baudrate, write_timeout = 0)
-            print("Connected to STM 0 successfully.")
+            print("[STM] Connected to STM 0 successfully.")
             self.connected = True
         except:
             try:
                 self.serial = serial.Serial("/dev/ttyUSB1", self.baudrate, write_timeout = 0)
-                print("Connected to STM 1 successfully.")
+                print("[STM] Connected to STM 1 successfully.")
                 self.connected = True
             except Exception as e:
-                print("Failed to connect to STM:", str(e))
+                print("[STM] ERROR: Failed to connect to STM -", str(e))
                 self.connected = False
+    
+    def reconnect(self): # TODO ??
+        if self.serial != None and self.serial.is_open:
+            self.serial.close()
+        self.connect()
 
     def listen(self):
-        if not self.connected:
-            print("Failed to start listening: STM is not connected.")
-            return
-        
         self.threadListening = True
+        message = None
         while True:
             try:
                 message = str(self.serial.read(SERIAL_BUFFER_SIZE))
-                print("Read from STM:", message)
-                message = message
+                print("[STM] Read from STM:", message)
                 
-                if len(message) <= 1:
-                    # print("Ignoring message with length <=1 from STM")
+                if len(message) < 1:
+                    # print("[STM] Ignoring message with length <1 from STM")
                     continue
                 else: 
-                    return message # TODO check return types
+                    break
 
             except Exception as e:
-                print("Failed to read from STM:", str(e))
-                # TODO: need to handle this in rpi main
-                self.threadListening = False 
-                return
-    
-    def wait_for_ack(self): 
-        response = self.listen(target_msg= STM_ACK_MSG)
-        if response == STM_ACK_MSG:
-            return True
-        else:
-            if response == None:
-                print("Error waiting for ACK message from STM")
-            else:
-                print("Unknown response from STM:", response)
-            return False
-            
-    def send(self, message): # TODO discuss return value
-        message_str = message.decode("utf-8")
-        message_json = json.loads(message_str)
-        message_type = message_json["type"]
+                message = str(e)
+                break
 
-        if message_type == "NAVIGATION":
-            commands = message_json["data"]["commands"]
-            for command in commands:
-                if self.is_valid_command(command):
-                    # TODO use queue?
-                    """
-                    - one queue for sending, one for receiving, queue size = 1
-                    - some projects use queues for sending everything (android included)
-                        - listen function puts messages in queues of other components
-                        - send function reads from queue and actually sends messages
-                        - this gives 2 threads per component
-                        - see MDP_GP28_CODE/MDP_GP28_CODE/RPI/task1.py.txt: from multiprocessing import Process, Value, Queue, Manager, Lock
-                        - see SC2079_CZ3004-MDP/RPI/Multithreading/task2/STM_thread.py
-                    """
-                    try:
-                        encoded_string = command.encode()
-                        byte_array = bytearray(encoded_string)
-                        self.serial.write(byte_array)
-                    except Exception as e:
-                        print("Failed to write to STM:", str(e)) # TODO retry?
+        self.threadListening = False 
+        return message
+            
+    def send(self): 
+        while True: 
+            message = self.msg_queue.get()
+
+            message_str = message.decode("utf-8")
+            message_json = json.loads(message_str)
+            message_type = message_json["type"]
+
+            if message_type == "NAVIGATION":
+                commands = message_json["data"]["commands"]
+                for command in commands:
+                    if self.is_valid_command(command):
+                        exception = True
+                        while exception:
+                            try:
+                                encoded_string = command.encode()
+                                byte_array = bytearray(encoded_string)
+                                self.serial.write(byte_array)
+                            except Exception as e:
+                                print("[STM] ERROR: Failed to write to STM -", str(e)) 
+                                exception = True
+                                self.reconnect() # reconnect and retry
+
+                            else:
+                                exception = False
+                                message = self.listen()
+                                if message  == STM_ACK_MSG:
+                                    print("[STM]", command, "acknowledged by STM") 
+                                elif message.isnumeric(): # TODO check STM ultrasonic sensor output format
+                                    print("[STM] WARNING:", command, "caused STM emergency stop, notifying PC") 
+                                    distance = float(message) 
+                                    ultrasonic_message = self.create_ultrasonic_message(command, distance)
+                                    self.RPiMain.PC.msg_queue.put(ultrasonic_message)
+                                else:
+                                    print("[STM] ERROR: Failed to read from STM -", message)
+                                    self.reconnect() # TODO ??
+                                
                     else:
-                        print("Write to STM [%s], waiting for ACK" % command)
-                        if self.wait_for_ack(): 
-                            print("Acknowledged by STM") # TODO show command if echo?
-                        else: #TODO handle exception or no ack: retry + timeout ??
-                            pass
-                else:
-                    print("Invalid command to STM rejected:", command, "in NAVIGATION message:", message)
-                    # TODO return to sender?
-                    return
-        # elif message_type == "GET_ULTRASONIC": # TODO
-        else:
-            print("Invalid message type for STM")
-            return
+                        print(f"[STM] ERROR: Invalid command to STM [{command}]. Discarding rest of NAVIGATION message {message}")
+            else:
+                print("[STM] WARNING: Rejecting message with unknown type [%s] for STM" % message_type)
+
 
     def is_valid_command(self, command):
         if re.match(STM_COMMAND_FORMAT, command):
             return True
         else:
             return False
+        
+    def create_ultrasonic_message(self, command, distance):
+        message = {
+            "type": "ULTRASONIC",
+            "data": {
+                "distance": distance,
+                "command": command
+            }
+        }
+        return json.dumps(message).encode("utf-8")
