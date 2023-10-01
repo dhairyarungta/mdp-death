@@ -10,23 +10,18 @@ class STMInterface:
         self.RPiMain = RPiMain 
         self.baudrate = STM_BAUDRATE
         self.serial = None
-        self.connected = False
-        self.threadListening = False
         self.msg_queue = Queue()
 
     def connect(self):
         try:
             self.serial = serial.Serial("/dev/ttyUSB0", self.baudrate, write_timeout = 0)
             print("[STM] Connected to STM 0 successfully.")
-            self.connected = True
         except:
             try:
                 self.serial = serial.Serial("/dev/ttyUSB1", self.baudrate, write_timeout = 0)
                 print("[STM] Connected to STM 1 successfully.")
-                self.connected = True
             except Exception as e:
                 print("[STM] ERROR: Failed to connect to STM -", str(e))
-                self.connected = False
     
     def reconnect(self): # TODO ??
         if self.serial != None and self.serial.is_open:
@@ -34,7 +29,6 @@ class STMInterface:
         self.connect()
 
     def listen(self):
-        self.threadListening = True
         message = None
         while True:
             try:
@@ -51,7 +45,6 @@ class STMInterface:
                 message = str(e)
                 break
 
-        self.threadListening = False 
         return message
             
     def send(self): 

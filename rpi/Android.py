@@ -12,8 +12,6 @@ class AndroidInterface:
         self.RPiMain = RPiMain
         self.host = RPI_IP
         self.uuid = BT_UUID # typical uuid
-        self.connected = False
-        self.threadListening = False # TODO are these required
         self.msg_queue = Queue()
 
     def connect(self):
@@ -49,13 +47,10 @@ class AndroidInterface:
         except socket.error as e:
             print('[Android] Disconnecting...')
             self.disconnectForced()
-        self.connected = True
 
     def disconnect(self):
         try:
             self.socket.close()
-            self.connected = False
-            self.threadListening = False
             print("[Android] Disconnected from Android successfully.")
         except Exception as e:
             print("[Android] ERROR: Failed to disconnect from Android -", str(e))
@@ -69,7 +64,6 @@ class AndroidInterface:
         self.connect()
 
     def listen(self):
-        self.threadListening = True
         while True:
             try:
                 message = self.client_socket.recv(BT_BUFFER_SIZE) 
@@ -104,10 +98,6 @@ class AndroidInterface:
                 print("[Android] ConnectionResetError")
             except:
                 print("[Android] Unknown error")
-                
-        #end of listening loop - set flags to false
-        self.threadListening = False
-        self.connected = False
 
     def send(self):
         while True: 
