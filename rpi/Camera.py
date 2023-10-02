@@ -4,6 +4,7 @@ import cv2
 def capture(img_pth):
     camera = PiCamera()
     camera.capture(img_pth)
+    camera.close()
     print("Done capturing!")
 
 def preprocess_img(img_pth):

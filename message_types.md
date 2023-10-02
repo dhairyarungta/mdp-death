@@ -9,19 +9,23 @@
 
 ## Flow of messages for task 1: image recognition (W8)
 1. **AR2, RP1:** Android tells PC obstacle locations and task type=`EXPLORATION`
-2. **PR1, RS1:** PC tells STM movement instructions after calculating path
-3. **SR1, RP2:** STM acknowledges end of movement sequence by sending ultrasonic sensor feedback
+2. **PR1:** PC sends RPi sequence of movement instructions for STM after calculating path
+3. **RS1:** RPi sends individual commands to STM one at a time
+   1. **SR1:** STM acknowledges end of each command 
+   2. **SR2, RP2:** if emergency stop is triggered by STM for collision avoidance, STM returns ultrasonic sensor output, which is relayed by RPi to PC
 4. optionally repeat steps 2-3 if not at planned coordinates/distance from obstacle
 5. **PR4, RA1:** pass current coordinates at end of movement sequence to Android for display
 6. **PR2, RP3:** PC requests image from RPi, RPi returns image
 7. **PR3, RA2:** PC returns image recognition results to Android
-8. repeat steps 2-7 until all obstacles/images identified
-9. repeat steps 2-5 to return to start
+8.  repeat steps 2-7 until all obstacles/images identified
+9.  repeat steps 2-5 to return to start
 
 ## Flow of messages for task 2: fastest car (W9)
 1. **AR2, RP1:** Android tells PC obstacle locations and task type=`FASTEST_PATH`
-2. **PR1, RS1:** PC tells STM movement instructions after calculating path
-3. **SR1, RP2:** STM acknowledges end of movement sequence by sending ultrasonic sensor feedback
+2. **PR1:** PC sends RPi sequence of movement instructions for STM after calculating path
+3. **RS1:** RPi sends individual commands to STM one at a time
+   1. **SR1:** STM acknowledges end of each command 
+   2. **SR2, RP2:** if emergency stop is triggered by STM for collision avoidance, STM returns ultrasonic sensor output, which is relayed by RPi to PC
 4. optionally repeat steps 2-3 if not at planned coordinates/distance from obstacle
 5. **PR2, RP3:** PC requests image from RPi, RPi returns image
 6. **PR3, RA2:** PC returns image recognition results to Android
@@ -30,12 +34,12 @@
 
 
 # Message types
-- `NAVIGATION`: AR1, RS1, and PR1
+- `NAVIGATION`: AR1 and PR1 (see also RS1, SR1)
 - `START_TASK`: AR2 and RP1
 - `COORDINATES`: RA1 and PR4
 - `GET_IMAGE`: PR2
 - `IMAGE_RESULTS`: RA2 and PR3 
-- `ULTRASONIC`: SR1 and RP2
+- `ULTRASONIC`: RP2 (see also SR2)
 - `IMAGE_TAKEN`: RP3
 
 ## AR: Android to RPi
@@ -54,7 +58,7 @@
       - F/B: the second character indicates Forward / Backward
       - XXX: the last 3 digits indicate distance in cm for S, or rotation angle for L/R
       - e.g. SB010 is move backwards 10cm, LF090 is turn 90 degrees to the left in the forward direction
-    - AR1, RS1, and PR1 are consistent
+    - AR1 and PR1 are consistent
 2. begin exploration: task type, start, obstacles (unique IDs)
    ```
     {
@@ -101,40 +105,24 @@
     - RA2 and PR3 are consistent
 
 ## SR: STM to RPi
-1. ultrasonic sensor info // TODO: this might not be feasible
-   ```
-    {
-        "type": "ULTRASONIC",
-        "data": {
-           "distance": 10
-        }
-    }
-    ```
-    - `distance` is the distance in cm from an obstacle, measured by the ultrasonic sensor
-    - SR1 and RP2 are consistent
-2. Acknowledgement of command
+1. Acknowledgement of command
    ```A```
    - acknowledges that command has been received and completed
-   - TODO: do we need a way to show WHICH command was received and completed, like should it echo?
+2. ultrasonic sensor info // TODO: format TBD
+   ```100```
+    - the distance in cm from an obstacle, measured by the ultrasonic sensor
+    - this message is sent by STM after an emergency stop is triggered for collision avoidance
+    - see also RP2 
 
 ## RS: RPi to STM 
 1. movement instructions from PC/Android: WASD + distance
-    ```
-    {
-        "type": "NAVIGATION",
-        "data": {
-           "commands": ["SF010", "RF090", "SB050", "LB090"]
-        }
-    }
-    ```
-    - `commands` is a list of directions (WASD) followed by distance 
+    ```SF010```
+    - while RPi receives a list of commands from PC (see `NAVIGATION` messages - AR1 and PR1), it sends each 5 character command 1 at a time to STM
       - each command is a 5 character code: <L/R/S><F/B>XXX 
       - S/L/R: the first character indicates Straight / Left / Right 
       - F/B: the second character indicates Forward / Backward
       - XXX: the last 3 digits indicate distance in cm for S, or rotation angle for L/R
       - e.g. SB010 is move backwards 10cm, LF090 is turn 90 degrees to the left in the forward direction
-    - AR1, RS1, and PR1 are consistent
-2. trigger ultrasonic sensor
 
 ## PR: PC to RPi
 1. movement instructions for STM
@@ -152,7 +140,7 @@
       - F/B: the second character indicates Forward / Backward
       - XXX: the last 3 digits indicate distance in cm for S, or rotation angle for L/R
       - e.g. SB010 is move backwards 10cm, LF090 is turn 90 degrees to the left in the forward direction
-    - AR1, RS1, and PR1 are consistent
+    - AR1 and PR1 are consistent
 2. trigger camera to take a picture and return it to PC for image recognition
     ```
     {
@@ -213,11 +201,14 @@ NOTE: messages sent to PC are prepended with message length
     {
         "type": "ULTRASONIC",
         "data": {
-           "distance": 10
+           "distance": 10,
+            "command": "SF010"
         }
     }
     ```
+    - this message is sent from RPi to PC when STM triggers an emergency stop to avoid collision
     - `distance` is the distance in cm from an obstacle, measured by the ultrasonic sensor
+    - `command` is the last command sent by RPi to the STM before the emergency stop was triggered
     - SR1 and RP2 are consistent
 3. raw image for image recognition
     ```
