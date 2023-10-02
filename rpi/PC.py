@@ -1,6 +1,9 @@
+from queue import Queue
 import socket
 import sys
 import json
+import logging
+import threading
 
 from Algorithm.mdpalgo.communication.message_parser import MessageParser, MessageType
 from Camera import capture, preprocess_img 
@@ -10,53 +13,70 @@ import base64
 from rpi_config import *
 
 class PCInterface:
-    def __init__(self, RPiMain):
+    def __init__(self,RPiMain):
         self.RPiMain = RPiMain
         self.host = RPI_IP
         self.port = PC_PORT
-        self.connected = False
-        self.threadListening = False
+        self.msg_queue = Queue()
 
     def connect(self):
         # 1. Solution for thread-related issues: always attempt to disconnect first before connecting
         self.disconnect()
 
-        # 2. Establish and bind socket
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
-        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        print("Socket established successfully.")
-
+        # 2. Wait and accept PC connection
         try:
-            self.socket.bind((self.host, self.port))
-            print("Socket binded successfully.")
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                print("Socket established successfully.")
+                sock.bind((self.host, self.port))
+                sock.listen(128) # the maximum number of queued connections that the server can handle simultaneously
+
+                print("Waiting for PC connection...")
+                with socket.timeout(5):
+                    self.client_socket, self.address = sock.accept()
+
+        # Handle any errors that may occur during the connection attempt.
         except socket.error as e:
-            print("Socket binding failed: %s" %str(e))
-            sys.exit()
+            logging.error('PC connection failed: {}'.format(str(e)))
 
-        # 3. Wait and accept PC connection
-        print("Waiting for PC connection...")
-        self.socket.listen(128) # the maximum number of queued connections that the server can handle simultaneously
-        self.client_socket, self.address = self.socket.accept()
-        print("PC connected successfully.")
-
-        # 4. Set flag to true
-        self.connected = True
-
+        # Log the connection attempt.
+        logging.info('PC connected successfully: {}'.format(self.address))
+        
     def disconnect(self):
         try:
-            self.socket.close()
-            self.connected = False
-            self.threadListening = False
-            print("Disconnected from PC successfully.")
+            if self.client_sock is not None:
+                self.client_sock.close()
+                self.client_sock = None
+                print("Disconnected from PC successfully.")
         except Exception as e:
-            print("Failed to disconnect from PC: %s" %str(e))
+            print("Failed to disconnect from PC: " + str(e))
+
+    def disconnect_forced(self):
+        self.disconnect()
+        sys.exit(0) 
+
+    def get_image(self,obs_id):
+        # capture img to img_pth 
+        img_pth = "img.jpg"
+        capture(img_pth)
+        # preprocessing image
+        preprocess_img(img_pth)
+                    
+        # construct image
+        if os.path.isfile(img_pth):
+            with open(img_pth, "rb") as img:
+                encoded_string = base64.b64encode(img.read()).decode('utf-8')
+                message = {
+                    "type": MessageType.IMAGE_TAKEN,
+                    "data":{
+                        "obs_id": obs_id,
+                        "image": encoded_string
+                     }
+                    }
+                self.msg_queue.put(json.dumps(message).encode("utf-8"))      
+
 
     def listen(self):
-        
-        # 1. Set flag to true
-        self.threadListening = True
-
-        # 2. Loop for listening
         while True:
             try:
                 message = self.client_socket.recv(PC_BUFFER_SIZE) # the maximum number of bytes to be received
@@ -65,7 +85,6 @@ class PCInterface:
                     print("PC disconnected remotely.")
                     break
 
-                # 3. Parse json message 
                 decodedMsg = message.decode("utf-8")
                 if len(decodedMsg) <= 1:
                     continue
@@ -75,37 +94,24 @@ class PCInterface:
                 
                 # PC -> Rpi -> STM
                 if type == 'NAVIGATION':
-                    self.RPiMain.STM.send(message) # bytes
+                    self.RPiMain.STM.msg_queue.put(message)
 
                 # PC -> Rpi -> Android
                 elif type == 'IMAGE_RESULTS':
-                    self.RPiMain.Android.send(message) # bytes
+                    self.RPiMain.Android.msg_queue.put(message) 
 
                 # PC -> Rpi -> PC
                 elif type == 'GET_IMAGE':
                     obs_id = parsedMsg["data"]["obs_id"]
-                    # capture img to img_pth 
-                    img_pth = "img.jpg"
-                    capture(img_pth)
-                    # preprocessing image
-                    preprocess_img(img_pth)
+                    # Start a new thread to capture and send the image
+                    capture_and_send_image_thread = threading.Thread(target=self.get_image, args=(obs_id,))
+                    capture_and_send_image_thread.start()
+                    # TODO: Need to wait for this thread finish?
                     
-                    # send image
-                    if os.path.isfile(img_pth):
-                        with open(img_pth, "rb") as img:
-                            encoded_string = base64.b64encode(img.read()).decode('utf-8')
-                            message = {
-                                "type": MessageType.IMAGE_TAKEN,
-                                "data":{
-                                    "obs_id": obs_id,
-                                    "image": encoded_string
-                                    }
-                                }
-                            self.send(json.dumps(message).encode("utf-8"))
                     
                 # PC -> Rpi -> Android
                 elif type == 'COORDINATES':
-                    self.RPiMain.Android.send(message)
+                    self.RPiMain.Android.msg_queue.put(message)
 
                 else:
                     print("ERROR: Received message with unknown type from PC.", message)
@@ -125,29 +131,19 @@ class PCInterface:
             except:
                 print("Unknown error")
                 break
-        
-        # 4. End of listening loop - set flags to false
-        self.threadListening = False
-        self.connected = False
 
+    def send(self):
+        while True:
+            message = self.msg_queue.get()
+            exception = True
+            while exception: 
+                try:
+                    self.client_socket.send(message)
+                    print("Write to PC: " + message.decode("utf-8"))
+                except Exception as e:
+                    print("ERROR: Failed to write to PC -", str(e))
+                    self.connect()
+                else:
+                    exception = False 
 
-    def send(self, message):
-        # message is expected to be a byte object
-        try:
-            # add the first 4 bytes is length of the 
-            message_len = len(message)
-            length_bytes = message_len.to_bytes(4, byteorder="big")
-            result_bytes = length_bytes + message
-            self.client_socket.send(result_bytes)
-            print("Send to PC: " + message)
-        
-        except ConnectionResetError:
-            print("Failed to send to PC: ConnectionResetError")
-            self.disconnect()
-        except socket.error:
-            print("Failed to send to PC: socket.error")
-            self.disconnect()
-        except IOError as e:
-            print("Failed to send to PC: %s" %str(e))
-            self.disconnect()
-
+            
