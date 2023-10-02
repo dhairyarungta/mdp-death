@@ -2,10 +2,8 @@ from queue import Queue
 import socket
 import sys
 import json
-import logging
 import threading
 
-from Algorithm.mdpalgo.communication.message_parser import MessageParser, MessageType
 from Camera import capture, preprocess_img 
 import os
 import base64
@@ -32,15 +30,15 @@ class PCInterface:
                 sock.listen(128) # the maximum number of queued connections that the server can handle simultaneously
 
                 print("Waiting for PC connection...")
-                with socket.timeout(5):
+                with socket.timeout(20):
                     self.client_socket, self.address = sock.accept()
 
         # Handle any errors that may occur during the connection attempt.
         except socket.error as e:
-            logging.error('PC connection failed: {}'.format(str(e)))
+            print('PC connection failed: {}'.format(str(e)))
 
         # Log the connection attempt.
-        logging.info('PC connected successfully: {}'.format(self.address))
+        print('PC connected successfully: {}'.format(self.address))
         
     def disconnect(self):
         try:
@@ -67,7 +65,7 @@ class PCInterface:
             with open(img_pth, "rb") as img:
                 encoded_string = base64.b64encode(img.read()).decode('utf-8')
                 message = {
-                    "type": MessageType.IMAGE_TAKEN,
+                    "type": 'IMAGE_TAKEN',
                     "data":{
                         "obs_id": obs_id,
                         "image": encoded_string
@@ -106,7 +104,7 @@ class PCInterface:
                     # Start a new thread to capture and send the image
                     capture_and_send_image_thread = threading.Thread(target=self.get_image, args=(obs_id,))
                     capture_and_send_image_thread.start()
-                    # TODO: Need to wait for this thread finish?
+                    
                     
                     
                 # PC -> Rpi -> Android
