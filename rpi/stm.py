@@ -23,7 +23,7 @@ class STMInterface:
             except Exception as e:
                 print("[STM] ERROR: Failed to connect to STM -", str(e))
     
-    def reconnect(self): # TODO ??
+    def reconnect(self): 
         if self.serial != None and self.serial.is_open:
             self.serial.close()
         self.connect()
@@ -82,7 +82,7 @@ class STMInterface:
                                     self.RPiMain.PC.msg_queue.put(ultrasonic_message)
                                 else:
                                     print("[STM] ERROR: Failed to read from STM -", message)
-                                    self.reconnect() # TODO ??
+                                    self.reconnect() # TODO
                                 
                     else:
                         print(f"[STM] ERROR: Invalid command to STM [{command}]. Discarding rest of NAVIGATION message {message}")

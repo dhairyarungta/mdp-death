@@ -8,7 +8,6 @@ from rpi.stm import STMInterface
 class RPiMain:
     def __init__(self):
         self.Android = AndroidInterface(self)
-        # self.Camera = CameraInterface(self)
         self.PC = PCInterface(self)
         self.STM = STMInterface(self)
 

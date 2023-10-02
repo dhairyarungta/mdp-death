@@ -41,12 +41,13 @@ class AndroidInterface:
         print("[Android] Waiting for Android connection...")
 
         try:
-            self.client_socket, self.client_info = self.socket.accept()
-            print("[Android] Accepted connection from", self.client_info)
+            with socket.timeout(30):
+                self.client_socket, self.client_info = self.socket.accept()
+                print("[Android] Accepted connection from", self.client_info)
             
         except socket.error as e:
-            print('[Android] Disconnecting...')
-            self.disconnectForced()
+            print("[Android] ERROR: connection failed -", str(e))
+            # self.reconnect() # TODO
 
     def disconnect(self):
         try:
@@ -55,9 +56,13 @@ class AndroidInterface:
         except Exception as e:
             print("[Android] ERROR: Failed to disconnect from Android -", str(e))
             
-    def disconnectForced(self):
+    def disconnectForced(self): # TODO: unused
         self.disconnect()
-        sys.exit(0) # TODO: later
+        sys.exit(0) 
+
+    def reconnect(self):
+        self.disconnect()
+        self.connect()
 
     def reconnect(self):
         self.disconnect()
@@ -69,7 +74,7 @@ class AndroidInterface:
                 message = self.client_socket.recv(BT_BUFFER_SIZE) 
 
                 if not message:
-                    print("[Android] Android disconnected remotely.")
+                    print("[Android] Android disconnected remotely. Reconnecting...")
                     self.reconnect()
 
                 decodedMsg = message.decode("utf-8")
@@ -87,7 +92,7 @@ class AndroidInterface:
                 if type == 'START_TASK':
                     self.RPiMain.PC.msg_queue.put(message)
 
-            # TODO should an exception prompt a reconnect? or do we ask android to resend
+            # TODO should android be asked to resend its message
             except socket.error as e:
                 print("[Android] SOCKET ERROR: Failed to read from Android -", str(e))
             except IOError as ie:
