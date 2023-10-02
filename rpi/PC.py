@@ -25,33 +25,37 @@ class PCInterface:
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                print("Socket established successfully.")
+                print("[PC] Socket established successfully.")
                 sock.bind((self.host, self.port))
                 sock.listen(128) # the maximum number of queued connections that the server can handle simultaneously
 
-                print("Waiting for PC connection...")
-                with socket.timeout(20):
+                print("[PC] Waiting for PC connection...")
+                with socket.timeout(30):
                     self.client_socket, self.address = sock.accept()
 
         # Handle any errors that may occur during the connection attempt.
         except socket.error as e:
-            print('PC connection failed: {}'.format(str(e)))
+            print("[PC] ERROR: Failed to connect -", str(e))
 
         # Log the connection attempt.
-        print('PC connected successfully: {}'.format(self.address))
+        print('[PC] PC connected successfully: {}'.format(self.address))
         
     def disconnect(self):
         try:
             if self.client_sock is not None:
                 self.client_sock.close()
                 self.client_sock = None
-                print("Disconnected from PC successfully.")
+                print("[PC] Disconnected from PC successfully.")
         except Exception as e:
-            print("Failed to disconnect from PC: " + str(e))
+            print("[PC] Failed to disconnect from PC: " + str(e))
 
     def disconnect_forced(self):
         self.disconnect()
         sys.exit(0) 
+
+    def reconnect(self):
+        self.disconnect()
+        self.connect()
 
     def get_image(self,obs_id):
         # capture img to img_pth 
@@ -80,13 +84,13 @@ class PCInterface:
                 message = self.client_socket.recv(PC_BUFFER_SIZE) # the maximum number of bytes to be received
 
                 if not message:
-                    print("PC disconnected remotely.")
-                    break
+                    print("[PC] PC disconnected remotely. Reconnecting...")
+                    self.reconnect()
 
                 decodedMsg = message.decode("utf-8")
                 if len(decodedMsg) <= 1:
                     continue
-                print("Read from PC: " + decodedMsg)
+                print("[PC] Read from PC: " + decodedMsg)
                 parsedMsg = json.loads(decodedMsg)
                 type = parsedMsg["type"]
                 
@@ -105,30 +109,24 @@ class PCInterface:
                     capture_and_send_image_thread = threading.Thread(target=self.get_image, args=(obs_id,))
                     capture_and_send_image_thread.start()
                     
-                    
-                    
                 # PC -> Rpi -> Android
                 elif type == 'COORDINATES':
                     self.RPiMain.Android.msg_queue.put(message)
 
                 else:
-                    print("ERROR: Received message with unknown type from PC.", message)
-           
+                    print("[PC] ERROR: Received message with unknown type from PC -", message)
+
+            # TODO handle exceptions
             except socket.error as e:
-                print("Socket Error. Failed to read from PC: %s" %str(e))
-                break
+                print("[PC] SOCKET ERROR: Failed to read from PC-", str(e))
             except IOError as ie:
-                print("IO Error. Failed to read from PC: %s" %str(ie))
-                break
+                print("[PC] IO ERROR: Failed to read from PC-", str(ie))
             except Exception as e2:
-                print("Failed to read from PC: %s" %str(e2))
-                break
+                print("[PC] ERROR: Failed to read from PC-", str(e2))
             except ConnectionResetError:
-                print("ConnectionResetError")
-                break
+                print("[PC] ConnectionResetError")
             except:
-                print("Unknown error")
-                break
+                print("[PC] Unknown error")
 
     def send(self):
         while True:
@@ -137,9 +135,9 @@ class PCInterface:
             while exception: 
                 try:
                     self.client_socket.send(message)
-                    print("Write to PC: " + message.decode("utf-8"))
+                    print("[PC] Write to PC: " + message.decode("utf-8"))
                 except Exception as e:
-                    print("ERROR: Failed to write to PC -", str(e))
+                    print("[PC] ERROR: Failed to write to PC -", str(e))
                     self.connect()
                 else:
                     exception = False 
