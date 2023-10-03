@@ -236,15 +236,17 @@ class AtoBPathPlan(object):
         self.robot.robot_pos.clear()
 
     def send_to_rpi_finish_task(self):
+        print(f"== A_TO_B > SEND_TO_RPI() |  {self.all_movements_dict}")
+        self.simulator.commsClient.send(self.all_movements_dict)
         # full_path_string = "STM/" + str(self.full_path)
         # full_robot_pos_string = "AND/[C10] " + ",".join(self.robot_pos_string)
         # print(full_path_string)
         # print(full_robot_pos_string)
-        try:
-            self.simulator.commsClient.send(full_path_string)  # Send full list of robot coordinates for android to update
-            self.simulator.commsClient.send(full_robot_pos_string)
-        except:
-            print('rpi not connected')
+        # try:
+        #     self.simulator.commsClient.send(full_path_string)  # Send full list of robot coordinates for android to update
+        #     self.simulator.commsClient.send(full_robot_pos_string)
+        # except:
+        #     print('rpi not connected')
 
     def reset_num_move_completed_rpi(self):
         self.num_move_completed_rpi = 0

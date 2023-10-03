@@ -77,7 +77,7 @@ class AlgoClient:
     def send(self, message):
         try:
             print(f'[Algo] Message to Algo Server: {message}')
-            self.client_socket.sendall(self.encode(message))
+            self.client_socket.sendall(self.encode(json.dumps(message)))
 
         except Exception as error:
             print("[Algo] Failed to send to Algo Server.")

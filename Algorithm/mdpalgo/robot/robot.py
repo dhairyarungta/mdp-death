@@ -42,7 +42,7 @@ class Robot(object):
         self.car_rect: pygame.Rect
         self.update_car_rect()
 
-        self.speed = 10
+        self.speed = 20
         self.velocity = Vector2(0.0, 0.0)
         self.steering = 0.0
 

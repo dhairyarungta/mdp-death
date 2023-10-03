@@ -157,7 +157,7 @@ class Simulator:
         self.commsClient = AlgoClient()
         self.commsClient.connect()
         mdp_constants.RPI_CONNECTED = True
-        self.receiving_process_EDITME()
+        # self.receiving_process_EDITME()
 
     def handle_worker_callbacks(self):
         """Check for callbacks from worker thread and handle them
