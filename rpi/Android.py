@@ -41,9 +41,9 @@ class AndroidInterface:
         print("[Android] Waiting for Android connection...")
 
         try:
-            with socket.timeout(30):
-                self.client_socket, self.client_info = self.socket.accept()
-                print("[Android] Accepted connection from", self.client_info)
+            # with socket.timeout(30):
+            self.client_socket, self.client_info = self.socket.accept()
+            print("[Android] Accepted connection from", self.client_info)
             
         except socket.error as e:
             print("[Android] ERROR: connection failed -", str(e))
