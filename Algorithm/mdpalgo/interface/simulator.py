@@ -1,7 +1,9 @@
+import base64
 import logging
 import os
 import queue
 import threading
+import json
 
 import pygame
 
@@ -11,7 +13,8 @@ from Algorithm.mdpalgo.algorithm.hamiltonian_planner_controller_euclidean_and_an
 from Algorithm.mdpalgo.algorithm.hamiltonian_planner_service_nearest_or_greedy import BruteForcePermutationHamiltonianPathPlanner, GreedyHamiltonianPathPlanner
 from Algorithm.mdpalgo.algorithm.a_to_b_planner_controller import AtoBPathPlan
 from Algorithm.mdpalgo.communication.comms import AlgoClient
-from Algorithm.mdpalgo.communication.message_parser import MessageParser, MessageType, TaskType
+from Algorithm.mdpalgo.communication.message_parser import MessageType, TaskType
+from Algorithm.mdpalgo.image_rec import image_rec
 from Algorithm.mdpalgo.interface.panel import Panel
 from Algorithm.mdpalgo.map.grid import Grid
 from Algorithm.mdpalgo.robot.robot import Robot
@@ -19,12 +22,16 @@ from Algorithm.mdpalgo.robot.robot import Robot
 # Set the HEIGHT and WIDTH of the screen
 WINDOW_SIZE = [960, 660]
 
-
 class Simulator:
 
     def __init__(self):
+        self.obs_ar = []
+        self.obs_idx = 0
+        self.obs_hashmap = {}
+        self.obs_id_click = 1
+
         self.grid_surface = None
-        self.comms = None
+        self.commsClient = None
 
         # Initialize pygame
         self.root = pygame
@@ -74,7 +81,7 @@ class Simulator:
         self.car.draw_car()
 
         # parser to parse messages from RPi
-        self.parser = MessageParser()
+        # self.parser = MessageParser()
 
         # count of 'no image result' exception
         self.no_image_result_count = 0
@@ -86,7 +93,7 @@ class Simulator:
     def run(self):
         # Loop until the user clicks the close button.
         done = False
-        print('HEADLESS is:', mdp_constants.HEADLESS) # default is False
+        print('HEADLESS is:', mdp_constants.HEADLESS)  # default is False
 
         # -------- Main Program Loop -----------
         if mdp_constants.HEADLESS:  # to simplify implementation, we use 2 threads even if headless
@@ -103,6 +110,7 @@ class Simulator:
                 # Check for callbacks from worker thread
                 while True:
                     try:
+                        # TODO what is this
                         self.handle_worker_callbacks()
                     except queue.Empty:  # raised when queue is empty
                         break
@@ -115,6 +123,9 @@ class Simulator:
                         # User clicks the mouse. Get the position
                         pos = pygame.mouse.get_pos()
                         if self.is_pos_clicked_within_grid(pos):
+                            x,y = self.grid.pixel_to_grid((pos[0], pos[1]))
+                            self.obs_hashmap[str(x) + "-" + str(y)] = self.obs_id_click
+                            self.obs_id_click+=1
                             self.grid.grid_clicked(pos[0], pos[1])
                             self.redraw_grid()
                             self.car.draw_car()  # Redraw the car
@@ -143,10 +154,10 @@ class Simulator:
 
     def start_algo_client(self):
         """Connect to RPi wifi server and start a thread to receive messages """
-        self.comms = AlgoClient()
-        self.comms.connect()
+        self.commsClient = AlgoClient()
+        self.commsClient.connect()
         mdp_constants.RPI_CONNECTED = True
-        self.receiving_process()
+        self.receiving_process_EDITME()
 
     def handle_worker_callbacks(self):
         """Check for callbacks from worker thread and handle them
@@ -163,7 +174,7 @@ class Simulator:
         else:
             callback()
 
-    def receiving_process(self):
+    def receiving_process_EDITME(self):
         """
         Method to be run in a separate thread to listen for commands from the socket
         Methods that update the UI must be passed into self.callback_queue for running in the main UI thread
@@ -172,31 +183,32 @@ class Simulator:
 
         while mdp_constants.RPI_CONNECTED:
             try:
-                if self.comms.client_socket is not None:
-                    txt = self.comms.client_socket.recv(1024)
-                    print("RECEIVED MSG: ", txt)
-                    if (txt == None):
-                        continue
-                # todo change to our own contract
-                message_type_and_data = self.parser.parse(txt.decode())
+                # if self.commsClient.client_socket is not None:
+                #     txt = self.commsClient.client_socket.recv(1024)
+                #     print("== SIMULATOR > RECV_PROCESS | RECEIVED MSG: ", txt)
+                #     if (txt == None):
+                #         continue
+                # message_type_and_data = self.parser.parse(txt.decode())
+                all_data = self.commsClient.recv()
+                message_type_and_data = json.loads(all_data)
+
                 message_data = message_type_and_data["data"]
-                if message_type_and_data["type"] == MessageType.START_TASK:  # From Android
+                if message_type_and_data["type"] == MessageType.START_TASK:
                     self.on_receive_start_task_message(message_data)
                     return
-
-                elif message_type_and_data["type"] == MessageType.UPDATE_ROBOT_POSE:
-                    self.on_receive_update_robot_pose(message_data)
 
                 elif message_type_and_data["type"] == MessageType.IMAGE_TAKEN:
                     self.on_receive_image_taken_message(message_data)
 
+                # elif message_type_and_data["type"] == MessageType.UPDATE_ROBOT_POSE:
+                #     self.on_receive_update_robot_pose(message_data)
+
+
             except (IndexError, ValueError) as e:
-                print("Invalid command: " + txt.decode())
+                print("Invalid command: " + all_data.decode())
 
     def on_receive_start_task_message(self, message_data: dict):
-        task = message_data["task"]
-
-        if task == TaskType.TASK_NAVIGATION:  # Week 8 Task
+        if message_data['task'] == TaskType.TASK_EXPLORATION:  # Week 8 Task
             # Reset first
             self.reset_button_clicked()
             # Set robot starting pos
@@ -208,10 +220,11 @@ class Simulator:
 
             # Create obstacles given parameters
             logging.info("Creating obstacles...")
-            for obstacle in message_data["obs"]:
+            for obstacle in message_data["obstacles"]:
                 logging.info("Obstacle: %s", obstacle)
                 id, grid_x, grid_y, dir = obstacle["id"], int(obstacle["x"]), int(obstacle["y"]), int(obstacle["dir"])
                 self.grid.create_obstacle([id, grid_x, grid_y, dir])
+                self.obs_hashmap[str(grid_x) + "-" + str(grid_y)] = id
 
             # Update grid, start explore
             self.car.redraw_car_refresh_screen()
@@ -219,13 +232,32 @@ class Simulator:
             logging.info("[AND] Doing path calculation...")
             self.start_button_clicked()
 
-    def on_receive_update_robot_pose(self, message_data: dict):
-        print("Received updated robot pose")
-        status = message_data["status"]
-        if status == "DONE":
-            self.a_to_b_path_planner.update_num_move_completed(message_data["num_move"])
-        else:
-            raise ValueError("Unimplemented response for updated robot pose")
+    def on_receive_image_taken_message(self, message_data: dict):
+        image_data = message_data["image"]
+        image_data = image_data.encode('utf-8')
+        image_data = base64.b64decode(image_data)
+        with open("test.jpg", "wb") as fh:
+            fh.write(image_data)
+
+        if os.path.isfile("test.jpg"):
+            result = image_rec("test.jpg", save_path="output.jpg")
+            result_message = {
+                "type": "IMAGE_RESULTS",
+                "data": {
+                    "obs_id": self.obs_ar[self.obs_idx],
+                    "img_id": result["predictions"][0]["class"]
+                }
+            }
+            self.obs_idx += 1
+            self.commsClient.send(json.dumps(result_message))
+
+    # def on_receive_update_robot_pose(self, message_data: dict):
+    #     print("Received updated robot pose")
+    #     status = message_data["status"]
+    #     if status == "DONE":
+    #         self.a_to_b_path_planner.update_num_move_completed(message_data["num_move"])
+    #     else:
+    #         raise ValueError("Unimplemented response for updated robot pose")
 
     def reprint_screen_and_buttons(self):
         self.screen.fill(mdp_constants.SIMULATOR_BG)
@@ -251,9 +283,9 @@ class Simulator:
                     self.start_algo_client()
                 elif button_func == "DISCONNECT":
                     print("Disconnect button pressed.")
-                    self.comms.disconnect()
+                    self.commsClient.disconnect()
                     mdp_constants.RPI_CONNECTED = False
-                    self.comms = None
+                    self.commsClient = None
 
                 # for testing purposes
                 elif button_func == "FORWARD":
@@ -286,9 +318,14 @@ class Simulator:
 
             self.hamiltonian_planner_svc = BruteForcePermutationHamiltonianPathPlanner(graph, "start")
             shortest_path, path_length = self.hamiltonian_planner_svc.find_path()
+            # print(self.obs_hashmap)
+            for coord in range(1, len(shortest_path)):
+                # print(shortest_path[coord])
+                self.obs_ar.append(self.obs_hashmap[shortest_path[coord]])
             shortest_path_implementation = self.hamiltonian_planner_ctlr.convert_shortest_path_to_ordered_targets(shortest_path)
             self.car.optimized_target_locations = shortest_path_implementation[1:]
             print(f"== SIMULATOR > start_b_c() | Final shortest route is {str(shortest_path)}")
+            print(f"== SIMULATOR > start_b_c() | Obstacle list is {self.obs_ar}")
             self.a_to_b_path_planner = AtoBPathPlan(self, self.grid, self.car, shortest_path_implementation)
 
             self.a_to_b_path_planner.start_robot()
@@ -297,6 +334,10 @@ class Simulator:
         self.grid.reset_data()
         self.redraw_grid()
         self.car.reset()
+        self.obs_ar = []
+        self.obs_idx = 0
+        self.obs_hashmap = {}
+        self.obs_id_click = 0
 
 
 if __name__ == "__main__":

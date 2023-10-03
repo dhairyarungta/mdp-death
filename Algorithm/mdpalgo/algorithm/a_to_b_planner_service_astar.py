@@ -1,4 +1,6 @@
 from queue import PriorityQueue
+from typing import Tuple, List, Any
+
 import numpy as np
 
 from Algorithm.mdpalgo.constants import mdp_constants
@@ -341,7 +343,7 @@ class AutoPlanner:
                 self.yet_to_visit_add(child)
         raise Exception("no path found to goal")
 
-    def reconstruct_movements_and_path_to_obtain_soln(self, current_node: ImprovedNode) -> list:
+    def reconstruct_movements_and_path_to_obtain_soln(self, current_node: ImprovedNode) -> Tuple[List[RobotMovement], List[list], List[Any]]:
         """Return a list of string of movements"""
         node = current_node
         movements = []

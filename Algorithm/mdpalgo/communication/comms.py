@@ -114,7 +114,7 @@ class AlgoClient:
 
 
 '''
-GRP14: MINI-PROGRAM TO TEST CONNECTION BETWEEN RPI AND LAPTOP
+GRP14: MINI-PROGRAM TO TEST IMAGE REG AND MOVEMENT FOR TASK A5
 '''
 if __name__ == '__main__':
     client = AlgoClient()
@@ -125,7 +125,7 @@ if __name__ == '__main__':
     from message_parser import MessageParser, MessageType
 
     parser = MessageParser()
-    obs_id = "00"
+    obs_idx = "00"
 
     # message = {
     #     "type": "GET_IMAGE",
@@ -160,7 +160,7 @@ if __name__ == '__main__':
             result_message = {
                 "type": "IMAGE_RESULTS",
                 "data": {
-                    "obs_id": obs_id,
+                    "obs_id": obs_idx,
                     "img_id": result["predictions"][0]["class"]
                 }
             }
