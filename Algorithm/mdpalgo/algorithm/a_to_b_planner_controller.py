@@ -48,7 +48,7 @@ class AtoBPathPlan(object):
             target = self.fastest_route.pop(0)
             self.plan_path_to(target)
 
-            self.send_to_rpi()
+            # self.send_to_rpi()
             # if count_of_obs >= 1:
             #     if mdp_constants.RPI_CONNECTED:
             #         self.send_to_rpi()
@@ -124,7 +124,7 @@ class AtoBPathPlan(object):
             pass
         self.robot.redraw_car_refresh_screen()
         try:
-            self.save_path_for_rpi()
+            self.save_path_and_send_to_rpi()
         except Exception as e:
             logging.exception(e)
             pass
@@ -202,12 +202,14 @@ class AtoBPathPlan(object):
         image_result_list = ["TARGET", target_id, self.obstacle_key]
         return '/'.join([str(elem) for elem in image_result_list]) + '/'
 
-    def save_path_for_rpi(self):
+    def save_path_and_send_to_rpi(self):
         # self.all_movements_dict[self.get_current_obstacle_id()] = self.parse_movements_string_EDITME()
         self.all_movements_dict = self.parse_movements_string_EDITME();
         # self.all_take_photo_dict[self.get_current_obstacle_id()] = self.get_take_photo_string()
         # self.obstacle_list_rpi.append(self.get_current_obstacle_id())
         print(f"== A_TO_B_PLAN_CTLR > save_path_for_rpi | {self.all_movements_dict}")
+        print(f"== A_TO_B_PLAN_CTLR > save_path_for_rpi | SENDING MSG")
+        self.simulator.commsClient.send(json.dumps(self.all_movements_dict))
 
         self.reset_collection_of_movements()
         self.reset_robot_pos_list()
