@@ -35,7 +35,7 @@ class STMInterface:
         while True:
             print("[STM] In listening loop...")
             try:
-                message = str(self.serial.read(SERIAL_BUFFER_SIZE))
+                message = str(self.serial.read())
                 print("[STM] Read from STM:", message)
                 
                 if len(message) < 1:
