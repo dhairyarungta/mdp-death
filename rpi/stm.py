@@ -35,7 +35,7 @@ class STMInterface:
         while True:
             print("[STM] In listening loop...")
             try:
-                message = str(self.serial.read())
+                message = self.serial.read().decode("utf-8")
                 print("[STM] Read from STM:", message)
                 
                 if len(message) < 1:
@@ -87,7 +87,7 @@ class STMInterface:
                                     ultrasonic_message = self.create_ultrasonic_message(command, distance)
                                     self.RPiMain.PC.msg_queue.put(ultrasonic_message)
                                 else:
-                                    print("[STM] ERROR: Failed to read from STM -", message)
+                                    print("[STM] ERROR: Unexpected message from STM -", message)
                                     self.reconnect() # TODO
                                 
                     else:
