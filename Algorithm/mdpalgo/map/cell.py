@@ -1,4 +1,4 @@
-from Algorithm.mdpalgo.map.obstacle import Obstacle
+from map.obstacle import Obstacle
 from enum import IntEnum, unique
 
 @unique

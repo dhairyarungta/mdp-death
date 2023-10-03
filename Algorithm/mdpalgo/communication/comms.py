@@ -2,8 +2,8 @@
 Algorithm Socket to connect with RPi.
 """
 
-from Algorithm.mdpalgo.constants import mdp_constants
-from Algorithm.mdpalgo.image_rec import image_rec
+from constants import mdp_constants
+from image_rec import image_rec
 
 import socket
 import struct

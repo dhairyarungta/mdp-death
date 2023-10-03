@@ -1,12 +1,12 @@
 import logging
 import json
 
-from Algorithm.mdpalgo.communication.message_parser import TaskType
-from Algorithm.mdpalgo.constants import mdp_constants
-from Algorithm.mdpalgo.robot.robot import Robot
-from Algorithm.mdpalgo.algorithm.a_to_b_planner_service_astar import AutoPlanner, RobotMovement
-from Algorithm.mdpalgo.map.configuration import Pose
-from Algorithm.mdpalgo.map.grid import Grid
+from communication.message_parser import TaskType
+from constants import mdp_constants
+from robot.robot import Robot
+from algorithm.a_to_b_planner_service_astar import AutoPlanner, RobotMovement
+from map.configuration import Pose
+from map.grid import Grid
 
 MARGIN = 2
 
@@ -209,7 +209,7 @@ class AtoBPathPlan(object):
         # self.obstacle_list_rpi.append(self.get_current_obstacle_id())
         print(f"== A_TO_B_PLAN_CTLR > save_path_for_rpi | {self.all_movements_dict}")
         print(f"== A_TO_B_PLAN_CTLR > save_path_for_rpi | SENDING MSG")
-        self.simulator.commsClient.send(json.dumps(self.all_movements_dict))
+        self.simulator.commsClient.send(self.all_movements_dict)
 
         self.reset_collection_of_movements()
         self.reset_robot_pos_list()

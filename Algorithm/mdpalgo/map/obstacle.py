@@ -1,4 +1,4 @@
-from Algorithm.mdpalgo.constants import mdp_constants
+from constants import mdp_constants
 
 
 class Obstacle:

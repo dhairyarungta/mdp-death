@@ -1,7 +1,7 @@
 import logging
 import argparse
 
-from Algorithm.mdpalgo.constants import mdp_constants
+from constants import mdp_constants
 from interface.simulator import Simulator
 
 # Logging

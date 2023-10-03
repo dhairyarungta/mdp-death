@@ -14,8 +14,8 @@ Explanation on coordinate system:
 import logging
 import pygame
 
-from Algorithm.mdpalgo.constants import mdp_constants
-from Algorithm.mdpalgo.map.cell import Cell, CellStatus
+from constants import mdp_constants
+from map.cell import Cell, CellStatus
 import numpy as np
 
 # This sets the margin between each Cell

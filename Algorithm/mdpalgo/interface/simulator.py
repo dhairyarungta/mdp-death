@@ -7,17 +7,17 @@ import json
 
 import pygame
 
-from Algorithm.mdpalgo.constants import mdp_constants
+from constants import mdp_constants
 import pygame
-from Algorithm.mdpalgo.algorithm.hamiltonian_planner_controller_euclidean_and_angle import HamiltonianPlannerController
-from Algorithm.mdpalgo.algorithm.hamiltonian_planner_service_nearest_or_greedy import BruteForcePermutationHamiltonianPathPlanner, GreedyHamiltonianPathPlanner
-from Algorithm.mdpalgo.algorithm.a_to_b_planner_controller import AtoBPathPlan
-from Algorithm.mdpalgo.communication.comms import AlgoClient
-from Algorithm.mdpalgo.communication.message_parser import MessageType, TaskType
-from Algorithm.mdpalgo.image_rec import image_rec
-from Algorithm.mdpalgo.interface.panel import Panel
-from Algorithm.mdpalgo.map.grid import Grid
-from Algorithm.mdpalgo.robot.robot import Robot
+from algorithm.hamiltonian_planner_controller_euclidean_and_angle import HamiltonianPlannerController
+from algorithm.hamiltonian_planner_service_nearest_or_greedy import BruteForcePermutationHamiltonianPathPlanner, GreedyHamiltonianPathPlanner
+from algorithm.a_to_b_planner_controller import AtoBPathPlan
+from communication.comms import AlgoClient
+from communication.message_parser import MessageType, TaskType
+from image_rec import image_rec
+from interface.panel import Panel
+from map.grid import Grid
+from robot.robot import Robot
 
 # Set the HEIGHT and WIDTH of the screen
 WINDOW_SIZE = [960, 660]
@@ -157,7 +157,7 @@ class Simulator:
         self.commsClient = AlgoClient()
         self.commsClient.connect()
         mdp_constants.RPI_CONNECTED = True
-        # self.receiving_process_EDITME()
+        self.receiving_process_EDITME()
 
     def handle_worker_callbacks(self):
         """Check for callbacks from worker thread and handle them
@@ -181,7 +181,9 @@ class Simulator:
         Running UI updating methods in a worker thread will cause a flashing effect as both threads attempt to update the UI
         """
 
+        print("reached here 1")
         while mdp_constants.RPI_CONNECTED:
+            print("reached here 2")
             try:
                 # if self.commsClient.client_socket is not None:
                 #     txt = self.commsClient.client_socket.recv(1024)
@@ -189,15 +191,20 @@ class Simulator:
                 #     if (txt == None):
                 #         continue
                 # message_type_and_data = self.parser.parse(txt.decode())
-                all_data = self.commsClient.recv()
+                print("HAI")
+                all_data = self.commsClient.client_socket.recv(1024)
+                print(all_data)
                 message_type_and_data = json.loads(all_data)
 
+                print(f"reach here {message_type_and_data}")
+
                 message_data = message_type_and_data["data"]
-                if message_type_and_data["type"] == MessageType.START_TASK:
+                if message_type_and_data["type"] == MessageType.START_TASK.value:
                     self.on_receive_start_task_message(message_data)
                     return
 
-                elif message_type_and_data["type"] == MessageType.IMAGE_TAKEN:
+                elif message_type_and_data["type"] == MessageType.IMAGE_TAKEN.value:
+                    print("in elif statement")
                     self.on_receive_image_taken_message(message_data)
 
                 # elif message_type_and_data["type"] == MessageType.UPDATE_ROBOT_POSE:
@@ -205,16 +212,26 @@ class Simulator:
 
 
             except (IndexError, ValueError) as e:
+                print(e)
                 print("Invalid command: " + all_data.decode())
 
     def on_receive_start_task_message(self, message_data: dict):
-        if message_data['task'] == TaskType.TASK_EXPLORATION:  # Week 8 Task
+        print("HIIIIIIIII")
+        if message_data['task'] == TaskType.TASK_EXPLORATION.value:  # Week 8 Task
             # Reset first
             self.reset_button_clicked()
             # Set robot starting pos
             robot_params = message_data['robot']
             logging.info("Setting robot position: %s", robot_params)
-            robot_x, robot_y, robot_dir = int(robot_params["x"]), int(robot_params["y"]), int(robot_params["dir"])
+            robot_x, robot_y, robot_dir = int(robot_params["x"]), int(robot_params["y"]), robot_params["dir"]
+            if robot_dir == "N":
+                robot_dir = 0
+            elif robot_dir == "S":
+                robot_dir = 180
+            elif robot_dir == "E":
+                robot_dir = -90
+            elif robot_dir == "W":
+                robot_dir = 90
             self.car.update_robot(robot_dir, self.grid.grid_to_pixel((robot_x, robot_y)))
             self.car.redraw_car_refresh_screen()
 
@@ -222,7 +239,15 @@ class Simulator:
             logging.info("Creating obstacles...")
             for obstacle in message_data["obstacles"]:
                 logging.info("Obstacle: %s", obstacle)
-                id, grid_x, grid_y, dir = obstacle["id"], int(obstacle["x"]), int(obstacle["y"]), int(obstacle["dir"])
+                id, grid_x, grid_y, dir = obstacle["id"], int(obstacle["x"]), int(obstacle["y"]), obstacle["dir"]
+                if dir == "N":
+                    dir = 0
+                elif dir == "S":
+                    dir = 180
+                elif dir == "E":
+                    dir = -90
+                elif dir == "W":
+                    dir = 90
                 self.grid.create_obstacle([id, grid_x, grid_y, dir])
                 self.obs_hashmap[str(grid_x) + "-" + str(grid_y)] = id
 
@@ -233,14 +258,17 @@ class Simulator:
             self.start_button_clicked()
 
     def on_receive_image_taken_message(self, message_data: dict):
+        print("hi i am hereee")
         image_data = message_data["image"]
         image_data = image_data.encode('utf-8')
         image_data = base64.b64decode(image_data)
         with open("test.jpg", "wb") as fh:
+            print("Image save to test.jpg!")
             fh.write(image_data)
 
         if os.path.isfile("test.jpg"):
             result = image_rec("test.jpg", save_path="output.jpg")
+            print("Output image is save to output.jpg")
             result_message = {
                 "type": "IMAGE_RESULTS",
                 "data": {

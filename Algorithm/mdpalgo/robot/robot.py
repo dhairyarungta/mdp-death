@@ -3,9 +3,9 @@ from math import degrees
 from pygame.math import Vector2
 import pygame
 
-from Algorithm.mdpalgo.constants import mdp_constants
-from Algorithm.mdpalgo.map.configuration import Pose
-from Algorithm.mdpalgo.map.grid import Grid
+from constants import mdp_constants
+from map.configuration import Pose
+from map.grid import Grid
 from enum import Enum
 
 # This sets the margin between each Cell

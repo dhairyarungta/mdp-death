@@ -3,10 +3,10 @@ from typing import Tuple, List, Any
 
 import numpy as np
 
-from Algorithm.mdpalgo.constants import mdp_constants
-from Algorithm.mdpalgo.map.cell import CellStatus
-from Algorithm.mdpalgo.map.configuration import Pose
-from Algorithm.mdpalgo.robot.robot import RobotMovement
+from constants import mdp_constants
+from map.cell import CellStatus
+from map.configuration import Pose
+from robot.robot import RobotMovement
 
 
 class ImprovedNode:
