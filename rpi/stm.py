@@ -3,7 +3,7 @@ from queue import Queue
 import re
 import threading
 import serial
-from rpi.Camera import get_image
+from Camera import get_image
 
 from rpi_config import *
 
