@@ -366,7 +366,10 @@ class AutoPlanner:
 
     def parse_raw_movements_into_movement_string(self, arr):
         # print(f"== A_TO_B_PLAN_SVC > process_movement_string() | {arr}")
-        TURNING_MOVEMENTS = [RobotMovement.RIGHT_FORWARD, RobotMovement.LEFT_FORWARD, RobotMovement.RIGHT_BACKWARD, RobotMovement.LEFT_BACKWARD]
+        TURNING_MOVEMENTS = [RobotMovement.RIGHT_FORWARD.value,
+                             RobotMovement.LEFT_FORWARD.value,
+                             RobotMovement.RIGHT_BACKWARD.value,
+                             RobotMovement.LEFT_BACKWARD.value]
 
         if not arr:
             return []
@@ -377,8 +380,11 @@ class AutoPlanner:
         # Initialize empty list to store tagged array
         tagged_arr = []
 
+        # print("HIIIIIIIIIIIIIIIIi")
+        # print(arr[0])
         # Loop through each element in the array, starting from the second element
         for i in range(1, len(arr)):
+            # print(arr[i])
             # If the current element is the same as the previous element, increment count
             if arr[i] == current_tag:
                 current_count += 1
@@ -388,6 +394,7 @@ class AutoPlanner:
                     current_count_str = str(current_count * 90).zfill(3)
                 else:
                     current_count_str = str(current_count * 10).zfill(3)
+                # print('appending ', current_tag+current_count_str)
                 tagged_arr.append(current_tag + current_count_str)
                 # Reset current tag and count to the new element
                 current_tag = arr[i]
@@ -398,6 +405,7 @@ class AutoPlanner:
             current_count_str = str(current_count * 10).zfill(3)
         tagged_arr.append(current_tag + current_count_str)
 
+        # print('final ', tagged_arr)
         # Print the tagged array
         return tagged_arr
 
