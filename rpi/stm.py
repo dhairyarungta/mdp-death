@@ -1,7 +1,9 @@
 import json
 from queue import Queue
 import re
+import threading
 import serial
+from rpi.Camera import get_image
 
 from rpi_config import *
 
@@ -86,9 +88,15 @@ class STMInterface:
                                 
                     else:
                         print(f"[STM] ERROR: Invalid command to STM [{command}]. Discarding rest of NAVIGATION message {message}")
+                
+                # Start a new thread to capture and send the image to PC
+                capture_and_send_image_thread = threading.Thread(target=self.send_image_to_pc)
+                capture_and_send_image_thread.start()
             else:
                 print("[STM] WARNING: Rejecting message with unknown type [%s] for STM" % message_type)
 
+    def send_image_to_pc(self):
+        self.RPiMain.PC.msg_queue.put(get_image())      
 
     def is_valid_command(self, command):
         if re.match(STM_COMMAND_FORMAT, command):

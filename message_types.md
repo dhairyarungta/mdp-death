@@ -141,7 +141,7 @@
       - XXX: the last 3 digits indicate distance in cm for S, or rotation angle for L/R
       - e.g. SB010 is move backwards 10cm, LF090 is turn 90 degrees to the left in the forward direction
     - AR1 and PR1 are consistent
-2. trigger camera to take a picture and return it to PC for image recognition
+<!-- 2. trigger camera to take a picture and return it to PC for image recognition
     ```
     {
         "type": "GET_IMAGE",
@@ -150,7 +150,7 @@
         }
     }
     ```
-    - `obs_id` is the unique `id` of the obstacle
+    - `obs_id` is the unique `id` of the obstacle -->
 3. image recognition results
     ```
     {
@@ -215,7 +215,6 @@ NOTE: messages sent to PC are prepended with message length
     {
         "type": "IMAGE_TAKEN",
         "data": {
-            "obs_id": "00", 
             "image": "..."
         }
     }

@@ -57,26 +57,6 @@ class PCInterface:
         self.disconnect()
         self.connect()
 
-    def get_image(self,obs_id):
-        # capture img to img_pth 
-        img_pth = "img.jpg"
-        capture(img_pth)
-        # preprocessing image
-        preprocess_img(img_pth)
-                    
-        # construct image
-        if os.path.isfile(img_pth):
-            with open(img_pth, "rb") as img:
-                encoded_string = base64.b64encode(img.read()).decode('utf-8')
-                message = {
-                    "type": 'IMAGE_TAKEN',
-                    "data":{
-                        "obs_id": obs_id,
-                        "image": encoded_string
-                     }
-                    }
-                self.msg_queue.put(json.dumps(message).encode("utf-8"))      
-
 
     def listen(self):
         while True:
@@ -101,13 +81,6 @@ class PCInterface:
                 # PC -> Rpi -> Android
                 elif type == 'IMAGE_RESULTS':
                     self.RPiMain.Android.msg_queue.put(message) 
-
-                # PC -> Rpi -> PC
-                elif type == 'GET_IMAGE':
-                    obs_id = parsedMsg["data"]["obs_id"]
-                    # Start a new thread to capture and send the image
-                    capture_and_send_image_thread = threading.Thread(target=self.get_image, args=(obs_id,))
-                    capture_and_send_image_thread.start()
                     
                 # PC -> Rpi -> Android
                 elif type == 'COORDINATES':
