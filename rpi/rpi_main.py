@@ -1,8 +1,8 @@
 from threading import Thread
 
-from rpi.Android import AndroidInterface
-from rpi.PC import PCInterface
-from rpi.stm import STMInterface
+from Android import AndroidInterface
+from PC import PCInterface
+from stm import STMInterface
 
 
 class RPiMain:
