@@ -30,8 +30,8 @@ class PCInterface:
                 sock.listen(128) # the maximum number of queued connections that the server can handle simultaneously
 
                 print("[PC] Waiting for PC connection...")
-                with socket.timeout(30):
-                    self.client_socket, self.address = sock.accept()
+                # with socket.timeout(30):
+                self.client_socket, self.address = sock.accept()
 
         # Handle any errors that may occur during the connection attempt.
         except socket.error as e:

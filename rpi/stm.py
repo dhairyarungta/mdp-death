@@ -33,6 +33,7 @@ class STMInterface:
     def listen(self):
         message = None
         while True:
+            print("[STM] In listening loop...")
             try:
                 message = str(self.serial.read(SERIAL_BUFFER_SIZE))
                 print("[STM] Read from STM:", message)
@@ -57,9 +58,12 @@ class STMInterface:
             message_json = json.loads(message_str)
             message_type = message_json["type"]
 
+            print("[STM] Sending message", message_str)
+
             if message_type == "NAVIGATION":
                 commands = message_json["data"]["commands"]
                 for command in commands:
+                    print("[STM] Sending command", command)
                     if self.is_valid_command(command):
                         exception = True
                         while exception:
