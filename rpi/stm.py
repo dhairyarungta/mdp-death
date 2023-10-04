@@ -18,10 +18,12 @@ class STMInterface:
         try:
             self.serial = serial.Serial("/dev/ttyUSB0", self.baudrate, write_timeout = 0)
             print("[STM] Connected to STM 0 successfully.")
+            self.clean_buffers()
         except:
             try:
                 self.serial = serial.Serial("/dev/ttyUSB1", self.baudrate, write_timeout = 0)
                 print("[STM] Connected to STM 1 successfully.")
+                self.clean_buffers()
             except Exception as e:
                 print("[STM] ERROR: Failed to connect to STM -", str(e))
     
@@ -29,6 +31,11 @@ class STMInterface:
         if self.serial != None and self.serial.is_open:
             self.serial.close()
         self.connect()
+    
+    def clean_buffers(self):
+        self.serial.reset_input_buffer() # receiving
+        self.serial.reset_output_buffer() # sending
+        print("[STM] Flushed input and output buffers")
 
     def listen(self):
         message = None
