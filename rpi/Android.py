@@ -76,7 +76,7 @@ class AndroidInterface:
                 decodedMsg = message.decode("utf-8")
                 if len(decodedMsg) <= 1:
                     continue
-                print("[Android] Read from Android:", decodedMsg)
+                print("[Android] Read from Android:", decodedMsg[:80])
                 parsedMsg = json.loads(decodedMsg)
                 type = parsedMsg["type"]
 
@@ -107,7 +107,7 @@ class AndroidInterface:
             while exception: 
                 try:
                     self.client_socket.send(message)
-                    print("[Android] Write to Android: " + message.decode("utf-8"))
+                    print("[Android] Write to Android: " + message.decode("utf-8")[:80])
                 except Exception as e:
                     print("[Android] ERROR: Failed to write to Android -", str(e))
                     self.reconnect() # reconnect and resend

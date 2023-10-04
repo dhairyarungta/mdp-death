@@ -38,7 +38,7 @@ class PCInterface:
             print("[PC] ERROR: Failed to connect -", str(e))
 
         # Log the connection attempt.
-        print('[PC] PC connected successfully: {}'.format(self.address))
+        print("[PC] PC connected successfully:", self.address)
         
     def disconnect(self):
         try:
@@ -47,7 +47,7 @@ class PCInterface:
                 self.client_sock = None
                 print("[PC] Disconnected from PC successfully.")
         except Exception as e:
-            print("[PC] Failed to disconnect from PC: " + str(e))
+            print("[PC] Failed to disconnect from PC:", str(e))
 
     def disconnect_forced(self):
         self.disconnect()
@@ -70,7 +70,7 @@ class PCInterface:
                 decodedMsg = message.decode("utf-8")
                 if len(decodedMsg) <= 1:
                     continue
-                print("[PC] Read from PC: " + decodedMsg)
+                print("[PC] Read from PC:", decodedMsg[:80])
                 parsedMsg = json.loads(decodedMsg)
                 type = parsedMsg["type"]
                 
@@ -108,7 +108,7 @@ class PCInterface:
             while exception: 
                 try:
                     self.client_socket.send(message)
-                    print("[PC] Write to PC: " + message.decode("utf-8"))
+                    print("[PC] Write to PC:", message.decode("utf-8")[:80])
                 except Exception as e:
                     print("[PC] ERROR: Failed to write to PC -", str(e))
                     self.connect()

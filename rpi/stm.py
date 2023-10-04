@@ -3,7 +3,7 @@ from queue import Queue
 import re
 import threading
 import serial
-from rpi.Camera import get_image
+from Camera import get_image
 
 from rpi_config import *
 
@@ -36,7 +36,7 @@ class STMInterface:
             print("[STM] In listening loop...")
             try:
                 message = self.serial.read().decode("utf-8")
-                print("[STM] Read from STM:", message)
+                print("[STM] Read from STM:", message[:80])
                 
                 if len(message) < 1:
                     # print("[STM] Ignoring message with length <1 from STM")
@@ -57,8 +57,6 @@ class STMInterface:
             message_str = message.decode("utf-8")
             message_json = json.loads(message_str)
             message_type = message_json["type"]
-
-            print("[STM] Sending message", message_str)
 
             if message_type == "NAVIGATION":
                 commands = message_json["data"]["commands"]
@@ -81,11 +79,11 @@ class STMInterface:
                                 message = self.listen()
                                 if message  == STM_ACK_MSG:
                                     print("[STM]", command, "acknowledged by STM") 
-                                elif message.isnumeric(): # TODO check STM ultrasonic sensor output format
-                                    print("[STM] WARNING:", command, "caused STM emergency stop, notifying PC") 
-                                    distance = float(message) 
-                                    ultrasonic_message = self.create_ultrasonic_message(command, distance)
-                                    self.RPiMain.PC.msg_queue.put(ultrasonic_message)
+                                # elif message.isnumeric(): # TODO check STM ultrasonic sensor output format
+                                #     print("[STM] WARNING:", command, "caused STM emergency stop, notifying PC") 
+                                #     distance = float(message) 
+                                #     ultrasonic_message = self.create_ultrasonic_message(command, distance)
+                                #     self.RPiMain.PC.msg_queue.put(ultrasonic_message)
                                 else:
                                     print("[STM] ERROR: Unexpected message from STM -", message)
                                     self.reconnect() # TODO
@@ -100,6 +98,7 @@ class STMInterface:
                 print("[STM] WARNING: Rejecting message with unknown type [%s] for STM" % message_type)
 
     def send_image_to_pc(self):
+        print("[STM] Adding image from camera to PC message queue")
         self.RPiMain.PC.msg_queue.put(get_image())      
 
     def is_valid_command(self, command):
@@ -108,12 +107,12 @@ class STMInterface:
         else:
             return False
         
-    def create_ultrasonic_message(self, command, distance):
-        message = {
-            "type": "ULTRASONIC",
-            "data": {
-                "distance": distance,
-                "command": command
-            }
-        }
-        return json.dumps(message).encode("utf-8")
+    # def create_ultrasonic_message(self, command, distance):
+    #     message = {
+    #         "type": "ULTRASONIC",
+    #         "data": {
+    #             "distance": distance,
+    #             "command": command
+    #         }
+    #     }
+    #     return json.dumps(message).encode("utf-8")
