@@ -76,8 +76,6 @@ public class RpiController {
         return status;
     }
 
-
-    // TODO: see how get obstacle coordinates
     public static String getTargetStatus(JSONObject results) {
         String status = "";
         try {
@@ -120,38 +118,38 @@ public class RpiController {
             robotCoor.put("x", robot.getX() - 1);
             robotCoor.put("y", robot.getY() - 1);
             robotCoor.put("dir", robot.getDirection());
-            checklistPayload.put("robot", robotCoor);
+//            checklistPayload.put("robot", robotCoor);
         } catch (Exception e) {
             Log.d(TAG, "Failed to parse string into json: ", e);
         }
-//        return robotCoor;
-        return checklistPayload;
+        return robotCoor;
+//        return checklistPayload;
     }
 
     // TODO: change after checklist complete
     public static JSONObject getObstacleDetails(Map.Obstacle obstacle) {
-        JSONObject checklistPayload = new JSONObject();
+//        JSONObject checklistPayload = new JSONObject();
         JSONObject obstacleCoor = new JSONObject();
         try {
-            obstacleCoor.put("id", obstacle.getObsID());
+            obstacleCoor.put("id", Integer.toString(obstacle.getObsID()));
             obstacleCoor.put("x", obstacle.getObsXCoor() - 1);
             obstacleCoor.put("y", obstacle.getObsYCoor() - 1);
             obstacleCoor.put("dir", obstacle.getDirection());
-            checklistPayload.put("obstacle", obstacleCoor);
+//            checklistPayload.put("obstacle", obstacleCoor);
         } catch (Exception e) {
             Log.d(TAG, "Failed to parse string into json: ", e);
         }
-//        return obstacleCoor;
-        return checklistPayload;
+        return obstacleCoor;
+//        return checklistPayload;
     }
 
     // get navigation details into json (up, down, left, right buttons)
     public static JSONObject getNavDetails(List<String> commands) {
         JSONObject message = new JSONObject();
+        JSONArray commandsArr = new JSONArray(commands);
         JSONObject commandsJson = new JSONObject();
         try {
-            commandsJson.put("commands", commands);
-            Log.d(TAG, "commands: "+commands);
+            commandsJson.put("commands", commandsArr);
             message.put("type","NAVIGATION");
             message.put("data", commandsJson);
 

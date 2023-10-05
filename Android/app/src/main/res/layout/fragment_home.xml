@@ -162,7 +162,7 @@
                 android:layout_marginTop="24dp"
                 android:text="@string/text_taskType"
                 android:textColor="@color/white"
-                app:layout_constraintBottom_toTopOf="@+id/button_fastest"
+                app:layout_constraintBottom_toTopOf="@+id/button_taskType"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.087"
                 app:layout_constraintStart_toStartOf="parent"

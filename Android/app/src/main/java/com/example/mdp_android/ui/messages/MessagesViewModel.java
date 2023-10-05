@@ -7,10 +7,8 @@ public class MessagesViewModel extends ViewModel {
     private MutableLiveData<String> deviceName;
 
     public MessagesViewModel() {
-        if (deviceName == null) {
-            deviceName = new MutableLiveData<>();
-            deviceName.setValue("Bluetooth: Not Connected");
-        }
+        deviceName = new MutableLiveData<>();
+        deviceName.setValue("");
     }
 
     public LiveData<String> getDeviceName() { return deviceName; }

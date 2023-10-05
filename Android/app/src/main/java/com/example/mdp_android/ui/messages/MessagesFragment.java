@@ -15,6 +15,7 @@ import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.Button;
 import android.widget.TextView;
@@ -41,14 +42,14 @@ public class MessagesFragment extends Fragment {
     private FragmentMessagesBinding binding;
     private MessagesViewModel messagesViewModel;
     private Button sendBtn;
+    private ImageButton clearReceivedBtn, clearSentBtn;
     private EditText eMessage;
     private ListView lvSentMessages;
     private ListView lvReceivedMessages;
-    private TextView bluetoothTextView;
     private static ArrayAdapter<String> aSentMessages;
     private static ArrayAdapter<String> aReceivedMessages;
     public static BluetoothController bController;
-    private String connectedDevice = "";
+
     DeviceSingleton deviceSingleton;
 
     @Override
@@ -70,6 +71,10 @@ public class MessagesFragment extends Fragment {
 
         eMessage = root.findViewById(R.id.editText_sendMessage);
         sendBtn = root.findViewById(R.id.button_send);
+        clearReceivedBtn = root.findViewById(R.id.imageButton_clearReceived);
+        clearSentBtn = root.findViewById(R.id.imageButton_clearSent);
+
+        deviceSingleton = DeviceSingleton.getInstance();
 
         if (aSentMessages == null || aReceivedMessages == null) {
             aSentMessages = new ArrayAdapter<>(binding.getRoot().getContext(), R.layout.message_item);
@@ -95,14 +100,6 @@ public class MessagesFragment extends Fragment {
             }
         });
 
-        bluetoothTextView = binding.textViewBluetoothStatus;
-
-        // register receiver for connected devices
-        LocalBroadcastManager.getInstance(requireActivity()).registerReceiver(
-                mNameReceiver,
-                new IntentFilter("getConnectedDevice")
-        );
-
         // register receiver for receiving messages from connected device
         LocalBroadcastManager.getInstance(requireActivity()).registerReceiver(
                 mTextReceiver,
@@ -114,14 +111,32 @@ public class MessagesFragment extends Fragment {
             public void onClick(View view) {
 
                 String message = eMessage.getText().toString();
-                if (message.equals("")) {
+                if (deviceSingleton.getDeviceName().equals("")) {
+                    toast("Bluetooth not connected to any device");
+                } else if (message.equals("")) {
                     toast("Hey, don't just send empty strings");
-                    return;
+                } else {
+                    sendMessage(message);
+                    toast("message sent: " + message);
+                    eMessage.setText("");
+                    appendASentMessages(message);
                 }
-                sendMessage(message);
-                toast("message sent: " + message);
-                eMessage.setText("");
-                appendASentMessages(message);
+            }
+        });
+
+        clearSentBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                aSentMessages.clear();
+                toast("messages cleared");
+            }
+        });
+
+        clearReceivedBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                aReceivedMessages.clear();
+                toast("messages cleared");
             }
         });
 
@@ -139,41 +154,9 @@ public class MessagesFragment extends Fragment {
     public void onDestroy() {
         super.onDestroy();
         // remove receivers
-        LocalBroadcastManager.getInstance(requireActivity()).unregisterReceiver(mNameReceiver);
         LocalBroadcastManager.getInstance(requireActivity()).unregisterReceiver(mTextReceiver);
     }
 
-    // hydrating the view with the view model
-    @Override
-    public void onResume() {
-        super.onResume();
-        bluetoothTextView.setText(messagesViewModel.getDeviceName().getValue());
-        messagesViewModel.getDeviceName().observe(getViewLifecycleOwner(), new Observer<String>() {
-            @Override
-            public void onChanged(@Nullable String s) {
-                bluetoothTextView.setText(s);
-            }
-        });
-    }
-
-    // Update status whenever connection changes
-    private BroadcastReceiver mNameReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Log.d(TAG, "broadcast received");
-            String deviceName = intent.getStringExtra("name");
-            if (deviceName.equals("")) {
-                connectedDevice = "";
-                deviceSingleton.setDeviceName(connectedDevice);
-                updateBluetoothStatus();
-            } else {
-                connectedDevice = deviceName;
-                deviceSingleton.setDeviceName(connectedDevice);
-                Log.d(TAG, "onReceive: -msg- " + connectedDevice);
-                updateBluetoothStatus();
-            }
-        }
-    };
 
     private BroadcastReceiver mTextReceiver = new BroadcastReceiver() {
         @Override
@@ -209,18 +192,4 @@ public class MessagesFragment extends Fragment {
         Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
     }
 
-    public void updateBluetoothStatus() {
-        Log.d(TAG, "updating bluetooth status in message fragment...");
-        deviceSingleton = DeviceSingleton.getInstance();
-
-        if (!deviceSingleton.getDeviceName().equals("")) {
-            connectedDevice = deviceSingleton.getDeviceName();
-            messagesViewModel.setDeviceName(getContext().getString(
-                    R.string.bluetooth_device_connected)+connectedDevice);
-
-        } else {
-            messagesViewModel.setDeviceName(getContext().getString(
-                    R.string.bluetooth_device_connected_not));
-        }
-    }
 }

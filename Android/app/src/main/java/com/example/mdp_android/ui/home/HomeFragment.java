@@ -59,6 +59,7 @@ public class HomeFragment extends Fragment {
     private static RecyclerAdapter obsItems;
     private RecyclerView.LayoutManager layoutManager;
     private ToggleButton setRobot, setDirection, setTaskType;
+    private Toast currentToast;
 
 
     @Override
@@ -84,6 +85,11 @@ public class HomeFragment extends Fragment {
         LocalBroadcastManager.getInstance(requireActivity()).registerReceiver(
                 mTextReceiver,
                 new IntentFilter("getReceived")
+        );
+
+        LocalBroadcastManager.getInstance(requireActivity()).registerReceiver(
+                initialStatusReceiver,
+                new IntentFilter("getStatus")
         );
 
 
@@ -131,6 +137,7 @@ public class HomeFragment extends Fragment {
                 status = RpiController.getRobotStatus(response);
                 homeViewModel.setRobotStatus(status);
                 updateRobotPosition(response);
+                // TODO: get robot coordinate message as list and update every few seconds using sleep and for loop
             } else if (messageType == "image") {
                 status = RpiController.getTargetStatus(response);
                 try {
@@ -141,7 +148,7 @@ public class HomeFragment extends Fragment {
                         status = status + " at (" + x + ", " + y + ") facing " + o.getDirection();
                     } else {
                         status = "Invalid ID received";
-                        Toast.makeText(getContext(), "Invalid Obstacle ID received", Toast.LENGTH_SHORT).show();
+                        toast("Invalid Obstacle ID received");
                     }
                 } catch (Exception e) {
                     log("Failed to parse JSON: "+e);
@@ -149,6 +156,15 @@ public class HomeFragment extends Fragment {
                 homeViewModel.setTargetStatus(status);
                 updateObstacle(response);
             }
+        }
+    };
+
+    private BroadcastReceiver initialStatusReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String textReceived = intent.getStringExtra("robot");
+            homeViewModel.setRobotStatus(textReceived);
+
         }
     };
 
@@ -165,6 +181,7 @@ public class HomeFragment extends Fragment {
         // remove receiver
         LocalBroadcastManager.getInstance(requireActivity()).unregisterReceiver(mNameReceiver);
         LocalBroadcastManager.getInstance(requireActivity()).unregisterReceiver(mTextReceiver);
+        LocalBroadcastManager.getInstance(requireActivity()).unregisterReceiver(initialStatusReceiver);
     }
 
     @Override
@@ -193,7 +210,13 @@ public class HomeFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 // sends task and robot and obstacles coordinates to rpi
-                map.sendMapToRpi();
+                if (map.robotInMap()) {
+                    map.sendMapToRpi();
+                    map.setStart(true);
+                    toast("Start Task: " + map.getTaskType());
+                } else {
+                    toast( "Map not filled");
+                }
             }
         });
 
@@ -202,82 +225,62 @@ public class HomeFragment extends Fragment {
             public void onClick(View view) {
                 map.clearGrid();
                 obsItems.setAllVisibility(true);
+                map.setStart(false);
             }
         });
 
         up.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Toast.makeText(getContext(), "move forward", Toast.LENGTH_SHORT).show();
-//                ArrayList<String> commands = new ArrayList<>();
-//                commands.add("SF010");
-//                RpiController.sendToRpi(RpiController.getNavDetails(commands));
-
-                // checklist
-                //RpiController.sendToRpi2("SF050");
-                RpiController.sendToRpi2("f");
-
-                log("move forward");
+                toast("move forward");
+                ArrayList<String> commands = new ArrayList<>();
+                commands.add("SF050");
+                RpiController.sendToRpi(RpiController.getNavDetails(commands));
             }
         });
 
         down.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Toast.makeText(getContext(), "move backwards", Toast.LENGTH_SHORT).show();
-//                ArrayList<String> commands = new ArrayList<>();
-//                commands.add("SB010");
-//                RpiController.sendToRpi(RpiController.getNavDetails(commands));
-
-                // checklist
-                //RpiController.sendToRpi2("SB050");
-                RpiController.sendToRpi2("r");
-                log("move backwards");
+                toast( "move backwards");
+                ArrayList<String> commands = new ArrayList<>();
+                commands.add("SB050");
+                RpiController.sendToRpi(RpiController.getNavDetails(commands));
             }
         });
 
         left.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Toast.makeText(getContext(), "turn left", Toast.LENGTH_SHORT).show();
-//                ArrayList<String> commands = new ArrayList<>();
-//                commands.add("LF090");
-////                commands.add("SF010");
-//                RpiController.sendToRpi(RpiController.getNavDetails(commands));
-
-                // checklist
-                //RpiController.sendToRpi2("LF090");
-                RpiController.sendToRpi2("tl");
-                log("turn left");
+                toast( "turn left");
+                ArrayList<String> commands = new ArrayList<>();
+                commands.add("LF090");
+//                commands.add("SF010");
+                RpiController.sendToRpi(RpiController.getNavDetails(commands));
             }
         });
 
         right.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Toast.makeText(getContext(), "turn right", Toast.LENGTH_SHORT).show();
-//                ArrayList<String> commands = new ArrayList<>();
-//                commands.add("RF090");
+                toast("turn right");
+                ArrayList<String> commands = new ArrayList<>();
+                commands.add("RF090");
 ////                commands.add("SF010");
-//                RpiController.sendToRpi(RpiController.getNavDetails(commands));
-
-                // checklist
-                //RpiController.sendToRpi2("RF090");
-                RpiController.sendToRpi2("tr");
-                log("turn right");
+                RpiController.sendToRpi(RpiController.getNavDetails(commands));
             }
         });
 
         setRobot.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                String toast;
+                String message;
                 if (b) {
-                    toast = "Select a cell to place robot";
+                    message = "Select a cell to place robot";
                 } else {
-                    toast = "Cancel";
+                    message = "Cancel";
                 }
-                Toast.makeText(getContext(), toast, Toast.LENGTH_SHORT).show();
+                toast(message);
                 map.setCanDrawRobot(b);
                 if (setDirection.isChecked()) setDirection.setChecked(!b);
             }
@@ -286,13 +289,13 @@ public class HomeFragment extends Fragment {
         setDirection.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                String toastStr;
+                String message;
                 if (b) {
-                    toastStr = "Select object to change direction";
+                    message = "Select object to change direction";
                 } else {
-                    toastStr = "cancel";
+                    message = "cancel";
                 }
-                Toast.makeText(getContext(), toastStr, Toast.LENGTH_SHORT).show();
+                toast(message);
                 map.setCanSetDirection(b);
                 if (setRobot.isChecked()) setRobot.setChecked(!b);
             }
@@ -301,13 +304,13 @@ public class HomeFragment extends Fragment {
         setTaskType.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                String toastStr;
+                String message;
                 if (b) {
-                    toastStr = "Task type: Fastest Car";
+                    message = "Task type: Fastest Car";
                 } else {
-                    toastStr = "Task type: Image Recognition";
+                    message = "Task type: Image Recognition";
                 }
-                Toast.makeText(getContext(), toastStr, Toast.LENGTH_SHORT).show();
+                toast(message);
                 // set task type in map
                 map.setTaskType(b);
             }
@@ -378,7 +381,7 @@ public class HomeFragment extends Fragment {
             if (map.isWithinCanvasRegion(x+1, y+1)) {
                 map.setRobotCoor(x + 1, y + 1, d);
             } else {
-                Toast.makeText(getContext(), "Invalid coordinates received", Toast.LENGTH_SHORT).show();
+                toast( "Invalid coordinates received");
             }
 
         } catch (Exception e) {
@@ -405,5 +408,11 @@ public class HomeFragment extends Fragment {
         Log.d(TAG, message);
     }
 
+    // cancels the current toast and show the next one
+    public void toast(String message) {
+        if (currentToast != null) currentToast.cancel();
+        currentToast = Toast.makeText(binding.getRoot().getContext(), message, Toast.LENGTH_SHORT);
+        currentToast.show();
+    }
 
 }

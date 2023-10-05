@@ -1,6 +1,7 @@
 package com.example.mdp_android.ui.grid;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -17,10 +18,12 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 
 import androidx.core.content.ContextCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.example.mdp_android.R;
 import com.example.mdp_android.controllers.RpiController;
 import com.example.mdp_android.ui.home.HomeFragment;
+import com.example.mdp_android.ui.home.HomeViewModel;
 
 import java.util.ArrayList;
 
@@ -42,9 +45,11 @@ public class Map extends View {
     private Bitmap robotDirectionBitmap;
     private static boolean canDrawRobot = false;
     private static boolean canSetDirection = false;
+    private static boolean start = false;
 
     private static boolean taskType = false;
 
+    public void setStart(boolean start) { this.start = start; }
     public void setCanSetDirection(boolean setDir) { canSetDirection = setDir; }
     public void setCanDrawRobot(boolean draw) {
         canDrawRobot = draw;
@@ -83,7 +88,7 @@ public class Map extends View {
         linePaint.setStyle(Paint.Style.FILL_AND_STROKE);
 
         // paint for robot
-        robotPaint.setColor(Color.CYAN);
+        robotPaint.setColor(Color.parseColor("#C8A2C8"));
 
         // paint for obstacle
         obstaclePaint.setColor(Color.BLACK);
@@ -431,20 +436,22 @@ public class Map extends View {
         if (oldX != -1 && oldY != -1) {
             for (int i = oldX - 1; i <= oldX + 1; i++)
                 for (int j = oldY - 1; j <= oldY + 1; j++)
-                    cells[i][j].setType("unexplored");
+                    if (!start) {
+                        cells[i][j].setType("unexplored");
+                    } else {
+                        cells[i][j].setType("explored");
+                    }
         }
 
         robot.setX(x);
         robot.setY(y);
         robot.setDirection(d);
-//        this.updateRobotAxis(col, row, direction.toUpperCase());
         int col = x;
         int row = this.convertRow(y);
         for (int i = col - 1; i <= col + 1; i++)
             for (int j = row - 1; j <= row + 1; j++)
                 if (isWithinCanvasRegion(i,j)) cells[i][j].setType("robot");
 
-        log("robot set");
 
         this.invalidate();
     }
@@ -490,7 +497,7 @@ public class Map extends View {
                     String obsID = event.getClipData().getItemAt(0).getText().toString();
                     setObstacleCoor(cellX, cellY, obsID);
                     // ADDED: send to RPI obstacle details
-                    RpiController.sendToRpi(RpiController.getObstacleDetails(obstacleCoor.get(obstacleCoor.size() - 1)));
+//                    RpiController.sendToRpi(RpiController.getObstacleDetails(obstacleCoor.get(obstacleCoor.size() - 1)));
                     HomeFragment.modifyObstacleVisibility(Integer.parseInt(obsID)-1, false);
                     this.invalidate();
                 } else {
@@ -521,13 +528,14 @@ public class Map extends View {
                             d = getNewDirection(obstacleCoor.get(cells[cellX][cellY].getObsIndex()).getDirection());
                             obstacleCoor.get(cells[cellX][cellY].getObsIndex()).setDirection(d);
                             // ADDED: send to RPI obstacle details
-                            RpiController.sendToRpi(RpiController.getObstacleDetails(obstacleCoor.get(cells[cellX][cellY].getObsIndex())));
+//                            RpiController.sendToRpi(RpiController.getObstacleDetails(obstacleCoor.get(cells[cellX][cellY].getObsIndex())));
                             this.invalidate();
                         } else if (cells[cellX][cellY].getType() == "robot") {
                             d = getNewDirection(robot.getDirection());
                             robot.setDirection(d);
                             // ADDED: send to RPI robot details
-                            RpiController.sendToRpi(RpiController.getRobotDetails(robot));
+//                            RpiController.sendToRpi(RpiController.getRobotDetails(robot));
+                            sendRobotStatus();
                             this.invalidate();
                         }
                     }
@@ -537,7 +545,8 @@ public class Map extends View {
                         if (checkSpaceEnough(cellX, cellY)) {
                             setRobotCoor(cellX, this.convertRow(cellY), DEFAULT_DIRECTION);
                             // ADDED: send to RPI robot details
-                            RpiController.sendToRpi(RpiController.getRobotDetails(robot));
+//                            RpiController.sendToRpi(RpiController.getRobotDetails(robot));
+                            sendRobotStatus();
 //                            this.invalidate();
                         } else {
                             log("already have an object here");
@@ -575,7 +584,7 @@ public class Map extends View {
                     if (isWithinCanvasRegion(cellX, cellY) && checkGridEmpty(cellX, cellY)) {
                         if (!(currentSelected == -1)) {
                             // ADDED: send to RPI obstacle details
-                            RpiController.sendToRpi(RpiController.getObstacleDetails(obstacleCoor.get(currentSelected)));
+//                            RpiController.sendToRpi(RpiController.getObstacleDetails(obstacleCoor.get(currentSelected)));
                             cells[cellX][cellY].setObsIndex(currentSelected);
                             cells[cellX][cellY].setType("obstacle");
                             currentSelected = -1;
@@ -699,6 +708,20 @@ public class Map extends View {
             }
         }
         return null;
+    }
+
+    public boolean robotInMap() {
+        return robot.getX() != -1 && robot.getY() != -1;
+    }
+
+    private void sendRobotStatus() {
+        String x = Integer.toString(robot.getX()-1);
+        String y = Integer.toString(robot.getY()-1);
+        String status = "robot at (" + x + " , " + y + ") facing " + robot.getDirection();
+        Log.d(TAG, "status: "+ status);
+        Intent intent = new Intent("getStatus");
+        intent.putExtra("robot", status);
+        LocalBroadcastManager.getInstance(getContext()).sendBroadcast(intent);
     }
 
     // TODO: update robot movements on map for manual navigation (only if robot in map)
