@@ -8,7 +8,7 @@ import json
 # Run this command in the terminal to start the server
 # docker run --mount source=roboflow,target=/tmp/cache -it --rm -p 9001:9001 roboflow/roboflow-inference-server-cpu
 
-infer_server_url = "http://localhost:9001/mdp-project/1?api_key=3cR60WzeoK9LNrEVOyPT"
+infer_server_url = "http://localhost:9001/mdp-project-4rl1x/1?api_key=xu7E4hooqQWgnxXgLY1r"
 
 
 def visualise_predictions(predictions: List[Dict], input_path, output_path, stroke=2):
