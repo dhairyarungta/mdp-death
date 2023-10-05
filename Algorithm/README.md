@@ -1,3 +1,44 @@
+# Steps to run PC application
+
+- From `Algorithm` directory, create a virtual venv:
+
+```shell
+python -m venv .venv
+```
+
+- Activate the virtual venv:
+    - Windows:
+
+    ```shell
+    source .venv/Scripts/activate 
+    ```
+
+    - Linux/Mac:
+
+    ```shell
+    source .venv/bin/activate
+    ```
+
+- Install required dependencies:
+
+```shell
+pip install -e .
+```
+
+- Change directory to `mdpalgo` and run the app:
+
+```shell
+cd mdpalgo
+python -m mdpalgo #or python __main__.py
+```
+
+NOTE: In actual setup, PC has to run a docker container for image inference server. Open a new terminal and run:
+
+```shell
+docker run --mount source=roboflow,target=/tmp/cache -it --rm -p 9001:9001 roboflow/roboflow-inference-server-cpu
+```
+
+
 # This section contains the code for the algorithms required in the MDP project including the path finding, navigation control algorithms.
 
 ## ******* USE PYTHON 3.8 *******
