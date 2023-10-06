@@ -131,7 +131,7 @@ class STMInterface:
     #             "command": command
     #         }
     #     }
-    #     return json.encode("utf-8")
+    #     return json.dumps(message).encode("utf-8")
 
     def create_path_message(self, path):
         message = {
@@ -140,4 +140,4 @@ class STMInterface:
                 "path": path
             }
         }
-        return json.encode("utf-8")
+        return json.dumps(message).encode("utf-8")
