@@ -88,6 +88,9 @@ dmypy.json
 
 # ignore files in images folder
 mdpalgo/images/*.jpg
+mdpalgo/images_result/*.jpg
+mdpalgo/test_images
+mdpalgo/test_images_result
 !mdpalgo/images/img_1.jpg
 fastestalgo/images/*.jpg
 
