@@ -191,12 +191,11 @@ class Simulator:
                 #     if (txt == None):
                 #         continue
                 # message_type_and_data = self.parser.parse(txt.decode())
-                print("HAI")
                 all_data = self.commsClient.client_socket.recv(1024)
                 print(all_data)
                 message_type_and_data = json.loads(all_data)
 
-                print(f"reach here {message_type_and_data}")
+                print(f"reached here 3 {message_type_and_data}")
 
                 message_data = message_type_and_data["data"]
                 if message_type_and_data["type"] == MessageType.START_TASK.value:
@@ -216,7 +215,6 @@ class Simulator:
                 print("Invalid command: " + all_data.decode())
 
     def on_receive_start_task_message(self, message_data: dict):
-        print("HIIIIIIIII")
         if message_data['task'] == TaskType.TASK_EXPLORATION.value:  # Week 8 Task
             # Reset first
             self.reset_button_clicked()
