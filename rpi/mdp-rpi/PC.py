@@ -105,6 +105,10 @@ class PCInterface:
     def send(self):
         while True:
             message = self.msg_queue.get()
+            # add the first 4 bytes is length of the 
+            message_len = len(message)
+            length_bytes = message_len.to_bytes(4, byteorder="big")
+            result_bytes = length_bytes + message
             exception = True
             while exception: 
                 try:

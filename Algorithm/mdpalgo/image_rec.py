@@ -88,6 +88,29 @@ def image_rec(image_path, save_path=None):
     # Optional: print the response
     result_str = response.text
     result_dict = json.loads(result_str)
+    nretries = 5
+    while len(result_dict['predictions']) == 0 and nretries>0:
+        print(f'No Object detected. Retrying')
+        response = send_post_request(encoded_image, infer_server_url)
+        result_str = response.text
+        result_dict = json.loads(result_str)
+        nretries-=1
+    
+    if len(result_dict['predictions']) == 0:
+        return None
+    print(result_dict)
+    if len(result_dict['predictions']) >1:
+        largest_box = 0
+        largest_box_pre = None
+        for pre in result_dict['predictions']:
+            box_area = pre['width']*pre['height']
+            if box_area > largest_box:
+                largest_box = box_area
+                largest_box_pre = pre
+        result_dict['predictions'] = [largest_box_pre]
+        
     if save_path is not None:
         visualise_predictions(result_dict["predictions"], image_path, save_path)
     return result_dict
+
+print(image_rec('test.jpg', 'output.jpg'))

@@ -182,25 +182,16 @@ class Simulator:
         """
 
         print("reached here 1")
-        while mdp_constants.RPI_CONNECTED:
+        while True:
             print("reached here 2")
             try:
-                # if self.commsClient.client_socket is not None:
-                #     txt = self.commsClient.client_socket.recv(1024)
-                #     print("== SIMULATOR > RECV_PROCESS | RECEIVED MSG: ", txt)
-                #     if (txt == None):
-                #         continue
-                # message_type_and_data = self.parser.parse(txt.decode())
-                all_data = self.commsClient.client_socket.recv(1024)
-                print(all_data)
+                all_data = self.commsClient.recv()
                 message_type_and_data = json.loads(all_data)
 
-                print(f"reached here 3 {message_type_and_data}")
-
+                print(f"reached here {message_type_and_data}")
                 message_data = message_type_and_data["data"]
                 if message_type_and_data["type"] == MessageType.START_TASK.value:
                     self.on_receive_start_task_message(message_data)
-                    return
 
                 elif message_type_and_data["type"] == MessageType.IMAGE_TAKEN.value:
                     print("in elif statement")
@@ -265,13 +256,18 @@ class Simulator:
             fh.write(image_data)
 
         if os.path.isfile("test.jpg"):
-            result = image_rec("test.jpg", save_path="output.jpg")
+            result = image_rec("test.jpg", save_path="output.jpg")  
             print("Output image is save to output.jpg")
+            if result is None:
+                print('No object detected!')
+                img_id = '00'
+            else:
+                img_id = result["predictions"][0]["class"][2:]
             result_message = {
                 "type": "IMAGE_RESULTS",
                 "data": {
                     "obs_id": self.obs_ar[self.obs_idx],
-                    "img_id": result["predictions"][0]["class"]
+                    "img_id": img_id
                 }
             }
             self.obs_idx += 1
