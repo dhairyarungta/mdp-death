@@ -227,15 +227,15 @@ class AtoBPathPlan(object):
     def save_path_and_send_to_rpi(self):
         # self.all_movements_dict[self.get_current_obstacle_id()] = self.parse_movements_string_EDITME()
         self.all_movements_dict = self.parse_movements_string_EDITME()
-        if self.all_movements_dict['data']['commands'][0][0:2] == "SF":
-            new_num = int(self.all_movements_dict['data']['commands'][0][3:5])+10
-            if new_num<100:
-                new_num_str = "0" + str(new_num)
-            else:
-                new_num_str = str(new_num)
-            self.all_movements_dict['data']['commands'][0] = "SF"+new_num_str
-        else:
-            self.all_movements_dict['data']['commands'].insert(0, "SF010")
+        # if self.all_movements_dict['data']['commands'][0][0:2] == "SF":
+        #     new_num = int(self.all_movements_dict['data']['commands'][0][2:5])+10
+        #     if new_num<100:
+        #         new_num_str = "0" + str(new_num)
+        #     else:
+        #         new_num_str = str(new_num)
+        #     self.all_movements_dict['data']['commands'][0] = "SF"+new_num_str
+        # else:
+        #     self.all_movements_dict['data']['commands'].insert(0, "SF010")
         print(f"== A_TO_B_PLAN_CTLR > save_path_for_rpi() | {self.all_movements_dict}")
         print(f"== A_TO_B_PLAN_CTLR > save_path_for_rpi() | SENDING MSG")
         self.simulator.commsClient.send(self.all_movements_dict)
