@@ -245,8 +245,7 @@ class Simulator:
             logging.info("[AND] Doing path calculation...")
             self.start_button_clicked()
 
-    def on_receive_image_taken_message(self, message_data: dict):
-        print("hi i am hereee")
+    def get_img_id_from_image_taken(self, message_data):
         image_data = message_data["image"]
         image_data = image_data.encode('utf-8')
         image_data = base64.b64decode(image_data)
@@ -259,22 +258,27 @@ class Simulator:
 
         if os.path.isfile(image_path):
             result_path = f'images_result/{image_name}'
-            result = image_rec(image_path, save_path=result_path)  
+            result = image_rec(image_path, save_path=result_path)
             print(f"Output image is save to {result_path}")
             if result is None:
                 print('No object detected!')
                 img_id = '00'
             else:
                 img_id = result["predictions"][0]["class"][2:]
-            result_message = {
-                "type": "IMAGE_RESULTS",
-                "data": {
-                    "obs_id": self.obs_ar[self.obs_idx],
-                    "img_id": img_id
-                }
+
+        return img_id
+
+    def on_receive_image_taken_message(self, message_data: dict):
+        img_id = self.get_img_id_from_image_taken(message_data)
+        result_message = {
+            "type": "IMAGE_RESULTS",
+            "data": {
+                "obs_id": self.obs_ar[self.obs_idx],
+                "img_id": img_id
             }
-            self.obs_idx += 1
-            self.commsClient.send(result_message)
+        }
+        self.obs_idx += 1
+        self.commsClient.send(result_message)
 
     # def on_receive_update_robot_pose(self, message_data: dict):
     #     print("Received updated robot pose")
@@ -354,6 +358,10 @@ class Simulator:
             self.a_to_b_path_planner = AtoBPathPlan(self, self.grid, self.car, shortest_path_implementation)
 
             self.a_to_b_path_planner.start_robot()
+
+            print(f"== SIMULATOR > start_b_c() | Parsing images to print")
+
+
 
     def reset_button_clicked(self):
         self.grid.reset_data()
