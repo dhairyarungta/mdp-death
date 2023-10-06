@@ -77,6 +77,7 @@ class STMInterface:
                     print("[STM] No path found in NAVIGATION message")
 
                 for command in commands:
+                    self.clean_buffers()
                     print("[STM] Sending command", command)
                     if self.is_valid_command(command):
                         exception = True
