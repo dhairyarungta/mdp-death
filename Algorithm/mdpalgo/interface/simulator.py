@@ -187,8 +187,7 @@ class Simulator:
             try:
                 all_data = self.commsClient.recv()
                 message_type_and_data = json.loads(all_data)
-
-                print(f"reached here {message_type_and_data}")
+                print('message type: ', message_type_and_data['type'])
                 message_data = message_type_and_data["data"]
                 if message_type_and_data["type"] == MessageType.START_TASK.value:
                     self.on_receive_start_task_message(message_data)
@@ -251,13 +250,17 @@ class Simulator:
         image_data = message_data["image"]
         image_data = image_data.encode('utf-8')
         image_data = base64.b64decode(image_data)
-        with open("test.jpg", "wb") as fh:
-            print("Image save to test.jpg!")
+        import uuid
+        image_name = f'{str(uuid.uuid4())}.jpg'
+        image_path = f"images/{image_name}"
+        with open(image_path, "wb") as fh:
+            print(f"Image save to {image_path}!")
             fh.write(image_data)
 
-        if os.path.isfile("test.jpg"):
-            result = image_rec("test.jpg", save_path="output.jpg")  
-            print("Output image is save to output.jpg")
+        if os.path.isfile(image_path):
+            result_path = f'images_result/{image_name}'
+            result = image_rec(image_path, save_path=result_path)  
+            print(f"Output image is save to {result_path}")
             if result is None:
                 print('No object detected!')
                 img_id = '00'

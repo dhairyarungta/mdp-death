@@ -113,4 +113,8 @@ def image_rec(image_path, save_path=None):
         visualise_predictions(result_dict["predictions"], image_path, save_path)
     return result_dict
 
-print(image_rec('test.jpg', 'output.jpg'))
+if __name__ == "__main__":
+    import os 
+
+    for img in os.listdir('test_images'):
+        image_rec(f'test_images/{img}', f'test_images_result/{img}')
