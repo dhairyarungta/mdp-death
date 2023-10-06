@@ -3,6 +3,7 @@ import json
 import os
 from picamera import PiCamera
 import cv2
+import time
 
 def capture(img_pth):
     camera = PiCamera()
@@ -18,7 +19,7 @@ def preprocess_img(img_pth):
 
 def get_image():
     # capture img to img_pth 
-    img_pth = "img.jpg"
+    img_pth = f"img_{round(time.time())}.jpg" 
     capture(img_pth)
     # preprocessing image
     preprocess_img(img_pth)
