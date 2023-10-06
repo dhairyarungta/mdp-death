@@ -86,6 +86,7 @@ class AtoBPathPlan(object):
             #     [[11, 13], [12, 13], [13, 13], [13, 14], [13, 15], [13, 16]],
             #     [[13, 15]]
             # ]
+            self.filled_coordinates_array = []
             for ar in self.path_according_to_movements:
                 for nested_ar in ar:
                     tmp = []
@@ -228,7 +229,7 @@ class AtoBPathPlan(object):
         #     self.all_movements_dict['data']['commands'][0] = "SF"+new_num_str
         # else:
         #     self.all_movements_dict['data']['commands'].insert(0, "SF010")
-        self.all_movements_dict["path"] = coords
+        self.all_movements_dict["data"]["path"] = coords
         print(f"== A_TO_B_PLAN_CTLR > save_path_for_rpi() | {self.all_movements_dict}")
         print(f"== A_TO_B_PLAN_CTLR > save_path_for_rpi() | SENDING MSG")
         self.simulator.commsClient.send(self.all_movements_dict)
