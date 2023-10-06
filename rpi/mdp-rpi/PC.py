@@ -43,9 +43,9 @@ class PCInterface:
         
     def disconnect(self):
         try:
-            if self.client_sock is not None: #TODO
-                self.client_sock.close()
-                self.client_sock = None
+            if self.client_socket is not None: #TODO
+                self.client_socket.close()
+                self.client_socket = None
                 print("[PC] Disconnected from PC successfully.")
         except Exception as e:
             print("[PC] Failed to disconnect from PC:", str(e))
