@@ -88,7 +88,10 @@ class AtoBPathPlan(object):
             # ]
             for ar in self.path_according_to_movements:
                 for nested_ar in ar:
-                    self.filled_coordinates_array.append(nested_ar)
+                    tmp = []
+                    for coord in nested_ar:
+                        tmp.append(int(coord))
+                    self.filled_coordinates_array.append(tmp)
             print(f"== A_TO_B_PLAN_CTLR > auto_search() | Collection of movements is {self.collection_of_movements}")
             print(f"== A_TO_B_PLAN_CTLR > auto_search() | path according to movements is {self.path_according_to_movements}")
             print(f"== A_TO_B_PLAN_CTLR > auto_search() | MOVEMENT STRING IS {self.movement_string}")
