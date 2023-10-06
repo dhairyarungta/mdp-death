@@ -4,6 +4,7 @@ import argparse
 from constants import mdp_constants
 from interface.simulator import Simulator
 from image_stiching import stiching_images
+import os 
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -31,9 +32,13 @@ def main():
         x.run()
     except Exception as err:
         print(err)
-    
-    stiching_images('images_result', 'images_result/stiched_image.jpg')
 
+def remove_file_ext(directory, file_ext = '.jpg'):
+    for f in os.listdir(directory):
+        if f.endswith(file_ext):
+            os.remove(os.path.join(directory, f))
 
 if __name__ == '__main__':
+    remove_file_ext('images', '.jpg')
+    remove_file_ext('images_result', '.jpg')
     main()

@@ -39,3 +39,6 @@ def stiching_images(image_folder_path, output_img_path):
     big_img.save(output_img_path)
 
     print(f'Stitched image saved to {output_img_path}')
+    
+if __name__ == "__main__":
+    stiching_images('images_result', 'images_result/stiched_image.jpg')
