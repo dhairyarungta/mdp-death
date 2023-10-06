@@ -1,4 +1,4 @@
-# for testing reading and writing from STM
+# for testing: sending path message to android
 
 import json
 import sys

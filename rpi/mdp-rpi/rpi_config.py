@@ -1,4 +1,5 @@
 RPI_IP = "192.168.14.1"
+MSG_LOG_MAX_SIZE = 150 # characters
 
 # PC Interface
 PC_PORT = 8888
@@ -12,5 +13,12 @@ BT_BUFFER_SIZE = 2048
 STM_BAUDRATE = 115200
 STM_ACK_MSG = "A"
 STM_COMMAND_FORMAT = '^[SLR][FB][0-9]{3}$'
+STM_COMMAND_ADJUSTMENT_MAP = {
+    "RF090": ["SF007", "RF090", "SB007"],
+    "LF090": ["SF008", "LF090", "SB008"],
+    "RB090": ["SF009", "RB090", "SB009"],
+    "LB090": ["SF005", "LB090", "SB010"]
+}
+
 
 # Image recognition

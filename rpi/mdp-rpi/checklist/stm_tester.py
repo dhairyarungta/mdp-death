@@ -1,33 +1,21 @@
-# for testing reading and writing from STM
+# for testing: sending commands to STM with adjustment for turning radius 3 * 10cm
+# A13.py sends commands with no adjustments and no wait for ACK
 
-import re
-import serial
-
+import sys
+sys.path.append("../rpi_mdp")
+from stm import STMInterface
 from rpi_config import *
 
-
-serial_sock = serial.Serial("/dev/ttyUSB0", 115200, write_timeout = 0)
-print("[STM] Connected to STM 0 successfully.")
+stm = STMInterface(None)
+stm.connect()
 
 while True: 
     command = input("Enter command: ").strip().upper()
-    if re.match('^[SLR][FB][0-9]{3}$', command):
-        encoded_string = command.encode()
-        byte_array = bytearray(encoded_string)
-        serial_sock.write(byte_array)
-
-        message = None
-        while True:
-            print("[STM] In listening loop...")
-            message = str(serial_sock.read())
-            print("[STM] Read from STM:", message)
-            
-            if len(message) < 1:
-                print("[STM] Ignoring message with length <1 from STM")
-                continue
-            else: 
-                break
-
-        print("RECEIVE:", message)
+    if stm.is_valid_command(command):
+        for c in stm.adjust_command(command):
+            print("> Sending command:", c)
+            stm.serial.write(bytearray(c.encode()))
+            message = stm.listen()
+            print(">>> Received:", message)
     else:
-        print("Invalid command. Please use format <L/R/S><F/B>XXX.")
+        print("> Invalid command. Please use format <L/R/S><F/B>XXX.")

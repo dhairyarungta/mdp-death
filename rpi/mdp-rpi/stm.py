@@ -43,7 +43,7 @@ class STMInterface:
             print("[STM] In listening loop...")
             try:
                 message = self.serial.read().decode("utf-8")
-                print("[STM] Read from STM:", message[:150])
+                print("[STM] Read from STM:", message[:MSG_LOG_MAX_SIZE])
                 
                 if len(message) < 1:
                     # print("[STM] Ignoring message with length <1 from STM")
@@ -66,7 +66,9 @@ class STMInterface:
             message_type = message_json["type"]
 
             if message_type == "NAVIGATION":
-                commands = message_json["data"]["commands"]
+                commands = []
+                for c in message_json["data"]["commands"]:
+                    commands.extend(self.adjust_command(c))
                 
                 # send path to Android for display
                 try: 
@@ -123,6 +125,12 @@ class STMInterface:
             return True
         else:
             return False
+    
+    def adjust_command(self, command):
+        if command in STM_COMMAND_ADJUSTMENT_MAP:
+            return STM_COMMAND_ADJUSTMENT_MAP[command]
+        else:
+            return [command]
         
     # def create_ultrasonic_message(self, command, distance):
     #     message = {
@@ -142,3 +150,4 @@ class STMInterface:
             }
         }
         return json.dumps(message).encode("utf-8")
+    
