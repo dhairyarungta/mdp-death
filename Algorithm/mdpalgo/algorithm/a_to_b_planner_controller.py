@@ -14,6 +14,7 @@ MARGIN = 2
 class AtoBPathPlan(object):
 
     def __init__(self, simulator, grid: Grid, robot: Robot, fastest_route):
+        self.filled_coordinates_array = []
         self.simulator = simulator
         self.grid = grid
         self.robot = robot
@@ -53,7 +54,8 @@ class AtoBPathPlan(object):
             #     if mdp_constants.RPI_CONNECTED:
             #         self.send_to_rpi()
 
-        self.restart_robot()
+        print(f"== A_TO_B_PLANNER > start_robot() | ENDING PATHING")
+        self.restart_robot_and_send_to_rpi(self.filled_coordinates_array)
 
     def plan_path_to(self, target):
         """target is a list [x, y, dir, Cell] where Cell is the obstacle cell
@@ -78,6 +80,7 @@ class AtoBPathPlan(object):
             ]
             self.collection_of_movements, self.path_according_to_movements, self.movement_string = self.auto_planner.get_movements_and_path_to_goal(
                 maze, cost, start, end, obstacle_coords)
+            self.filled_coordinates_array.extend(self.path_according_to_movements)
             print(f"== A_TO_B_PLAN_CTLR > auto_search() | Collection of movements is {self.collection_of_movements}")
             print(f"== A_TO_B_PLAN_CTLR > auto_search() | path according to movements is {self.path_according_to_movements}")
             print(f"== A_TO_B_PLAN_CTLR > auto_search() | MOVEMENT STRING IS {self.movement_string}")
@@ -136,7 +139,15 @@ class AtoBPathPlan(object):
     def skip_current_target(self):
         self.skipped_obstacles.append(self.target)
 
-    def restart_robot(self):
+    def restart_robot_and_send_to_rpi(self, coord_ar):
+        msg = {
+            "type": "PATH",
+            "data": {
+               "path": coord_ar,
+            }
+        }
+        print(f"== A_TO_B_PLANNER > restart_robot_and_send_t_r() | Sending {msg}")
+        self.simulator.commsClient.send(json.dumps(msg))
         if len(self.skipped_obstacles) == 0:
             print("No skipped obstacles to run")
             self.send_to_rpi()
