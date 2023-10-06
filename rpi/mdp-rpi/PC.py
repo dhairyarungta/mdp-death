@@ -71,7 +71,7 @@ class PCInterface:
                 decodedMsg = message.decode("utf-8")
                 if len(decodedMsg) <= 1:
                     continue
-                print("[PC] Read from PC:", decodedMsg[:150])
+                print("[PC] Read from PC:", decodedMsg[:MSG_LOG_MAX_SIZE])
                 parsedMsg = json.loads(decodedMsg)
                 type = parsedMsg["type"]
                 
@@ -114,7 +114,7 @@ class PCInterface:
                 try:
                     message_sized = self.prepend_msg_size(message)
                     self.client_socket.send(message_sized)
-                    print("[PC] Write to PC:", message.decode("utf-8")[:150])
+                    print("[PC] Write to PC:", message.decode("utf-8")[:MSG_LOG_MAX_SIZE])
                 except Exception as e:
                     print("[PC] ERROR: Failed to write to PC -", str(e))
                     self.connect()
