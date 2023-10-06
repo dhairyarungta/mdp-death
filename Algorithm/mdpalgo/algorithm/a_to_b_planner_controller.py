@@ -155,7 +155,7 @@ class AtoBPathPlan(object):
             }
         }
         print(f"== A_TO_B_PLANNER > restart_robot_and_send_t_r() | Sending {msg}")
-        self.simulator.commsClient.send(json.dumps(msg))
+        self.simulator.commsClient.send(msg)
         if len(self.skipped_obstacles) == 0:
             print("No skipped obstacles to run")
             self.send_to_rpi()
@@ -247,7 +247,7 @@ class AtoBPathPlan(object):
         self.obstacle_key = self.obstacle_list_rpi.pop(0)
         self.reset_num_move_completed_rpi()
         print(f"== A_TO_B_PLAN_CTLR > send_to_rpi() | SENDING THIS TO RPI {self.all_movements_dict}")
-        self.simulator.commsClient.send(json.dumps(self.all_movements_dict))
+        self.simulator.commsClient.send(self.all_movements_dict)
         # print("Remaining obstacles: ", self.obstacle_list_rpi)
         # id = []
         # id.append(str(self.get_target_id(self.target)))

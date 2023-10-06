@@ -277,7 +277,7 @@ class Simulator:
                 }
             }
             self.obs_idx += 1
-            self.commsClient.send(json.dumps(result_message))
+            self.commsClient.send(result_message)
 
     # def on_receive_update_robot_pose(self, message_data: dict):
     #     print("Received updated robot pose")

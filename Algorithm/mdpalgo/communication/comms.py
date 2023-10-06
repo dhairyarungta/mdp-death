@@ -142,8 +142,8 @@ if __name__ == '__main__':
                          'RB090', 'SF065', 'RF180'],
         }
     }
-    print(f"==SENDING {json.dumps(message)}")
-    client.send(json.dumps(message))
+    print(f"==SENDING {message}")
+    client.send(message)
     all_data = client.recv()
 
     # test the photo data
@@ -164,4 +164,4 @@ if __name__ == '__main__':
                     "img_id": result["predictions"][0]["class"]
                 }
             }
-            client.send(json.dumps(result_message))
+            client.send(result_message)
