@@ -55,7 +55,7 @@ class AtoBPathPlan(object):
             #         self.send_to_rpi()
 
         print(f"== A_TO_B_PLANNER > start_robot() | ENDING PATHING")
-        self.restart_robot_and_send_to_rpi(self.filled_coordinates_array)
+        self.restart_robot_and_send_to_rpi()
 
     def plan_path_to(self, target):
         """target is a list [x, y, dir, Cell] where Cell is the obstacle cell
@@ -93,7 +93,7 @@ class AtoBPathPlan(object):
                         tmp.append(int(coord))
                     self.filled_coordinates_array.append(tmp)
             print(f"== A_TO_B_PLAN_CTLR > auto_search() | Collection of movements is {self.collection_of_movements}")
-            print(f"== A_TO_B_PLAN_CTLR > auto_search() | path according to movements is {self.path_according_to_movements}")
+            print(f"== A_TO_B_PLAN_CTLR > auto_search() | Filled coordinates array is {self.filled_coordinates_array}")
             print(f"== A_TO_B_PLAN_CTLR > auto_search() | MOVEMENT STRING IS {self.movement_string}")
         except Exception as e:
             logging.exception(e)
@@ -103,7 +103,7 @@ class AtoBPathPlan(object):
             return
 
         # execute gray route
-        self.execute_planned_path()
+        self.execute_planned_path(self.filled_coordinates_array)
 
     def get_target_id(self, target: list):
         if target[3].id != None:
@@ -118,7 +118,7 @@ class AtoBPathPlan(object):
         self.target_pose.set_pose(target[:3])
         self.obstacle_cell = target[3]
 
-    def execute_planned_path(self):
+    def execute_planned_path(self, coords):
         for move_index in range(len(self.collection_of_movements)):
             move = self.collection_of_movements[move_index]
             # print(f"== A_TO_B_PLAN_CTLR > execute_a_s_r | Performing the move: {move}")
@@ -138,7 +138,7 @@ class AtoBPathPlan(object):
             pass
         self.robot.redraw_car_refresh_screen()
         try:
-            self.save_path_and_send_to_rpi()
+            self.save_path_and_send_to_rpi(coords)
         except Exception as e:
             logging.exception(e)
             pass
@@ -150,15 +150,7 @@ class AtoBPathPlan(object):
     def skip_current_target(self):
         self.skipped_obstacles.append(self.target)
 
-    def restart_robot_and_send_to_rpi(self, coord_ar):
-        msg = {
-            "type": "PATH",
-            "data": {
-               "path": coord_ar,
-            }
-        }
-        print(f"== A_TO_B_PLANNER > restart_robot_and_send_t_r() | Sending {msg}")
-        self.simulator.commsClient.send(msg)
+    def restart_robot_and_send_to_rpi(self):
         if len(self.skipped_obstacles) == 0:
             print("No skipped obstacles to run")
             self.send_to_rpi()
@@ -224,7 +216,7 @@ class AtoBPathPlan(object):
         image_result_list = ["TARGET", target_id, self.obstacle_key]
         return '/'.join([str(elem) for elem in image_result_list]) + '/'
 
-    def save_path_and_send_to_rpi(self):
+    def save_path_and_send_to_rpi(self, coords):
         # self.all_movements_dict[self.get_current_obstacle_id()] = self.parse_movements_string_EDITME()
         self.all_movements_dict = self.parse_movements_string_EDITME()
         # if self.all_movements_dict['data']['commands'][0][0:2] == "SF":
@@ -236,6 +228,7 @@ class AtoBPathPlan(object):
         #     self.all_movements_dict['data']['commands'][0] = "SF"+new_num_str
         # else:
         #     self.all_movements_dict['data']['commands'].insert(0, "SF010")
+        self.all_movements_dict["path"] = coords
         print(f"== A_TO_B_PLAN_CTLR > save_path_for_rpi() | {self.all_movements_dict}")
         print(f"== A_TO_B_PLAN_CTLR > save_path_for_rpi() | SENDING MSG")
         self.simulator.commsClient.send(self.all_movements_dict)
