@@ -67,6 +67,15 @@ class STMInterface:
 
             if message_type == "NAVIGATION":
                 commands = message_json["data"]["commands"]
+                
+                # send path to Android for display
+                try: 
+                    path_message = self.create_path_message(message_json["data"]["path"])
+                    self.RPiMain.Android.msg_queue.put(path_message)
+                    print("[STM] Adding NAVIGATION path from PC to Android message queue")
+                except:
+                    print("[STM] No path found in NAVIGATION message")
+
                 for command in commands:
                     print("[STM] Sending command", command)
                     if self.is_valid_command(command):
@@ -122,4 +131,13 @@ class STMInterface:
     #             "command": command
     #         }
     #     }
-    #     return json.dumps(message).encode("utf-8")
+    #     return json.encode("utf-8")
+
+    def create_path_message(self, path):
+        message = {
+            "type": "PATH",
+            "data": {
+                "path": path
+            }
+        }
+        return json.encode("utf-8")

@@ -10,27 +10,28 @@
 ## Flow of messages for task 1: image recognition (W8)
 1. **AR2, RP1:** Android tells PC obstacle locations and task type=`EXPLORATION`
 2. **PR1:** PC sends RPi sequence of movement instructions for STM after calculating path
-3. **RS1:** RPi sends individual commands to STM one at a time
+3. **RA3**: RPi sends Android list of cells traversed by robot on the way to this obstacle
+4. **RS1:** RPi sends individual commands to STM one at a time
    1. **SR1:** STM acknowledges end of each command 
    2. **SR2, RP2:** if emergency stop is triggered by STM for collision avoidance, STM returns ultrasonic sensor output, which is relayed by RPi to PC
-4. optionally repeat steps 2-3 if not at planned coordinates/distance from obstacle
-5. **PR4, RA1:** pass current coordinates at end of movement sequence to Android for display
-6. **PR2, RP3:** PC requests image from RPi, RPi returns image
-7. **PR3, RA2:** PC returns image recognition results to Android
-8.  repeat steps 2-7 until all obstacles/images identified
-9.  repeat steps 2-5 to return to start
+5. optionally repeat steps 2-3 if not at planned coordinates/distance from obstacle
+6. **PR4, RA1:** pass current coordinates at end of movement sequence to Android for display
+7. **PR2, RP3:** PC requests image from RPi, RPi returns image
+8. **PR3, RA2:** PC returns image recognition results to Android
+9.  repeat steps 2-8 until all obstacles/images identified
 
 ## Flow of messages for task 2: fastest car (W9)
 1. **AR2, RP1:** Android tells PC obstacle locations and task type=`FASTEST_PATH`
 2. **PR1:** PC sends RPi sequence of movement instructions for STM after calculating path
-3. **RS1:** RPi sends individual commands to STM one at a time
+3. **RA3**: RPi sends Android list of cells traversed by robot on the way to this obstacle
+4. **RS1:** RPi sends individual commands to STM one at a time
    1. **SR1:** STM acknowledges end of each command 
    2. **SR2, RP2:** if emergency stop is triggered by STM for collision avoidance, STM returns ultrasonic sensor output, which is relayed by RPi to PC
-4. optionally repeat steps 2-3 if not at planned coordinates/distance from obstacle
-5. **PR2, RP3:** PC requests image from RPi, RPi returns image
-6. **PR3, RA2:** PC returns image recognition results to Android
-7. calculate path based on arrow identified in image and repeat steps 2-6 until all images identified
-8. repeat steps 2-4 to return to start
+5. optionally repeat steps 2-3 if not at planned coordinates/distance from obstacle
+6. **PR2, RP3:** PC requests image from RPi, RPi returns image
+7. **PR3, RA2:** PC returns image recognition results to Android
+8. calculate path based on arrow identified in image and repeat steps 2-7 until all images identified
+9. repeat steps 2-5 to return to start
 
 
 # Message types
@@ -38,8 +39,8 @@
 - `IMAGE_RESULTS`: RA2 and PR3 
 - `IMAGE_TAKEN`: RP3
 - `ULTRASONIC`: RP2 (see also SR2)
-- `NAVIGATION`: AR1 and PR1 (see also RS1, SR1)
-- `PATH`: AR3 and PR2
+- `NAVIGATION`: AR1 and PR1 (see also RS1+SR1, PR1)
+- `PATH`: RA3 (see also PR1)
 - `START_TASK`: AR2 and RP1
 
 ## AR: Android to RPi
@@ -77,17 +78,6 @@
     - `robot` is the location of the robot (`id` = `R`), including `x` and `y` coordinates, and orientation (`dir`)
     - `obstacles` is a list of obstacle locations, each with unique `id` starting from 0, including `x` and `y` coordinates, and orientation (`dir`)
     - AR2 and RP1 are consistent 
-3. path taken by robot in arena, sent by PC to Android at end of run
-   ```
-    {
-        "type": "PATH",
-        "data": {
-           "path": [[0,1], [1,1], [2,1], [3,1]]
-        }
-    }
-    ```
-    - `path` is the list of cells (each a 10x10cm block) traversed by the robot
-    - AR3 and PR2 are consistent
 
 ## RA: RPi to Android
 1. current coordinates of robot from PC
@@ -114,6 +104,17 @@
     - `obs_id` is the unique `id` of the obstacle
     - `img_id` is the image ID identified by the image recognition algorithms running on PC
     - RA2 and PR3 are consistent
+3. path taken by robot in arena
+   ```
+    {
+        "type": "PATH",
+        "data": {
+           "path": [[0,1], [1,1], [2,1], [3,1]]
+        }
+    }
+    ```
+    - `path` is the list of cells (each a 10x10cm block) traversed by the robot
+    - this message is sent from RPi to Android before beginning the movement sequence towards an obstacle as specified in the `NAVIGATION` message from PC (see PR1)
 
 ## SR: STM to RPi
 1. Acknowledgement of command
@@ -141,7 +142,8 @@
     {
         "type": "NAVIGATION",
         "data": {
-           "commands": ["SF010", "RF090", "SB050", "LB090"]
+           "commands": ["SF010", "RF090", "SB050", "LB090"],
+           "path": [[0,1], [1,1], [2,1], [3,1]]
         }
     }
     ```
@@ -151,19 +153,11 @@
       - F/B: the second character indicates Forward / Backward
       - XXX: the last 3 digits indicate distance in cm for S, or rotation angle for L/R
       - e.g. SB010 is move backwards 10cm, LF090 is turn 90 degrees to the left in the forward direction
+    - `path` is the list of cells (each a 10x10cm block) to be traversed by the robot
+      - RPi reformats this into a `PATH` message to be forwarded to Android (see RA3)
     - AR1 and PR1 are consistent
-2. path taken by robot in arena, sent by PC to Android at end of run
-   ```
-    {
-        "type": "PATH",
-        "data": {
-           "path": [[0,1], [1,1], [2,1], [3,1]]
-        }
-    }
-    ```
-    - `path` is the list of cells (each a 10x10cm block) traversed by the robot
-    - AR3 and PR2 are consistent
-3. image recognition results
+
+2. image recognition results
     ```
     {
         "type": "IMAGE_RESULTS",
@@ -176,7 +170,7 @@
     - `obs_id` is the unique `id` of the obstacle
     - `img_id` is the image ID identified by the image recognition algorithms running on PC
     - RA2 and PR3 are consistent
-4. current coordinates of robot
+3. current coordinates of robot
     ```
     {
         "type": "COORDINATES",
