@@ -43,7 +43,7 @@ class STMInterface:
             print("[STM] In listening loop...")
             try:
                 message = self.serial.read().decode("utf-8")
-                print("[STM] Read from STM:", message[:80])
+                print("[STM] Read from STM:", message[:150])
                 
                 if len(message) < 1:
                     # print("[STM] Ignoring message with length <1 from STM")

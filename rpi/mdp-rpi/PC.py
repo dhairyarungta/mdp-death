@@ -15,6 +15,7 @@ class PCInterface:
         self.RPiMain = RPiMain
         self.host = RPI_IP
         self.port = PC_PORT
+        self.client_socket = None
         self.msg_queue = Queue()
 
     def connect(self):
@@ -42,7 +43,7 @@ class PCInterface:
         
     def disconnect(self):
         try:
-            if self.client_sock is not None:
+            if self.client_sock is not None: #TODO
                 self.client_sock.close()
                 self.client_sock = None
                 print("[PC] Disconnected from PC successfully.")
@@ -70,7 +71,7 @@ class PCInterface:
                 decodedMsg = message.decode("utf-8")
                 if len(decodedMsg) <= 1:
                     continue
-                print("[PC] Read from PC:", decodedMsg[:80])
+                print("[PC] Read from PC:", decodedMsg[:150])
                 parsedMsg = json.loads(decodedMsg)
                 type = parsedMsg["type"]
                 
@@ -108,7 +109,7 @@ class PCInterface:
             while exception: 
                 try:
                     self.client_socket.send(message)
-                    print("[PC] Write to PC:", message.decode("utf-8")[:80])
+                    print("[PC] Write to PC:", message.decode("utf-8")[:150])
                 except Exception as e:
                     print("[PC] ERROR: Failed to write to PC -", str(e))
                     self.connect()
