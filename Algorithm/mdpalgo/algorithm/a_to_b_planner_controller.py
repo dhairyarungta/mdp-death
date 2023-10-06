@@ -80,7 +80,15 @@ class AtoBPathPlan(object):
             ]
             self.collection_of_movements, self.path_according_to_movements, self.movement_string = self.auto_planner.get_movements_and_path_to_goal(
                 maze, cost, start, end, obstacle_coords)
-            self.filled_coordinates_array.extend(self.path_according_to_movements)
+            # [
+            #     [[8, 11], [8, 12], [8, 13], [9, 13], [10, 13], [11, 13]],
+            #     [[10, 13]],
+            #     [[11, 13], [12, 13], [13, 13], [13, 14], [13, 15], [13, 16]],
+            #     [[13, 15]]
+            # ]
+            for ar in self.path_according_to_movements:
+                for nested_ar in ar:
+                    self.filled_coordinates_array.append(nested_ar)
             print(f"== A_TO_B_PLAN_CTLR > auto_search() | Collection of movements is {self.collection_of_movements}")
             print(f"== A_TO_B_PLAN_CTLR > auto_search() | path according to movements is {self.path_according_to_movements}")
             print(f"== A_TO_B_PLAN_CTLR > auto_search() | MOVEMENT STRING IS {self.movement_string}")
