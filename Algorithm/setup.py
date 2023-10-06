@@ -12,5 +12,6 @@ setup(name='mdpalgo',
         'numpy',
         'opencv-python',
         'requests',
+        'pillow'
       ]
      )

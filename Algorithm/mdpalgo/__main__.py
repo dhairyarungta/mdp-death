@@ -3,6 +3,7 @@ import argparse
 
 from constants import mdp_constants
 from interface.simulator import Simulator
+from image_stiching import stiching_images
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -26,7 +27,12 @@ def main():
         print("Running in headless mode")
 
     x = Simulator()
-    x.run()
+    try:
+        x.run()
+    except Exception as err:
+        print(err)
+    
+    stiching_images('images_result', 'images_result/stiched_image.jpg')
 
 
 if __name__ == '__main__':
