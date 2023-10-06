@@ -83,7 +83,7 @@ class PCInterface:
                     self.RPiMain.Android.msg_queue.put(message) 
                     
                 # PC -> Rpi -> Android
-                elif type == 'COORDINATES':
+                elif type in ['COORDINATES', 'PATH']:
                     self.RPiMain.Android.msg_queue.put(message)
 
                 else:

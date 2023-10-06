@@ -34,13 +34,13 @@
 
 
 # Message types
-- `NAVIGATION`: AR1 and PR1 (see also RS1, SR1)
-- `START_TASK`: AR2 and RP1
 - `COORDINATES`: RA1 and PR4
-- `GET_IMAGE`: PR2
 - `IMAGE_RESULTS`: RA2 and PR3 
-- `ULTRASONIC`: RP2 (see also SR2)
 - `IMAGE_TAKEN`: RP3
+- `ULTRASONIC`: RP2 (see also SR2)
+- `NAVIGATION`: AR1 and PR1 (see also RS1, SR1)
+- `PATH`: AR3 and PR2
+- `START_TASK`: AR2 and RP1
 
 ## AR: Android to RPi
 1. directions to directly control STM 
@@ -77,6 +77,17 @@
     - `robot` is the location of the robot (`id` = `R`), including `x` and `y` coordinates, and orientation (`dir`)
     - `obstacles` is a list of obstacle locations, each with unique `id` starting from 0, including `x` and `y` coordinates, and orientation (`dir`)
     - AR2 and RP1 are consistent 
+3. path taken by robot in arena, sent by PC to Android at end of run
+   ```
+    {
+        "type": "PATH",
+        "data": {
+           "path": [[0,1], [1,1], [2,1], [3,1]]
+        }
+    }
+    ```
+    - `path` is the list of cells (each a 10x10cm block) traversed by the robot
+    - AR3 and PR2 are consistent
 
 ## RA: RPi to Android
 1. current coordinates of robot from PC
@@ -141,16 +152,17 @@
       - XXX: the last 3 digits indicate distance in cm for S, or rotation angle for L/R
       - e.g. SB010 is move backwards 10cm, LF090 is turn 90 degrees to the left in the forward direction
     - AR1 and PR1 are consistent
-<!-- 2. trigger camera to take a picture and return it to PC for image recognition
-    ```
+2. path taken by robot in arena, sent by PC to Android at end of run
+   ```
     {
-        "type": "GET_IMAGE",
+        "type": "PATH",
         "data": {
-            "obs_id_": "00", 
+           "path": [[0,1], [1,1], [2,1], [3,1]]
         }
     }
     ```
-    - `obs_id` is the unique `id` of the obstacle -->
+    - `path` is the list of cells (each a 10x10cm block) traversed by the robot
+    - AR3 and PR2 are consistent
 3. image recognition results
     ```
     {
