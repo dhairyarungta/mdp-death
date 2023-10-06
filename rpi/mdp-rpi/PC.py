@@ -108,12 +108,18 @@ class PCInterface:
             exception = True
             while exception: 
                 try:
-                    self.client_socket.send(message)
+                    message_sized = self.prepend_msg_size(message)
+                    self.client_socket.send(message_sized)
                     print("[PC] Write to PC:", message.decode("utf-8")[:150])
                 except Exception as e:
                     print("[PC] ERROR: Failed to write to PC -", str(e))
                     self.connect()
                 else:
                     exception = False 
+
+
+    def prepend_msg_size(self, message):
+        length_bytes = len(message).to_bytes(4, byteorder="big")
+        return length_bytes + message
 
             
