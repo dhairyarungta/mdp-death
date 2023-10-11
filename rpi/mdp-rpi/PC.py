@@ -113,7 +113,7 @@ class PCInterface:
                         print("[PC] Write to PC:", message.decode("utf-8")[:MSG_LOG_MAX_SIZE])
                     except Exception as e:
                         print("[PC] ERROR: Failed to write to PC -", str(e))
-                        self.connect()
+                        self.reconnect() # TODO
                     else:
                         exception = False
 
