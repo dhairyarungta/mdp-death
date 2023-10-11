@@ -2,12 +2,7 @@ from queue import Queue
 import socket
 import sys
 import json
-import threading
-
 from Camera import capture, preprocess_img 
-import os
-import base64
-
 from rpi_config import *
 
 class PCInterface:
@@ -17,6 +12,7 @@ class PCInterface:
         self.port = PC_PORT
         self.client_socket = None
         self.msg_queue = Queue()
+        self.send_message = False
 
     def connect(self):
         # 1. Solution for thread-related issues: always attempt to disconnect first before connecting
@@ -33,6 +29,7 @@ class PCInterface:
                 print("[PC] Waiting for PC connection...")
                 # with socket.timeout(30):
                 self.client_socket, self.address = sock.accept()
+                self.send_message = True
 
         # Handle any errors that may occur during the connection attempt.
         except socket.error as e:
@@ -46,6 +43,7 @@ class PCInterface:
             if self.client_socket is not None: #TODO
                 self.client_socket.close()
                 self.client_socket = None
+                self.send_message = False
                 print("[PC] Disconnected from PC successfully.")
         except Exception as e:
             print("[PC] Failed to disconnect from PC:", str(e))
@@ -103,7 +101,7 @@ class PCInterface:
                 print("[PC] Unknown error")
 
     def send(self):
-        while True:
+        while self.send_message:
             message = self.msg_queue.get()
             # add the first 4 bytes is length of the 
             message_len = len(message)
