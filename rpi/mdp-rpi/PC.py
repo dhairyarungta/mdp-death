@@ -36,7 +36,8 @@ class PCInterface:
             print("[PC] ERROR: Failed to connect -", str(e))
 
         # Log the connection attempt.
-        print("[PC] PC connected successfully:", self.address)
+        else:
+            print("[PC] PC connected successfully:", self.address)
         
     def disconnect(self):
         try:
@@ -56,13 +57,13 @@ class PCInterface:
         self.disconnect()
         self.connect()
 
-
     def listen(self):
         while True:
             try:
                 message = self.client_socket.recv(PC_BUFFER_SIZE) # the maximum number of bytes to be received
 
                 if not message:
+                    self.send_message = False
                     print("[PC] PC disconnected remotely. Reconnecting...")
                     self.reconnect()
 
@@ -104,10 +105,6 @@ class PCInterface:
         while True:
             if (self.send_message):
                 message = self.msg_queue.get()
-                # add the first 4 bytes is length of the 
-                message_len = len(message)
-                length_bytes = message_len.to_bytes(4, byteorder="big")
-                result_bytes = length_bytes + message
                 exception = True
                 while exception: 
                     try:
@@ -120,11 +117,10 @@ class PCInterface:
                     else:
                         exception = False
 
-             
-
-
     def prepend_msg_size(self, message):
-        length_bytes = len(message).to_bytes(4, byteorder="big")
+        # first 4 bytes is length of the message
+        message_len = len(message)
+        length_bytes = message_len.to_bytes(4, byteorder="big")
         return length_bytes + message
 
             
