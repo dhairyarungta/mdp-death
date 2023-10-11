@@ -35,7 +35,7 @@ class STMInterface:
     def clean_buffers(self):
         self.serial.reset_input_buffer() # receiving
         self.serial.reset_output_buffer() # sending
-        print("[STM] Flushed input and output buffers")
+        # print("[STM] Flushed input and output buffers")
 
     def listen(self):
         message = None
@@ -66,10 +66,6 @@ class STMInterface:
             message_type = message_json["type"]
 
             if message_type == "NAVIGATION":
-                commands = []
-                for c in message_json["data"]["commands"]:
-                    commands.extend(self.adjust_command(c))
-                
                 # send path to Android for display
                 try: 
                     path_message = self.create_path_message(message_json["data"]["path"])
@@ -78,6 +74,7 @@ class STMInterface:
                 except:
                     print("[STM] No path found in NAVIGATION message")
 
+                commands = self.adjust_commands(message_json["data"]["commands"])
                 for command in commands:
                     self.clean_buffers()
                     print("[STM] Sending command", command)
@@ -125,13 +122,52 @@ class STMInterface:
             return True
         else:
             return False
-    
-    def adjust_command(self, command):
-        if command in STM_COMMAND_ADJUSTMENT_MAP:
-            return STM_COMMAND_ADJUSTMENT_MAP[command]
-        else:
-            return [command]
-        
+
+    def adjust_commands(self, commands):
+        def is_turn_command(command):
+            return (command in STM_COMMAND_ADJUSTMENT_MAP.keys())
+
+        def adjust_turn_command(turn_command):
+            return STM_COMMAND_ADJUSTMENT_MAP.get(turn_command, turn_command)
+
+        def combine_straight_commands(straight_commands):
+            dir_dict = {"SF": 1, "SB": -1} # let forward direction be positive
+            total = 0
+            for c in straight_commands:
+                dir = c[:2]
+                val = int(c[2:])
+                total += dir_dict.get(dir, 0) * val
+            
+            if total > 0:
+                return "SF%03d" % abs(total)
+            elif total < 0:
+                return "SB%03d" % abs(total)
+            else:
+                return None
+
+        def add_command(final, new):
+            # check new and preceding are straight commands
+            if not is_turn_command(new) and \
+                    (len(final) > 0 and not is_turn_command(final[-1])): 
+                prev = final.pop(-1) # remove prev
+                combined = combine_straight_commands([prev, new])
+                if combined != None:
+                    final.append(combined)
+            else:
+                final.append(new)
+
+            return final
+
+        final_commands = []     
+        for i in range(len(commands)):
+            if is_turn_command(commands[i]): 
+                turn_seq = adjust_turn_command(commands[i])
+                for c in turn_seq:
+                    final_commands = add_command(final_commands, c)
+            else:
+                final_commands = add_command(final_commands, commands[i])
+        return final_commands
+       
     # def create_ultrasonic_message(self, command, distance):
     #     message = {
     #         "type": "ULTRASONIC",
