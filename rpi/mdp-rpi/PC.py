@@ -101,23 +101,26 @@ class PCInterface:
                 print("[PC] Unknown error")
 
     def send(self):
-        while self.send_message:
-            message = self.msg_queue.get()
-            # add the first 4 bytes is length of the 
-            message_len = len(message)
-            length_bytes = message_len.to_bytes(4, byteorder="big")
-            result_bytes = length_bytes + message
-            exception = True
-            while exception: 
-                try:
-                    message_sized = self.prepend_msg_size(message)
-                    self.client_socket.send(message_sized)
-                    print("[PC] Write to PC:", message.decode("utf-8")[:MSG_LOG_MAX_SIZE])
-                except Exception as e:
-                    print("[PC] ERROR: Failed to write to PC -", str(e))
-                    self.connect()
-                else:
-                    exception = False 
+        while True:
+            if (self.send_message):
+                message = self.msg_queue.get()
+                # add the first 4 bytes is length of the 
+                message_len = len(message)
+                length_bytes = message_len.to_bytes(4, byteorder="big")
+                result_bytes = length_bytes + message
+                exception = True
+                while exception: 
+                    try:
+                        message_sized = self.prepend_msg_size(message)
+                        self.client_socket.send(message_sized)
+                        print("[PC] Write to PC:", message.decode("utf-8")[:MSG_LOG_MAX_SIZE])
+                    except Exception as e:
+                        print("[PC] ERROR: Failed to write to PC -", str(e))
+                        self.connect()
+                    else:
+                        exception = False
+
+             
 
 
     def prepend_msg_size(self, message):
