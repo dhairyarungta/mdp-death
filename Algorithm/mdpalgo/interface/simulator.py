@@ -19,8 +19,12 @@ from interface.panel import Panel
 from map.grid import Grid
 from robot.robot import Robot
 
+from Algorithm.mdpalgo.map.cell import Cell, CellStatus
+from Algorithm.mdpalgo.map.obstacle import Obstacle
+
 # Set the HEIGHT and WIDTH of the screen
 WINDOW_SIZE = [960, 660]
+
 
 class Simulator:
 
@@ -91,6 +95,7 @@ class Simulator:
         self.screen.blit(self.grid_surface, self.grid_from_screen_top_left)
 
     def run(self):
+
         # Loop until the user clicks the close button.
         done = False
         print('HEADLESS is:', mdp_constants.HEADLESS)  # default is False
@@ -123,9 +128,9 @@ class Simulator:
                         # User clicks the mouse. Get the position
                         pos = pygame.mouse.get_pos()
                         if self.is_pos_clicked_within_grid(pos):
-                            x,y = self.grid.pixel_to_grid((pos[0], pos[1]))
+                            x, y = self.grid.pixel_to_grid((pos[0], pos[1]))
                             self.obs_hashmap[str(x) + "-" + str(y)] = self.obs_id_click
-                            self.obs_id_click+=1
+                            self.obs_id_click += 1
                             self.grid.grid_clicked(pos[0], pos[1])
                             self.redraw_grid()
                             self.car.draw_car()  # Redraw the car
@@ -360,8 +365,6 @@ class Simulator:
             self.a_to_b_path_planner.start_robot()
 
             print(f"== SIMULATOR > start_b_c() | Parsing images to print")
-
-
 
     def reset_button_clicked(self):
         self.grid.reset_data()
