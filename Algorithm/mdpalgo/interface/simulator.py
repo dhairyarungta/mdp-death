@@ -19,16 +19,16 @@ from interface.panel import Panel
 from map.grid import Grid
 from robot.robot import Robot
 
-from Algorithm.mdpalgo.map.cell import Cell, CellStatus
-from Algorithm.mdpalgo.map.obstacle import Obstacle
-
+from mdpalgo.map.cell import Cell, CellStatus
+from mdpalgo.map.obstacle import Obstacle
+import argparse
 # Set the HEIGHT and WIDTH of the screen
 WINDOW_SIZE = [960, 660]
 
 
 class Simulator:
 
-    def __init__(self):
+    def __init__(self, id_list=[]):
         self.obs_ar = []
         self.obs_idx = 0
         self.obs_hashmap = {}
@@ -89,6 +89,7 @@ class Simulator:
 
         # count of 'no image result' exception
         self.no_image_result_count = 0
+        self.id_list = id_list
 
     def redraw_grid(self):
         self.grid_surface = self.grid.get_updated_grid_surface()
@@ -264,13 +265,24 @@ class Simulator:
         if os.path.isfile(image_path):
             result_path = f'images_result/{image_name}'
             result = image_rec(image_path, save_path=result_path)
-            print(f"Output image is save to {result_path}")
             if result is None:
                 print('No object detected!')
                 img_id = '00'
             else:
                 img_id = result["predictions"][0]["class"][2:]
+                #Use arrow model if detect arrow
+                if img_id in ['38', '39']:
+                    if len(self.id_list) == 1:
+                        mage_rec(image_path, save_path=result_path, arrow_id=self.id_list[0])
+                        return self.id_list[0]
+                    else:
+                        return '00'
+                
+                if len(self.id_list) >1:
+                    if img_id not in self.id_list:
+                        return '00'
 
+                print(f"Output image is save to {result_path}")
         return img_id
 
     def on_receive_image_taken_message(self, message_data: dict):

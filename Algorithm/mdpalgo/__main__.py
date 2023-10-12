@@ -10,6 +10,9 @@ import os
 logging.basicConfig(level=logging.INFO)
 
 # parse the arguments
+def list_of_strings(args):
+    return args.split(",")
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--hl", help="run in headless mode", action="store_true")
 parser.add_argument("--cen", help="center pathing on obstacle",
@@ -17,7 +20,9 @@ parser.add_argument("--cen", help="center pathing on obstacle",
 parser.add_argument("--testwifi", help="use test wifi server on PC instead "
                                        "of real rpi",
                     action="store_true")
-
+parser.add_argument("--il", type=list_of_strings)
+parser.add_argument("-l", action="store_true")
+parser.add_argument("-r", action="store_true")
 
 def main():
     mdp_constants.HEADLESS = False
@@ -27,8 +32,15 @@ def main():
         mdp_constants.HEADLESS = True
         print("Running in headless mode")
 
-    x = Simulator()
     try:
+        if args.l:
+            x = Simulator(['39'])
+        elif args.r:
+            x = Simulator(['38'])
+        elif len(args.il)>0:
+            x = Simulator(args.il)
+        else:
+            x = Simulator()
         x.run()
     except Exception as err:
         print(err)
@@ -41,4 +53,5 @@ def remove_file_ext(directory, file_ext = '.jpg'):
 if __name__ == '__main__':
     remove_file_ext('images', '.jpg')
     remove_file_ext('images_result', '.jpg')
+    remove_file_ext('images_resized', '.jpg')
     main()
