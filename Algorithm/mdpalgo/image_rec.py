@@ -4,11 +4,13 @@ from typing import Dict, List
 import requests
 import cv2
 import json
+import pathlib
 
 # Run this command in the terminal to start the server
 # docker run --mount source=roboflow,target=/tmp/cache -it --rm -p 9001:9001 roboflow/roboflow-inference-server-cpu
 
-infer_server_url = "http://localhost:9001/mdp-project-4rl1x/1?api_key=xu7E4hooqQWgnxXgLY1r"
+common_object_url = "http://localhost:9001/mdp-mhgbi/1?api_key=IEwWvsYdPmyXduQYIz3k"
+arrow_url = "http://localhost:9001/mdp-arrows-qxuax/3?api_key=xu7E4hooqQWgnxXgLY1r"
 
 
 def visualise_predictions(predictions: List[Dict], input_path, output_path, stroke=2):
@@ -59,6 +61,13 @@ def visualise_predictions(predictions: List[Dict], input_path, output_path, stro
         )
     cv2.imwrite(output_path, image)
 
+def preprocess_img(img_pth):
+    img = cv2.imread(img_pth)
+    resized_img = cv2.resize(img, (800, 800))
+    resized_path = 'images_resized/' + pathlib.Path(img_pth).stem + '_resized.jpg'
+    cv2.imwrite(resized_path, resized_img)
+    print("Image resize to 800x800!")
+    return resized_path
 
 def encode_image_to_base64(image_path):
     """Encode image to Base64."""
@@ -76,13 +85,18 @@ def send_post_request(encoded_image, url):
     return response
 
 
-def image_rec(image_path, save_path=None):
+def image_rec(image_path, save_path=None, arrow_id=None):
     """Send a POST request with the Base64 encoded image."""
+
+    # if not arrow:
+    #     image_path = preprocess_img(image_path)
 
     # Encode the image to Base64
     encoded_image = encode_image_to_base64(image_path)
 
     # Send the POST request
+    infer_server_url = common_object_url
+
     response = send_post_request(encoded_image, infer_server_url)
 
     # Optional: print the response
@@ -98,23 +112,42 @@ def image_rec(image_path, save_path=None):
     
     if len(result_dict['predictions']) == 0:
         return None
-    print(result_dict)
+
     if len(result_dict['predictions']) >1:
         largest_box = 0
         largest_box_pre = None
         for pre in result_dict['predictions']:
+            # if pre["confidence"] < 0.7:
+            #     result_dict['predictions'].remove(pre)
+            #     continue
             box_area = pre['width']*pre['height']
             if box_area > largest_box:
                 largest_box = box_area
                 largest_box_pre = pre
         result_dict['predictions'] = [largest_box_pre]
+    
+    if len(result_dict['predictions']) == 0:
+        return None
+    
+    print(result_dict)
         
     if save_path is not None:
+        if arrow_id is not None:
+            result_dict['predictions'][0]['class'] = f'id{arrow_id}'
         visualise_predictions(result_dict["predictions"], image_path, save_path)
     return result_dict
 
 if __name__ == "__main__":
     import os 
-
-    for img in os.listdir('test_images'):
-        image_rec(f'test_images/{img}', f'test_images_result/{img}')
+    # image_rec('20230825_132514.jpg', 'output.jpg')
+    image_dir = 'images'
+    resutl_dir = 'images_result'
+    count = 0
+    for img in os.listdir(image_dir):
+        if img.endswith('.jpg'):
+            if count %2 ==0:
+                image_rec(f'{image_dir}/{img}', f'{resutl_dir}/{img}', arrow_id='39')
+            # else:
+            #     print(img)
+            #     image_rec(f'{image_dir}/{img}', f'{resutl_dir}/{img}', arrow=False)
+            # count+=1
