@@ -2,6 +2,7 @@ import json
 from queue import Queue
 import re
 import threading
+import time
 import serial
 from Camera import get_image
 
@@ -13,6 +14,7 @@ class STMInterface:
         self.baudrate = STM_BAUDRATE
         self.serial = None
         self.msg_queue = Queue()
+        self.obstacle_count = 0
 
     def connect(self):
         try:
@@ -66,59 +68,79 @@ class STMInterface:
             message_type = message_json["type"]
 
             if message_type == "NAVIGATION":
-                # send path to Android for display
-                try: 
-                    path_message = self.create_path_message(message_json["data"]["path"])
-                    self.RPiMain.Android.msg_queue.put(path_message)
-                    print("[STM] Adding NAVIGATION path from PC to Android message queue")
-                except:
-                    print("[STM] No path found in NAVIGATION message")
+                # display path on android
+                self.send_path_to_android(message_json) 
 
                 commands = self.adjust_commands(message_json["data"]["commands"])
                 for command in commands:
-                    self.clean_buffers()
                     print("[STM] Sending command", command)
-                    if self.is_valid_command(command):
-                        exception = True
-                        while exception:
-                            try:
-                                encoded_string = command.encode()
-                                byte_array = bytearray(encoded_string)
-                                self.serial.write(byte_array)
-                            except Exception as e:
-                                print("[STM] ERROR: Failed to write to STM -", str(e)) 
-                                exception = True
-                                self.reconnect() # reconnect and retry
+                    self.write_to_stm(command)  
+                self.obstacle_count += 1
 
-                            else:
-                                exception = False
-                                message = self.listen()
-                                if message  == STM_ACK_MSG:
-                                    print("[STM]", command, "acknowledged by STM") 
-                                # elif message.isnumeric(): # TODO check STM ultrasonic sensor output format
-                                #     print("[STM] WARNING:", command, "caused STM emergency stop, notifying PC") 
-                                #     distance = float(message) 
-                                #     ultrasonic_message = self.create_ultrasonic_message(command, distance)
-                                #     self.RPiMain.PC.msg_queue.put(ultrasonic_message)
-                                else:
-                                    print("[STM] ERROR: Unexpected message from STM -", message)
-                                    self.reconnect() # TODO
-                                
-                    else:
-                        print(f"[STM] ERROR: Invalid command to STM [{command}]. Discarding rest of NAVIGATION message {message}")
-                
                 # Start a new thread to capture and send the image to PC
                 capture_and_send_image_thread = threading.Thread(target=self.send_image_to_pc)
                 capture_and_send_image_thread.start()
+
+                if self.obstacle_count % STM_GYRO_RESET_FREQ == 0:
+                    print("[STM] Resetting gyroscope after %d obstacles" % self.obstacle_count)
+                    self.write_to_stm(STM_GYRO_RESET_COMMAND)
             else:
                 print("[STM] WARNING: Rejecting message with unknown type [%s] for STM" % message_type)
+
+    def write_to_stm(self, command):
+        self.clean_buffers()
+        if self.is_valid_command(command):
+            exception = True
+            while exception:
+                try:
+                    encoded_string = command.encode()
+                    byte_array = bytearray(encoded_string)
+                    self.serial.write(byte_array)
+                except Exception as e:
+                    print("[STM] ERROR: Failed to write to STM -", str(e)) 
+                    exception = True
+                    self.reconnect() # reconnect and retry
+
+                else:
+                    exception = False
+                    if command == STM_GYRO_RESET_COMMAND:
+                        print("[STM] Waiting %ss for reset" % STM_GYRO_RESET_DELAY)
+                        time.sleep(STM_GYRO_RESET_DELAY)
+                    else: # navigation command
+                        print("[STM] Waiting for ACK")
+                        self.wait_for_ack()
+        else:
+            print(f"[STM] ERROR: Invalid command to STM [{command}]. Discarding rest of NAVIGATION message {message}")
+
+    def wait_for_ack(self):
+        message = self.listen()
+        if message  == STM_ACK_MSG:
+            print("[STM] Received ACK from STM") 
+        # elif message.isnumeric(): # TODO check STM ultrasonic sensor output format
+        #     print("[STM] WARNING:", command, "caused STM emergency stop, notifying PC") 
+        #     distance = float(message) 
+        #     ultrasonic_message = self.create_ultrasonic_message(command, distance)
+        #     self.RPiMain.PC.msg_queue.put(ultrasonic_message)
+        else:
+            print("[STM] ERROR: Unexpected message from STM -", message)
+            self.reconnect() # TODO
+
 
     def send_image_to_pc(self):
         print("[STM] Adding image from camera to PC message queue")
         self.RPiMain.PC.msg_queue.put(get_image())      
 
+    def send_path_to_android(self, message_json):
+        # send path to Android for display
+        try: 
+            path_message = self.create_path_message(message_json["data"]["path"])
+            self.RPiMain.Android.msg_queue.put(path_message)
+            print("[STM] Adding NAVIGATION path from PC to Android message queue")
+        except:
+            print("[STM] No path found in NAVIGATION message")    
+
     def is_valid_command(self, command):
-        if re.match(STM_COMMAND_FORMAT, command):
+        if re.match(STM_NAV_COMMAND_FORMAT, command) or command == STM_GYRO_RESET_COMMAND:
             return True
         else:
             return False
