@@ -78,7 +78,7 @@ class STMInterface:
                 self.obstacle_count += 1
 
                 # Start a new thread to capture and send the image to PC
-                capture_and_send_image_thread = threading.Thread(target=self.send_image_to_pc)
+                capture_and_send_image_thread = threading.Thread(target=self.send_image_to_pc, daemon=True)
                 capture_and_send_image_thread.start()
 
                 if self.obstacle_count % STM_GYRO_RESET_FREQ == 0:

@@ -17,7 +17,7 @@ STM_ACK_MSG = "A"
 STM_NAV_COMMAND_FORMAT = '^[SLR][FB][0-9]{3}$'
 STM_GYRO_RESET_COMMAND = "GYROR"
 STM_GYRO_RESET_DELAY = 8 # time to wait for gyro reset
-STM_GYRO_RESET_FREQ = 3 # number of obstacles before GRYO RESET command is sent
+STM_GYRO_RESET_FREQ = 14 # number of obstacles before GRYO RESET command is sent
 
 # adjust commands for turns to correct turning radius to 30cm, as expected by PC-algo
 STM_COMMAND_ADJUSTMENT_DICT = {
