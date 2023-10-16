@@ -14,6 +14,8 @@ import android.view.DragEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Toast;
+import android.os.Handler;
+
 
 import androidx.annotation.Nullable;
 
@@ -26,6 +28,8 @@ import com.example.mdp_android.ui.home.HomeFragment;
 import com.example.mdp_android.ui.home.HomeViewModel;
 
 import java.util.ArrayList;
+//import java.util.logging.Handler;
+
 
 public class Map extends View {
     private static final String TAG = "MapController";
@@ -103,7 +107,7 @@ public class Map extends View {
         targetTextPaint.setFakeBoldText(true);
         targetTextPaint.setTextSize(16);
         targetTextPaint.setTextAlign(Paint.Align.CENTER);
-        imageIdentifiedPaint.setColor(Color.parseColor("#30D5C8"));
+        imageIdentifiedPaint.setColor(Color.parseColor("#89B09F"));
 
     }
 
@@ -639,14 +643,9 @@ public class Map extends View {
 
     private int convertRow(int r) {return NUM_ROWS - r;}
 
+    // uncomment on actual
     public void clearGrid() {
         // clear obstacles
-//        for (Obstacle obstacle : obstacleCoor) {
-//            int x = obstacle.getObsXCoor();
-//            int y = this.convertRow(obstacle.getObsYCoor());
-////            cells[x][y].setType("unexplored");
-//            cells[x][y].setObsIndex(-1);
-//        }
         obstacleCoor.clear();
         currentSelected = -1;
 
@@ -668,6 +667,23 @@ public class Map extends View {
 
         this.invalidate();
     }
+
+    // clear grid: test
+//    public void clearGrid() {
+//        // clear obstacles
+//        currentSelected = -1;
+//
+//        // clear grids
+//        for (int x = 1; x <= NUM_COLS; x++) {
+//            for (int y = 0; y < NUM_ROWS; y++) {
+//                if (cells[x][y].type.equals("explored")) {
+//                    cells[x][y].setType("unexplored");
+//                }
+//            }
+//        }
+//
+//        this.invalidate();
+//    }
 
     private void updateObstacleCoor(int start) {
         int x, y, index;
@@ -722,6 +738,32 @@ public class Map extends View {
         Intent intent = new Intent("getStatus");
         intent.putExtra("robot", status);
         LocalBroadcastManager.getInstance(getContext()).sendBroadcast(intent);
+    }
+
+    public void setExploredPath(ArrayList<ArrayList<Integer>> path) {
+        final int delayMillis = 3000;
+        final Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                // Do something after 5s = 5000ms
+                for (int i = 0; i < path.size(); i++) {
+                    int row = convertRow(path.get(i).get(1) + 1);
+                    int col = path.get(i).get(0) + 1;
+                    if (cells[col][row].getType() == "unexplored") {
+                        cells[col][row].setType("explored");
+                        invalidate();
+                    }
+
+                    // send status
+                    String status = "robot at (" + path.get(i).get(0) + " , " + path.get(i).get(1) + ")";
+                    Log.d(TAG, "status: " + status);
+                    Intent intent = new Intent("getStatus");
+                    intent.putExtra("robot", status);
+                    LocalBroadcastManager.getInstance(getContext()).sendBroadcast(intent);
+                }
+            }
+        }, delayMillis);
     }
 
     // TODO: update robot movements on map for manual navigation (only if robot in map)

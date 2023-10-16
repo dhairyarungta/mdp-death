@@ -22,22 +22,12 @@ public class RpiController {
      */
 
     public static String getRpiMessageTyoe(String received) {
-//        try {
-//            JSONObject jsonObj = new JSONObject(received);
-//            if (jsonObj.get("type").equals("COORDINATES")) {
-//                return "robot";
-//            } else if (jsonObj.get("type").equals("IMAGE_RESULTS")) {
-//                return "image";
-//            } else {
-//                return "";
-//            }
-//        } catch (Exception e) {
-//            Log.e(TAG, "Failed to pass json: " + e);
-//        }
         if (received.contains("COORDINATES")) {
             return "robot";
         } else if (received.contains("IMAGE_RESULTS")) {
             return "image";
+        } else if (received.contains("PATH")) {
+            return "path";
         } else {
             return "";
         }
@@ -54,6 +44,10 @@ public class RpiController {
                 // get image rec results from rpi
                 JSONObject results = jsonObj.getJSONObject("data");
                 return results;
+            } else if (jsonObj.get("type").equals("PATH")) {
+                // get list of coordinates from rpi
+                JSONObject path = jsonObj.getJSONObject("data");
+                return path;
             }
 
         } catch (Exception e) {
@@ -88,6 +82,26 @@ public class RpiController {
         return status;
     }
 
+    public static ArrayList<ArrayList<Integer>> getPath(JSONObject results) {
+        ArrayList<ArrayList<Integer>> path = new ArrayList<>();
+        try {
+            Log.d(TAG, "getting path");
+            JSONArray pathJson = results.getJSONArray("path");
+            Log.d(TAG, "path: "+pathJson);
+            for (int i = 0; i < pathJson.length();i++) {
+                JSONArray coorJson = pathJson.getJSONArray(i);
+                ArrayList<Integer> coor = new ArrayList<>();
+                for (int j=0; j < coorJson.length(); j++) {
+                    coor.add(Integer.parseInt(coorJson.get(j).toString()));
+                }
+                path.add(coor);
+            }
+        } catch (Exception e) {
+            Log.d(TAG, "failed to parse json: "+e);
+        }
+        return path;
+    }
+
     // get map details into json (including task type)
     public static JSONObject getMapDetails(String task, Map.Robot robot, ArrayList<Map.Obstacle> obstacles) {
         JSONObject message = new JSONObject();
@@ -118,29 +132,24 @@ public class RpiController {
             robotCoor.put("x", robot.getX() - 1);
             robotCoor.put("y", robot.getY() - 1);
             robotCoor.put("dir", robot.getDirection());
-//            checklistPayload.put("robot", robotCoor);
         } catch (Exception e) {
             Log.d(TAG, "Failed to parse string into json: ", e);
         }
         return robotCoor;
-//        return checklistPayload;
     }
 
     // TODO: change after checklist complete
     public static JSONObject getObstacleDetails(Map.Obstacle obstacle) {
-//        JSONObject checklistPayload = new JSONObject();
         JSONObject obstacleCoor = new JSONObject();
         try {
             obstacleCoor.put("id", Integer.toString(obstacle.getObsID()));
             obstacleCoor.put("x", obstacle.getObsXCoor() - 1);
             obstacleCoor.put("y", obstacle.getObsYCoor() - 1);
             obstacleCoor.put("dir", obstacle.getDirection());
-//            checklistPayload.put("obstacle", obstacleCoor);
         } catch (Exception e) {
             Log.d(TAG, "Failed to parse string into json: ", e);
         }
         return obstacleCoor;
-//        return checklistPayload;
     }
 
     // get navigation details into json (up, down, left, right buttons)
@@ -164,16 +173,6 @@ public class RpiController {
         try {
             bController.write(jsonObj.toString().getBytes(StandardCharsets.UTF_8));
             Log.d(TAG, "sendToRPi: \n" + jsonObj.toString(2));
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to send message to rpi: ", e);
-        }
-    }
-
-    // checklist
-    public static void sendToRpi2(String jsonObj) {
-        try {
-            bController.write(jsonObj.getBytes(StandardCharsets.UTF_8));
-//            Log.d(TAG, "sendToRPi: \n" + jsonObj.toString(2));
         } catch (Exception e) {
             Log.e(TAG, "Failed to send message to rpi: ", e);
         }

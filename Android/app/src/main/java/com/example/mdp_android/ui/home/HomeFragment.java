@@ -87,6 +87,7 @@ public class HomeFragment extends Fragment {
                 new IntentFilter("getReceived")
         );
 
+        // register receiver for initial robot position
         LocalBroadcastManager.getInstance(requireActivity()).registerReceiver(
                 initialStatusReceiver,
                 new IntentFilter("getStatus")
@@ -155,6 +156,14 @@ public class HomeFragment extends Fragment {
                 }
                 homeViewModel.setTargetStatus(status);
                 updateObstacle(response);
+            } else if (messageType == "path") {
+                try {
+                    ArrayList<ArrayList<Integer>> path = RpiController.getPath(response);
+                    map.setExploredPath(path);
+                    Log.d(TAG, "path: " + path.get(0));
+                } catch (Exception e) {
+                    log("empty path received: " + e);
+                }
             }
         }
     };
@@ -210,13 +219,13 @@ public class HomeFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 // sends task and robot and obstacles coordinates to rpi
-                if (map.robotInMap()) {
+//                if (map.robotInMap()) {
                     map.sendMapToRpi();
                     map.setStart(true);
                     toast("Start Task: " + map.getTaskType());
-                } else {
-                    toast( "Map not filled");
-                }
+//                } else {
+//                    toast( "Map not filled");
+//                }
             }
         });
 
@@ -393,7 +402,11 @@ public class HomeFragment extends Fragment {
         try {
             int obsID = Integer.parseInt(target.getString("obs_id"));
             int imgID = Integer.parseInt(target.getString("img_id"));
-            map.setObsTargetID(obsID, imgID);
+            if (imgID == 00) {
+                toast("Cannot detect image");
+            } else {
+                map.setObsTargetID(obsID, imgID);
+            }
         } catch (Exception e) {
             log("Failed to parse JSON: " + e);
         }
