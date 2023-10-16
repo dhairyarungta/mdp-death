@@ -458,7 +458,8 @@ public class BluetoothController {
 
         public void run() {
             Log.d(TAG, "BEGIN mConnectedThread");
-            mmBuffer = new byte[1024];
+//            mmBuffer = new byte[1024];
+            mmBuffer = new byte[2048];
             int numBytes; // bytes returned from read()
 
             // Keep listening to the InputStream until an exception occurs.
