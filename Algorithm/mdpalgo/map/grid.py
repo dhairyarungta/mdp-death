@@ -14,8 +14,8 @@ Explanation on coordinate system:
 import logging
 import pygame
 
-from Algorithm.mdpalgo.constants import mdp_constants
-from Algorithm.mdpalgo.map.cell import Cell, CellStatus
+from constants import mdp_constants
+from map.cell import Cell, CellStatus
 import numpy as np
 
 # This sets the margin between each Cell
@@ -170,24 +170,28 @@ class Grid(object):
         else:
             print("Clicked on a cell that cannot be chosen as obstacle cell.")
 
-    def get_boundary_cells_coords(self, cell: Cell):
+    def get_boundary_cells_coords_EDITME(self, cell: Cell):
         """Return a list of coordinates [x_coord, y_coord] of the cells
         surrounding a given cell, within a 2 cell radius (1 for diagonal)."""
         x, y = cell.get_xcoord(), cell.get_ycoord()
         boundary_cells = [
+            # [x - 2, y + 2], [x - 1, y + 2], [x, y + 2], [x + 1, y + 2], [x + 2, y + 2],
+            # [x - 2, y + 1], [x - 1, y + 1], [x, y + 1], [x + 1, y + 1], [x + 2, y + 1],
+            # [x - 2, y    ], [x - 1, y    ],             [x + 1, y    ], [x + 2, y    ],
+            # [x - 2, y - 1], [x - 1, y - 1], [x, y - 1], [x + 1, y - 1], [x + 2, y - 1],
+            # [x - 2, y - 2], [x - 1, y - 2], [x, y - 2], [x + 1, y - 2], [x + 2, y - 2]
             [x - 1, y + 1], [x, y + 1], [x + 1, y + 1],
-            [x - 1, y    ],             [x + 1, y    ],
+            [x - 1, y], [x + 1, y],
             [x - 1, y - 1], [x, y - 1], [x + 1, y - 1]
         ]
         return boundary_cells
 
     def set_obstacle_boundary_cells_around(self, obstacle_cell: Cell):
-        """For an obstacle cell, set the statuses of the cells around it to
-        boundary status"""
+        """For an obstacle cell, set the statuses of the cells around it to boundary status"""
         if not self.is_obstacle_status(obstacle_cell.get_cell_status()):
             raise Exception("Attempt to set boundary around a non-obstacle cell.")
 
-        boundary_cells = self.get_boundary_cells_coords(obstacle_cell)
+        boundary_cells = self.get_boundary_cells_coords_EDITME(obstacle_cell)
         # Set status of cells around obstacle as boundary
         for x, y in boundary_cells:
             if not self.is_xy_coords_within_grid(x, y):
@@ -215,7 +219,7 @@ class Grid(object):
         if self.is_obstacle_status(removed_obstacle_cell):
             raise Exception("Attempted to remove boundary cells from an existing obstacle. Remove the obstacle before doing this!")
 
-        boundary_cells = self.get_boundary_cells_coords(removed_obstacle_cell)
+        boundary_cells = self.get_boundary_cells_coords_EDITME(removed_obstacle_cell)
         # Unset status of cells around obstacle
         for x, y in boundary_cells:
             if not self.is_xy_coords_within_grid(x, y):

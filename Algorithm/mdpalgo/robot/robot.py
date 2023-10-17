@@ -3,15 +3,15 @@ from math import degrees
 from pygame.math import Vector2
 import pygame
 
-from Algorithm.mdpalgo.constants import mdp_constants
-from Algorithm.mdpalgo.map.configuration import Pose
-from Algorithm.mdpalgo.map.grid import Grid
+from constants import mdp_constants
+from map.configuration import Pose
+from map.grid import Grid
 from enum import Enum
 
 # This sets the margin between each Cell
 MARGIN = 2
 ONE_CELL = 20 + MARGIN
-THREE_CELL = 3 * ONE_CELL
+THREE_CELL = mdp_constants.TURNING_RADIUS * ONE_CELL
 dt = 0.2     # Max without messing up is 0.8
 class RobotMovement(Enum):
     STRAIGHT_FORWARD = "SF"
@@ -42,7 +42,7 @@ class Robot(object):
         self.car_rect: pygame.Rect
         self.update_car_rect()
 
-        self.speed = 10
+        self.speed = 20
         self.velocity = Vector2(0.0, 0.0)
         self.steering = 0.0
 

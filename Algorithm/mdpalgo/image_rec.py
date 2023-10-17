@@ -8,7 +8,7 @@ import json
 # Run this command in the terminal to start the server
 # docker run --mount source=roboflow,target=/tmp/cache -it --rm -p 9001:9001 roboflow/roboflow-inference-server-cpu
 
-infer_server_url = "http://localhost:9001/mdp-project/1?api_key=3cR60WzeoK9LNrEVOyPT"
+infer_server_url = "http://localhost:9001/mdp-project-4rl1x/1?api_key=xu7E4hooqQWgnxXgLY1r"
 
 
 def visualise_predictions(predictions: List[Dict], input_path, output_path, stroke=2):
@@ -88,6 +88,33 @@ def image_rec(image_path, save_path=None):
     # Optional: print the response
     result_str = response.text
     result_dict = json.loads(result_str)
+    nretries = 5
+    while len(result_dict['predictions']) == 0 and nretries>0:
+        print(f'No Object detected. Retrying')
+        response = send_post_request(encoded_image, infer_server_url)
+        result_str = response.text
+        result_dict = json.loads(result_str)
+        nretries-=1
+    
+    if len(result_dict['predictions']) == 0:
+        return None
+    print(result_dict)
+    if len(result_dict['predictions']) >1:
+        largest_box = 0
+        largest_box_pre = None
+        for pre in result_dict['predictions']:
+            box_area = pre['width']*pre['height']
+            if box_area > largest_box:
+                largest_box = box_area
+                largest_box_pre = pre
+        result_dict['predictions'] = [largest_box_pre]
+        
     if save_path is not None:
         visualise_predictions(result_dict["predictions"], image_path, save_path)
     return result_dict
+
+if __name__ == "__main__":
+    import os 
+
+    for img in os.listdir('test_images'):
+        image_rec(f'test_images/{img}', f'test_images_result/{img}')

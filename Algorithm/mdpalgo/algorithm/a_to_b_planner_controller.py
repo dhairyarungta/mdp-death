@@ -1,11 +1,12 @@
 import logging
+import json
 
-from Algorithm.mdpalgo.communication.message_parser import TaskType
-from Algorithm.mdpalgo.constants import mdp_constants
-from Algorithm.mdpalgo.robot.robot import Robot
-from Algorithm.mdpalgo.algorithm.a_to_b_planner_service_astar import AutoPlanner, RobotMovement
-from Algorithm.mdpalgo.map.configuration import Pose
-from Algorithm.mdpalgo.map.grid import Grid
+from communication.message_parser import TaskType
+from constants import mdp_constants
+from robot.robot import Robot
+from algorithm.a_to_b_planner_service_astar import AutoPlanner, RobotMovement
+from map.configuration import Pose
+from map.grid import Grid
 
 MARGIN = 2
 
@@ -13,6 +14,7 @@ MARGIN = 2
 class AtoBPathPlan(object):
 
     def __init__(self, simulator, grid: Grid, robot: Robot, fastest_route):
+        self.filled_coordinates_array = []
         self.simulator = simulator
         self.grid = grid
         self.robot = robot
@@ -47,11 +49,13 @@ class AtoBPathPlan(object):
             target = self.fastest_route.pop(0)
             self.plan_path_to(target)
 
-            if count_of_obs >= 1:
-                if mdp_constants.RPI_CONNECTED:
-                    self.send_to_rpi()
+            # self.send_to_rpi()
+            # if count_of_obs >= 1:
+            #     if mdp_constants.RPI_CONNECTED:
+            #         self.send_to_rpi()
 
-        self.restart_robot()
+        print(f"== A_TO_B_PLANNER > start_robot() | ENDING PATHING")
+        self.restart_robot_and_send_to_rpi()
 
     def plan_path_to(self, target):
         """target is a list [x, y, dir, Cell] where Cell is the obstacle cell
@@ -76,8 +80,21 @@ class AtoBPathPlan(object):
             ]
             self.collection_of_movements, self.path_according_to_movements, self.movement_string = self.auto_planner.get_movements_and_path_to_goal(
                 maze, cost, start, end, obstacle_coords)
+            # [
+            #     [[8, 11], [8, 12], [8, 13], [9, 13], [10, 13], [11, 13]],
+            #     [[10, 13]],
+            #     [[11, 13], [12, 13], [13, 13], [13, 14], [13, 15], [13, 16]],
+            #     [[13, 15]]
+            # ]
+            self.filled_coordinates_array = []
+            for ar in self.path_according_to_movements:
+                for nested_ar in ar:
+                    tmp = []
+                    for coord in nested_ar:
+                        tmp.append(int(coord))
+                    self.filled_coordinates_array.append(tmp)
             print(f"== A_TO_B_PLAN_CTLR > auto_search() | Collection of movements is {self.collection_of_movements}")
-            print(f"== A_TO_B_PLAN_CTLR > auto_search() | path according to movements is {self.path_according_to_movements}")
+            print(f"== A_TO_B_PLAN_CTLR > auto_search() | Filled coordinates array is {self.filled_coordinates_array}")
             print(f"== A_TO_B_PLAN_CTLR > auto_search() | MOVEMENT STRING IS {self.movement_string}")
         except Exception as e:
             logging.exception(e)
@@ -87,7 +104,7 @@ class AtoBPathPlan(object):
             return
 
         # execute gray route
-        self.execute_planned_path()
+        self.execute_planned_path(self.filled_coordinates_array)
 
     def get_target_id(self, target: list):
         if target[3].id != None:
@@ -102,7 +119,7 @@ class AtoBPathPlan(object):
         self.target_pose.set_pose(target[:3])
         self.obstacle_cell = target[3]
 
-    def execute_planned_path(self):
+    def execute_planned_path(self, coords):
         for move_index in range(len(self.collection_of_movements)):
             move = self.collection_of_movements[move_index]
             # print(f"== A_TO_B_PLAN_CTLR > execute_a_s_r | Performing the move: {move}")
@@ -122,7 +139,7 @@ class AtoBPathPlan(object):
             pass
         self.robot.redraw_car_refresh_screen()
         try:
-            self.save_path_for_rpi()
+            self.save_path_and_send_to_rpi(coords)
         except Exception as e:
             logging.exception(e)
             pass
@@ -134,7 +151,7 @@ class AtoBPathPlan(object):
     def skip_current_target(self):
         self.skipped_obstacles.append(self.target)
 
-    def restart_robot(self):
+    def restart_robot_and_send_to_rpi(self):
         if len(self.skipped_obstacles) == 0:
             print("No skipped obstacles to run")
             self.send_to_rpi()
@@ -200,12 +217,22 @@ class AtoBPathPlan(object):
         image_result_list = ["TARGET", target_id, self.obstacle_key]
         return '/'.join([str(elem) for elem in image_result_list]) + '/'
 
-    def save_path_for_rpi(self):
+    def save_path_and_send_to_rpi(self, coords):
         # self.all_movements_dict[self.get_current_obstacle_id()] = self.parse_movements_string_EDITME()
-        self.all_movements_dict = self.parse_movements_string_EDITME();
-        self.all_take_photo_dict[self.get_current_obstacle_id()] = self.get_take_photo_string()
-        self.obstacle_list_rpi.append(self.get_current_obstacle_id())
-        print(f"== A_TO_B_PLAN_CTLR > save_path_for_rpi | {self.all_movements_dict, self.all_take_photo_dict}")
+        self.all_movements_dict = self.parse_movements_string_EDITME()
+        # if self.all_movements_dict['data']['commands'][0][0:2] == "SF":
+        #     new_num = int(self.all_movements_dict['data']['commands'][0][2:5])+10
+        #     if new_num<100:
+        #         new_num_str = "0" + str(new_num)
+        #     else:
+        #         new_num_str = str(new_num)
+        #     self.all_movements_dict['data']['commands'][0] = "SF"+new_num_str
+        # else:
+        #     self.all_movements_dict['data']['commands'].insert(0, "SF010")
+        self.all_movements_dict["data"]["path"] = coords
+        print(f"== A_TO_B_PLAN_CTLR > save_path_for_rpi() | {self.all_movements_dict}")
+        print(f"== A_TO_B_PLAN_CTLR > save_path_for_rpi() | SENDING MSG")
+        self.simulator.commsClient.send(self.all_movements_dict)
 
         self.reset_collection_of_movements()
         self.reset_robot_pos_list()
@@ -218,25 +245,33 @@ class AtoBPathPlan(object):
 
     def send_to_rpi(self):
         if not self.obstacle_list_rpi:
-            self.send_to_rpi_finish_task()
+            # self.send_to_rpi_finish_task()
             return
 
         self.obstacle_key = self.obstacle_list_rpi.pop(0)
         self.reset_num_move_completed_rpi()
         print(f"== A_TO_B_PLAN_CTLR > send_to_rpi() | SENDING THIS TO RPI {self.all_movements_dict}")
-        print("Remaining obstacles: ", self.obstacle_list_rpi)
-        id = []
-        id.append(str(self.get_target_id(self.target)))
-        self.movement_string = id + self.movement_string
-        self.full_path.append(self.movement_string)
-        self.robot_pos_string.append(",".join(self.robot.robot_pos))
-        self.robot.robot_pos.clear()
+        self.simulator.commsClient.send(self.all_movements_dict)
+        # print("Remaining obstacles: ", self.obstacle_list_rpi)
+        # id = []
+        # id.append(str(self.get_target_id(self.target)))
+        # self.movement_string = id + self.movement_string
+        # self.full_path.append(self.movement_string)
+        # self.robot_pos_string.append(",".join(self.robot.robot_pos))
+        # self.robot.robot_pos.clear()
 
-    def send_to_rpi_finish_task(self):
-        full_path_string = "STM/" + str(self.full_path)
-        full_robot_pos_string = "AND/[C10] " + ",".join(self.robot_pos_string)
-        self.simulator.comms.send(full_path_string)  # Send full list of robot coordinates for android to update
-        self.simulator.comms.send(full_robot_pos_string)
+    # def send_to_rpi_finish_task(self):
+    #     print(f"== A_TO_B > SEND_TO_RPI() |  {self.all_movements_dict}")
+    #     self.simulator.commsClient.send(self.all_movements_dict)
+    #     # full_path_string = "STM/" + str(self.full_path)
+    #     # full_robot_pos_string = "AND/[C10] " + ",".join(self.robot_pos_string)
+    #     # print(full_path_string)
+    #     # print(full_robot_pos_string)
+    #     # try:
+    #     #     self.simulator.commsClient.send(full_path_string)  # Send full list of robot coordinates for android to update
+    #     #     self.simulator.commsClient.send(full_robot_pos_string)
+    #     # except:
+    #     #     print('rpi not connected')
 
     def reset_num_move_completed_rpi(self):
         self.num_move_completed_rpi = 0
@@ -247,5 +282,5 @@ class AtoBPathPlan(object):
     def is_move_to_current_obstacle_done(self) -> bool:
         return self.num_move_completed_rpi == self.total_num_move_required_rpi
 
-    def request_photo_from_rpi(self):
-        self.simulator.comms.send(self.all_take_photo_dict[self.obstacle_key])
+    # def request_photo_from_rpi(self):
+    #     self.simulator.commsClient.send(self.all_take_photo_dict[self.obstacle_key])

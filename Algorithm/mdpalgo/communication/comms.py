@@ -2,8 +2,8 @@
 Algorithm Socket to connect with RPi.
 """
 
-from Algorithm.mdpalgo.constants import mdp_constants
-from Algorithm.mdpalgo.image_rec import image_rec
+from constants import mdp_constants
+from image_rec import image_rec
 
 import socket
 import struct
@@ -77,7 +77,7 @@ class AlgoClient:
     def send(self, message):
         try:
             print(f'[Algo] Message to Algo Server: {message}')
-            self.client_socket.sendall(self.encode(message))
+            self.client_socket.sendall(self.encode(json.dumps(message)))
 
         except Exception as error:
             print("[Algo] Failed to send to Algo Server.")
@@ -114,7 +114,7 @@ class AlgoClient:
 
 
 '''
-GRP14: MINI-PROGRAM TO TEST CONNECTION BETWEEN RPI AND LAPTOP
+GRP14: MINI-PROGRAM TO TEST IMAGE REG AND MOVEMENT FOR TASK A5
 '''
 if __name__ == '__main__':
     client = AlgoClient()
@@ -125,7 +125,7 @@ if __name__ == '__main__':
     from message_parser import MessageParser, MessageType
 
     parser = MessageParser()
-    obs_id = "00"
+    obs_idx = "00"
 
     # message = {
     #     "type": "GET_IMAGE",
@@ -142,8 +142,8 @@ if __name__ == '__main__':
                          'RB090', 'SF065', 'RF180'],
         }
     }
-    print(f"==SENDING {json.dumps(message)}")
-    client.send(json.dumps(message))
+    print(f"==SENDING {message}")
+    client.send(message)
     all_data = client.recv()
 
     # test the photo data
@@ -160,8 +160,8 @@ if __name__ == '__main__':
             result_message = {
                 "type": "IMAGE_RESULTS",
                 "data": {
-                    "obs_id": obs_id,
+                    "obs_id": obs_idx,
                     "img_id": result["predictions"][0]["class"]
                 }
             }
-            client.send(json.dumps(result_message))
+            client.send(result_message)

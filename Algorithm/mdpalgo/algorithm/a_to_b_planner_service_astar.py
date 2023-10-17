@@ -1,10 +1,12 @@
 from queue import PriorityQueue
+from typing import Tuple, List, Any
+
 import numpy as np
 
-from Algorithm.mdpalgo.constants import mdp_constants
-from Algorithm.mdpalgo.map.cell import CellStatus
-from Algorithm.mdpalgo.map.configuration import Pose
-from Algorithm.mdpalgo.robot.robot import RobotMovement
+from constants import mdp_constants
+from map.cell import CellStatus
+from map.configuration import Pose
+from robot.robot import RobotMovement
 
 
 class ImprovedNode:
@@ -338,10 +340,11 @@ class AutoPlanner:
                 if self.is_node_in_yet_to_visit_and_has_higher_cost(child):
                     continue
 
+                print(f"== A_TO_B_PLANNER_SVC > get_movements() | Adding child: {child.pose.to_tuple()}")
                 self.yet_to_visit_add(child)
         raise Exception("no path found to goal")
 
-    def reconstruct_movements_and_path_to_obtain_soln(self, current_node: ImprovedNode) -> list:
+    def reconstruct_movements_and_path_to_obtain_soln(self, current_node: ImprovedNode) -> Tuple[List[RobotMovement], List[list], List[Any]]:
         """Return a list of string of movements"""
         node = current_node
         movements = []
@@ -359,12 +362,19 @@ class AutoPlanner:
         movements_str.reverse()
         path.reverse()
         movements_str = self.parse_raw_movements_into_movement_string(movements_str)
+        print("HELLO (EDIT BEFORE ME)")
+        print(movements)
+        print("HELLO2")
+        print(movements_str)
         self.full_path.append(movements_str)
         return movements, path, movements_str
 
     def parse_raw_movements_into_movement_string(self, arr):
         # print(f"== A_TO_B_PLAN_SVC > process_movement_string() | {arr}")
-        TURNING_MOVEMENTS = [RobotMovement.RIGHT_FORWARD, RobotMovement.LEFT_FORWARD, RobotMovement.RIGHT_BACKWARD, RobotMovement.LEFT_BACKWARD]
+        TURNING_MOVEMENTS = [RobotMovement.RIGHT_FORWARD.value,
+                             RobotMovement.LEFT_FORWARD.value,
+                             RobotMovement.RIGHT_BACKWARD.value,
+                             RobotMovement.LEFT_BACKWARD.value]
 
         if not arr:
             return []
@@ -375,8 +385,11 @@ class AutoPlanner:
         # Initialize empty list to store tagged array
         tagged_arr = []
 
+        # print("HIIIIIIIIIIIIIIIIi")
+        # print(arr[0])
         # Loop through each element in the array, starting from the second element
         for i in range(1, len(arr)):
+            # print(arr[i])
             # If the current element is the same as the previous element, increment count
             if arr[i] == current_tag:
                 current_count += 1
@@ -386,6 +399,7 @@ class AutoPlanner:
                     current_count_str = str(current_count * 90).zfill(3)
                 else:
                     current_count_str = str(current_count * 10).zfill(3)
+                # print('appending ', current_tag+current_count_str)
                 tagged_arr.append(current_tag + current_count_str)
                 # Reset current tag and count to the new element
                 current_tag = arr[i]
@@ -396,6 +410,7 @@ class AutoPlanner:
             current_count_str = str(current_count * 10).zfill(3)
         tagged_arr.append(current_tag + current_count_str)
 
+        # print('final ', tagged_arr)
         # Print the tagged array
         return tagged_arr
 

@@ -10,5 +10,8 @@ setup(name='mdpalgo',
         'networkx',
         'parse',
         'numpy',
+        'opencv-python',
+        'requests',
+        'pillow'
       ]
      )

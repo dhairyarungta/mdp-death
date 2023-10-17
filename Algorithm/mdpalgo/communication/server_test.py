@@ -7,7 +7,7 @@ This script is used to test the RPi server.
 
 import socket
 import threading
-from Algorithm.mdpalgo.constants import mdp_constants
+from constants import mdp_constants
 
 FORMAT = "UTF-8"
 ALGO_SOCKET_BUFFER_SIZE = 1024
