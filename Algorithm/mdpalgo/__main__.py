@@ -37,7 +37,7 @@ def main():
             x = Simulator(['39'])
         elif args.r:
             x = Simulator(['38'])
-        elif len(args.il)>0:
+        elif args.il and len(args.il)>0:
             x = Simulator(args.il)
         else:
             x = Simulator()

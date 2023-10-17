@@ -10,7 +10,7 @@ import pathlib
 # docker run --mount source=roboflow,target=/tmp/cache -it --rm -p 9001:9001 roboflow/roboflow-inference-server-cpu
 
 common_object_url = "http://localhost:9001/mdp-mhgbi/1?api_key=IEwWvsYdPmyXduQYIz3k"
-arrow_url = "http://localhost:9001/mdp-arrows-qxuax/3?api_key=xu7E4hooqQWgnxXgLY1r"
+arrow_url = "http://localhost:5000/image_rec_week9"
 
 
 def visualise_predictions(predictions: List[Dict], input_path, output_path, stroke=2):
@@ -76,26 +76,29 @@ def encode_image_to_base64(image_path):
     return encoded_string
 
 
-def send_post_request(encoded_image, url):
+def send_post_request(encoded_image, url, arrow: bool = False):
     """Send a POST request with the Base64 encoded image."""
     headers = {
         'Content-Type': 'application/x-www-form-urlencoded'
     }
-    response = requests.post(url, data=encoded_image, headers=headers)
+    if arrow:
+        response = requests.post(url, data=encoded_image)
+    else:
+        response = requests.post(url, data=encoded_image, headers=headers)
     return response
 
 
-def image_rec(image_path, save_path=None, arrow_id=None):
+def image_rec(image_path, save_path=None, arrow: bool = False):
     """Send a POST request with the Base64 encoded image."""
-
-    # if not arrow:
-    #     image_path = preprocess_img(image_path)
 
     # Encode the image to Base64
     encoded_image = encode_image_to_base64(image_path)
 
     # Send the POST request
-    infer_server_url = common_object_url
+    if arrow:
+        infer_server_url = arrow_url
+    else:
+        infer_server_url = common_object_url
 
     response = send_post_request(encoded_image, infer_server_url)
 
@@ -128,8 +131,6 @@ def image_rec(image_path, save_path=None, arrow_id=None):
     
     if len(result_dict['predictions']) == 0:
         return None
-    
-    print(result_dict)
         
     if save_path is not None:
         if arrow_id is not None:
@@ -140,13 +141,11 @@ def image_rec(image_path, save_path=None, arrow_id=None):
 if __name__ == "__main__":
     import os 
     # image_rec('20230825_132514.jpg', 'output.jpg')
-    image_dir = 'images'
-    resutl_dir = 'images_result'
-    count = 0
+    image_dir = 'test_images_2'
+    resutl_dir = 'test_images_result_2'
     for img in os.listdir(image_dir):
         if img.endswith('.jpg'):
-            if count %2 ==0:
-                image_rec(f'{image_dir}/{img}', f'{resutl_dir}/{img}', arrow_id='39')
+            image_rec(f'{image_dir}/{img}', f'{resutl_dir}/{img}')
             # else:
             #     print(img)
             #     image_rec(f'{image_dir}/{img}', f'{resutl_dir}/{img}', arrow=False)
