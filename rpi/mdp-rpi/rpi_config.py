@@ -14,12 +14,13 @@ BT_BUFFER_SIZE = 2048
 # STM Interface
 STM_BAUDRATE = 115200
 STM_ACK_MSG = "A"
-STM_NAV_COMMAND_FORMAT = '^[SLR][FB][0-9]{3}$'
+# STM_NAV_COMMAND_FORMAT = '^[SLR][FB][0-9]{3}$' # task 1
+STM_NAV_COMMAND_FORMAT = '^(([SLR][FB]|OF)[0-9]{3})|([XY]DIST)$' # task 2
 STM_GYRO_RESET_COMMAND = "GYROR"
 STM_GYRO_RESET_DELAY = 8 # time to wait for gyro reset
-STM_GYRO_RESET_FREQ = 14 # number of obstacles before GRYO RESET command is sent
+STM_GYRO_RESET_FREQ = 1414 # number of obstacles before GRYO RESET command is sent
 
-# adjust commands for turns to correct turning radius to 30cm, as expected by PC-algo
+# Task 1: adjust commands for turns to correct turning radius to 30cm, as expected by PC-algo
 STM_COMMAND_ADJUSTMENT_DICT = {
     "OUT": {
         # 90 degree turns: manually calibrated
@@ -58,3 +59,12 @@ STM_COMMAND_ADJUSTMENT_DICT = {
 }
 STM_COMMAND_ADJUSTMENT_MAP = STM_COMMAND_ADJUSTMENT_DICT[LOCATION]
 
+# Task 2: translate PC commands for moving around obstacles to STM_NAV_COMMAND_FORMAT
+STM_OBS_ROUTING_MAP = {
+    "firstLeft": ["LF050", "RF050", "RF060", "LF040", "RB020"],
+    "firstRight": ["RF050", "LF050", "LF060", "RF040", "LB020"],
+    "secondLeft": ["LF090", "OF065", "SB010", "RF180", "OF130", "RF090"],
+    "secondRight": ["RF090", "OF065", "SB010", "LF180", "OF130", "LF090"]
+}
+STM_XDIST_COMMAND = "XDIST"
+STM_YDIST_COMMAND = "YDIST"
