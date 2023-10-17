@@ -1,4 +1,4 @@
-LOCATION = "IN" # IN OR OUT
+LOCATION = "IN" # IN (indoors) / OUT (outdoors)
 
 RPI_IP = "192.168.14.1"
 MSG_LOG_MAX_SIZE = 150 # characters
@@ -58,5 +58,3 @@ STM_COMMAND_ADJUSTMENT_DICT = {
 }
 STM_COMMAND_ADJUSTMENT_MAP = STM_COMMAND_ADJUSTMENT_DICT[LOCATION]
 
-
-# Image recognition

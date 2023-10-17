@@ -116,14 +116,9 @@ class STMInterface:
         message = self.listen()
         if message  == STM_ACK_MSG:
             print("[STM] Received ACK from STM") 
-        # elif message.isnumeric(): # TODO check STM ultrasonic sensor output format
-        #     print("[STM] WARNING:", command, "caused STM emergency stop, notifying PC") 
-        #     distance = float(message) 
-        #     ultrasonic_message = self.create_ultrasonic_message(command, distance)
-        #     self.RPiMain.PC.msg_queue.put(ultrasonic_message)
         else:
             print("[STM] ERROR: Unexpected message from STM -", message)
-            self.reconnect() # TODO
+            self.reconnect() 
 
 
     def send_image_to_pc(self):
@@ -189,16 +184,6 @@ class STMInterface:
             else:
                 final_commands = add_command(final_commands, commands[i])
         return final_commands
-       
-    # def create_ultrasonic_message(self, command, distance):
-    #     message = {
-    #         "type": "ULTRASONIC",
-    #         "data": {
-    #             "distance": distance,
-    #             "command": command
-    #         }
-    #     }
-    #     return json.dumps(message).encode("utf-8")
 
     def create_path_message(self, path):
         message = {
@@ -209,6 +194,7 @@ class STMInterface:
         }
         return json.dumps(message).encode("utf-8")
     
+    # functions for task 2 (W9) - fastest car
     def move_back(self,xdist,ydist):
         movement_list = []
         y_adjustment = 10   # to be tested later, range[4, ?]

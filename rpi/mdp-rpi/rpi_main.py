@@ -15,7 +15,6 @@ class RPiMain:
         self.Android.connect()
         self.PC.connect()
         self.STM.connect()
-        # TODO add error handling and retry
 
     def cleanup(self):
         self.Android.disconnect()

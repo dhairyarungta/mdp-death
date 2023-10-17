@@ -2,7 +2,6 @@ from queue import Queue
 import socket
 import sys
 import json
-from Camera import capture, preprocess_img 
 from rpi_config import *
 
 class PCInterface:
@@ -16,7 +15,8 @@ class PCInterface:
 
     def connect(self):
         # 1. Solution for thread-related issues: always attempt to disconnect first before connecting
-        self.disconnect()
+        if self.client_socket is not None: 
+            self.disconnect()
 
         # 2. Wait and accept PC connection
         try:
@@ -113,7 +113,7 @@ class PCInterface:
                         print("[PC] Write to PC:", message.decode("utf-8")[:MSG_LOG_MAX_SIZE])
                     except Exception as e:
                         print("[PC] ERROR: Failed to write to PC -", str(e))
-                        self.reconnect() # TODO
+                        self.reconnect()
                     else:
                         exception = False
 
