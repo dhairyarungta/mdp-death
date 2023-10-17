@@ -209,3 +209,22 @@ class STMInterface:
         }
         return json.dumps(message).encode("utf-8")
     
+    def move_back(self,xdist,ydist):
+        movement_list = []
+        y_adjustment = 10   # to be tested later, range[4, ?]
+        x_adjustment = 0.5* xdist
+        y_offset = ydist + 20 + y_adjustment
+        movement_list.append(f"SF{str(y_offset)}")
+        turning_direction = self.get_second_arrow()   # to be implemented later
+        if turning_direction == 'r':
+            movement_list.append(STM_COMMAND_ADJUSTMENT_MAP["LF090"])
+            movement_list.append(f"SF{str(x_adjustment)}")
+            movement_list.append(STM_COMMAND_ADJUSTMENT_MAP["RF090"])
+        else:
+            movement_list.append(STM_COMMAND_ADJUSTMENT_MAP["RF090"])
+            movement_list.append(f"SF{str(x_adjustment)}")
+            movement_list.append(STM_COMMAND_ADJUSTMENT_MAP["LF090"])
+        return movement_list
+
+
+    
