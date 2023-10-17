@@ -14,7 +14,8 @@ class STMInterface:
         self.baudrate = STM_BAUDRATE
         self.serial = None
         self.msg_queue = Queue()
-        self.obstacle_count = 0
+        self.obstacle_count = 0 # for task 1 gyro reset
+        self.second_arrow = None # for task 2
 
     def connect(self):
         try:
@@ -60,6 +61,8 @@ class STMInterface:
         return message
             
     def send(self): 
+        self.obstacle_count = 0 # for task 1 gyro reset
+        self.second_arrow = None # for task 2
         while True: 
             message = self.msg_queue.get()
 
@@ -71,11 +74,16 @@ class STMInterface:
                 # display path on android
                 self.send_path_to_android(message_json) 
 
+                # convert any turn or obstacle routing commands
+                # smooth out commands by combining consecutive SF/SB commands
                 commands = self.adjust_commands(message_json["data"]["commands"])
-                for command in commands:
+                for command in commands: # send and wait for ACK/reset delay
                     print("[STM] Sending command", command)
                     self.write_to_stm(command)  
                 self.obstacle_count += 1
+
+                if self.second_arrow != None: # after moving around obstacle 2
+                    self.return_to_carpark()
 
                 # Start a new thread to capture and send the image to PC
                 capture_and_send_image_thread = threading.Thread(target=self.send_image_to_pc, daemon=True)
@@ -116,15 +124,9 @@ class STMInterface:
         message = self.listen()
         if message  == STM_ACK_MSG:
             print("[STM] Received ACK from STM") 
-        # elif message.isnumeric(): # TODO check STM ultrasonic sensor output format
-        #     print("[STM] WARNING:", command, "caused STM emergency stop, notifying PC") 
-        #     distance = float(message) 
-        #     ultrasonic_message = self.create_ultrasonic_message(command, distance)
-        #     self.RPiMain.PC.msg_queue.put(ultrasonic_message)
         else:
             print("[STM] ERROR: Unexpected message from STM -", message)
-            self.reconnect() # TODO
-
+            self.reconnect() 
 
     def send_image_to_pc(self):
         print("[STM] Adding image from camera to PC message queue")
@@ -152,6 +154,17 @@ class STMInterface:
         def adjust_turn_command(turn_command):
             return STM_COMMAND_ADJUSTMENT_MAP.get(turn_command, turn_command)
 
+        def is_obstacle_routing_command(command):
+            return (command in STM_OBS_ROUTING_MAP.keys())
+
+        def adjust_obstacle_routing_command(obs_routing_command):
+            if obs_routing_command.startswith("second"):
+                self.second_arrow = obs_routing_command[len("second")]
+            return STM_OBS_ROUTING_MAP.get(obs_routing_command, STM_OBS_ROUTING_MAP["secondLeft"])
+        
+        def is_straight_command(command):
+            return not (is_turn_command(command) or is_obstacle_routing_command(command))
+
         def combine_straight_commands(straight_commands):
             dir_dict = {"SF": 1, "SB": -1} # let forward direction be positive
             total = 0
@@ -169,12 +182,14 @@ class STMInterface:
 
         def add_command(final, new):
             # check new and preceding are straight commands
-            if not is_turn_command(new) and \
-                    (len(final) > 0 and not is_turn_command(final[-1])): 
+            if is_straight_command(new) and \
+                    (len(final) > 0 and is_straight_command(final[-1])): 
                 prev = final.pop(-1) # remove prev
                 combined = combine_straight_commands([prev, new])
                 if combined != None:
                     final.append(combined)
+                else: # failed to combine commands
+                    final.append(new)
             else:
                 final.append(new)
 
@@ -182,23 +197,19 @@ class STMInterface:
 
         final_commands = []     
         for i in range(len(commands)):
-            if is_turn_command(commands[i]): 
-                turn_seq = adjust_turn_command(commands[i])
-                for c in turn_seq:
-                    final_commands = add_command(final_commands, c)
-            else:
+            if is_straight_command(commands[i]):
                 final_commands = add_command(final_commands, commands[i])
+            else:
+                adj_commands = []
+                if is_turn_command(commands[i]): 
+                    adj_commands = adjust_turn_command(commands[i])
+                elif is_obstacle_routing_command(commands[i]): 
+                    adj_commands = adjust_obstacle_routing_command(commands[i])
+                else:
+                    final_commands = add_command(final_commands, commands[i])
+                for c in adj_commands:
+                    final_commands = add_command(final_commands, c)
         return final_commands
-       
-    # def create_ultrasonic_message(self, command, distance):
-    #     message = {
-    #         "type": "ULTRASONIC",
-    #         "data": {
-    #             "distance": distance,
-    #             "command": command
-    #         }
-    #     }
-    #     return json.dumps(message).encode("utf-8")
 
     def create_path_message(self, path):
         message = {
@@ -209,21 +220,66 @@ class STMInterface:
         }
         return json.dumps(message).encode("utf-8")
     
-    def move_back(self,xdist,ydist):
+    # functions for task 2 (W9) - fastest car
+    def return_to_carpark(self, second_arrow):
+        xdist = self.get_dist(STM_XDIST_COMMAND)
+        ydist = self.get_dist(STM_YDIST_COMMAND) 
+        commands = self.get_commands_to_carpark(xdist, ydist, second_arrow)
+        print("[STM] Returning to carpark...")
+        for command in commands: # send and wait for ACK
+            print("[STM] Sending command", command)
+            self.write_to_stm(command)  
+
+    def get_dist(self, dist_command):
+        print("[STM] Getting DIST...")
+        self.clean_buffers()
+        distance = None
+        if self.is_valid_command(dist_command) and dist_command.endswith("DIST"):
+            exception = True
+            while exception:
+                try:
+                    encoded_string = dist_command.encode()
+                    byte_array = bytearray(encoded_string)
+                    self.serial.write(byte_array)
+                except Exception as e:
+                    print("[STM] ERROR: Failed to write to STM -", str(e)) 
+                    exception = True
+                    self.reconnect() # reconnect and retry
+                else:
+                    exception = False
+                    message = self.listen()
+                    if message.isnumeric(): 
+                        distance = float(message) # TODO check format
+                        print("[STM] Read DIST =", distance) 
+                    else: # TODO add timeout for waiting for dist, to resend DIST command?
+                        print(f"[STM] ERROR: Unexpected message from STM after command [{dist_command}] - {message}")
+                        self.reconnect() 
+        else:
+            print(f"[STM] ERROR: Invalid DIST command to STM [{dist_command}]")
+        return distance
+
+    def get_commands_to_carpark(self, xdist, ydist):
+        print(f"[STM] Calculating path to carpark after {self.second_arrow} arrow for XDIST = {xdist} YDIST = {ydist}")
         movement_list = []
         y_adjustment = 10   # to be tested later, range[4, ?]
-        x_adjustment = 0.5* xdist
+        x_adjustment = 0.5 * xdist
         y_offset = ydist + 20 + y_adjustment
+
         movement_list.append(f"SF{str(y_offset)}")
-        turning_direction = self.get_second_arrow()   # to be implemented later
-        if turning_direction == 'r':
-            movement_list.append(STM_COMMAND_ADJUSTMENT_MAP["LF090"])
+        if self.second_arrow == 'R':
+            movement_list.append("LF090")
             movement_list.append(f"SF{str(x_adjustment)}")
-            movement_list.append(STM_COMMAND_ADJUSTMENT_MAP["RF090"])
+            movement_list.append("RF090")
+            movement_list.append("OF150")
+        elif self.second_arrow == 'L':
+            movement_list.append("RF090")
+            movement_list.append(f"SF{str(x_adjustment)}")
+            movement_list.append("LF090")
+            movement_list.append("OF150")
         else:
-            movement_list.append(STM_COMMAND_ADJUSTMENT_MAP["RF090"])
-            movement_list.append(f"SF{str(x_adjustment)}")
-            movement_list.append(STM_COMMAND_ADJUSTMENT_MAP["LF090"])
+            print("[STM] ERROR getting path to carpark, second arrow undefined -", self.second_arrow)
+        
+        print("[STM] Final path to carpark:", movement_list)
         return movement_list
 
 

@@ -56,9 +56,9 @@ class AndroidInterface:
         except Exception as e:
             print("[Android] ERROR: Failed to disconnect from Android -", str(e))
             
-    def disconnectForced(self): # TODO: unused
+    def reconnect(self):
         self.disconnect()
-        sys.exit(0) 
+        self.connect()
 
     def reconnect(self):
         self.disconnect()
