@@ -21,17 +21,18 @@
 9.  repeat steps 2-8 until all obstacles/images identified
 
 ## Flow of messages for task 2: fastest car (W9)
-1. **AR2, RP1:** Android tells PC obstacle locations and task type=`FASTEST_PATH`
-2. **PR1:** PC sends RPi sequence of movement instructions for STM after calculating path
-3. **RA3**: RPi sends Android list of cells traversed by robot on the way to this obstacle
-4. **RS1:** RPi sends individual commands to STM one at a time
-   1. **SR1:** STM acknowledges end of each command 
-   2. **SR2, RP2:** if emergency stop is triggered by STM for collision avoidance, STM returns ultrasonic sensor output, which is relayed by RPi to PC
-5. optionally repeat steps 2-3 if not at planned coordinates/distance from obstacle
-6. **PR2, RP3:** PC requests image from RPi, RPi returns image
-7. **PR3, RA2:** PC returns image recognition results to Android
-8. calculate path based on arrow identified in image and repeat steps 2-7 until all images identified
-9. repeat steps 2-5 to return to start
+1. **AR2, RP1:** Android sends START_TASK message to PC
+2. **PR1:** PC sends NAVIGATION message with commands `[OF150]` no path to RPi
+3. **RS1/2, SR1:** RPi forwards commands to STM and waits for ACK, STM moves to directly in front of obstacle 1
+4. **RP3:** RPi gets image, sends to PC
+5. **PR1:** PC sends NAVIGATION message with commands `[firstLeft/firstRight, OF150, SB010]` no path to RPi
+6. **RS1/2, SR1:** RPi forwards commands to STM and waits for ACK, STM moves around obstacle 1, then forward, to just in front of the image on obstacle 2
+7. **RP3:** RPi gets image, sends to PC
+8. **PR1:** PC sends NAVIGATION message with commands `[secondLeft/secondRight]` no path to RPi
+   - RPi records `second_arrow`, required for returning to carpark later
+9. **RS1/2, SR1:** RPi forwards commands to STM and waits for ACK, STM moves around obstacle 2, ending up on side of obstacle 2 in opposite direction than `second_arrow` 
+10. **RS3/4**: RPi gets `XDIST` and `YDIST` from STM, required for returning to carpark 
+11. **RS1/2, SR1:** RPi calls `return_to_carpark(xdist, ydist)`, sending STM commands to return home
 
 
 # Message types
@@ -135,6 +136,18 @@
       - F/B: the second character indicates Forward / Backward
       - XXX: the last 3 digits indicate distance in cm for S, or rotation angle for L/R
       - e.g. SB010 is move backwards 10cm, LF090 is turn 90 degrees to the left in the forward direction
+2. movement until ultrasonic sensor output indicates imminent obstacle
+    ```OF100```
+    - O: the first character indicates to end the movement based on the ultrasonic sensor
+    - F: the second character indicates Forward (this is the only valid direction since our ultrasonic sensor is front mounted)
+    - XXX: the last 3 digits indicate distance in cm which is the upper limit of how far to move if the ultrasonic sensor is not triggered
+    - e.g. OF100 is to move foward 100cm, or until the ultrasonic sensor indicates that an obstacle is ahead
+3. get displacement in horizontal direction (perpendicular to initial facing of car) - task 2
+   ```XDIST```
+    - STM should return the horizontal distance in cm moved across the back of obstacle 2
+4. get displacement in vertical direction (parallel to initial facing of car) - task 2
+   ```YDIST```
+    - STM should return the vertical distance in cm moved between obstacle 1 and 2
 
 ## PR: PC to RPi
 1. movement instructions for STM
@@ -153,6 +166,7 @@
       - F/B: the second character indicates Forward / Backward
       - XXX: the last 3 digits indicate distance in cm for S, or rotation angle for L/R
       - e.g. SB010 is move backwards 10cm, LF090 is turn 90 degrees to the left in the forward direction
+      - note: for task 2, commands may also include specially defined commands in `STM_OBS_ROUTING_MAP` found in `rpi/mdp-rpi/rpi_config.py`
     - `path` is the list of cells (each a 10x10cm block) to be traversed by the robot
       - RPi reformats this into a `PATH` message to be forwarded to Android (see RA3)
     - AR1 and PR1 are consistent
