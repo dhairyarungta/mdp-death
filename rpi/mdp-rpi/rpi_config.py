@@ -62,10 +62,10 @@ STM_COMMAND_ADJUSTMENT_MAP = STM_COMMAND_ADJUSTMENT_DICT[LOCATION]
 
 # Task 2: translate PC commands for moving around obstacles to STM_NAV_COMMAND_FORMAT
 STM_OBS_ROUTING_MAP = {
-    "firstLeft": ["LF050", "RF050", "RF060", "LF040", "RB020"],
-    "firstRight": ["RF050", "LF050", "LF060", "RF040", "LB020"],
-    "secondLeft": ["LF090", "IR100", "RF180", "XR200", "RF090"],
-    "secondRight": ["RF090", "IL100", "LF180", "XL200", "LF090"]
+    "FIRSTLEFT": ["LF050", "RF050", "RF060", "LF040", "RB020"],
+    "FIRSTRIGHT": ["RF050", "LF050", "LF060", "RF040", "LB020"],
+    "SECONDLEFT": ["LF090", "SB015", "IR100", "RF180", "SF015", "XR200", "RF090"],
+    "SECONDRIGHT": ["RF090", "SB015", "IL100", "LF180", "SF015", "XL200", "LF090"]
 }
-STM_XDIST_COMMAND_FORMAT = "^[IX][LR][0-9]{3}$"
-STM_YDIST_COMMAND_FORMAT = "^[UY]F[0-9]{3}$"
+STM_XDIST_COMMAND_FORMAT = "^X[LR][0-9]{3}$"
+STM_YDIST_COMMAND_FORMAT = "^YF[0-9]{3}$"

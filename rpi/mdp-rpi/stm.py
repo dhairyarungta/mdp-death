@@ -46,7 +46,7 @@ class STMInterface:
     def listen(self):
         message = None
         while True:
-            print("[STM] In listening loop...")
+            # print("[STM] In listening loop...")
             try:
                 message = self.serial.read().decode("utf-8")
                 print("[STM] Read from STM:", message[:MSG_LOG_MAX_SIZE])
@@ -65,7 +65,10 @@ class STMInterface:
             
     def send(self): 
         self.obstacle_count = 0 # for task 1 gyro reset
-        self.second_arrow = None # for task 2
+        # for task 2
+        self.second_arrow = None 
+        self.xdist = None 
+        self.ydist = None 
         while True: 
             message = self.msg_queue.get()
 
@@ -77,11 +80,10 @@ class STMInterface:
                 # display path on android
                 self.send_path_to_android(message_json) 
 
-                # convert any turn or obstacle routing commands
+                # convert/adjust any turn or obstacle routing commands
                 # smooth out commands by combining consecutive SF/SB commands
                 commands = self.adjust_commands(message_json["data"]["commands"])
                 for command in commands: # send and wait for ACK/reset delay
-                    print("[STM] Sending command", command)
                     self.write_to_stm(command)  
                 self.obstacle_count += 1
 
@@ -104,6 +106,7 @@ class STMInterface:
             exception = True
             while exception:
                 try:
+                    print("[STM] Sending command", command)
                     encoded_string = command.encode()
                     byte_array = bytearray(encoded_string)
                     self.serial.write(byte_array)
@@ -121,19 +124,21 @@ class STMInterface:
                         dist = self.wait_for_dist()
                         if dist > 0: 
                             self.xdist = dist
+                            print("[STM] updated XDIST =", self.xdist)
                         else:
                             print("[STM] ERROR: failed to update XDIST, received invalid value:", dist)
                     elif re.match(STM_YDIST_COMMAND_FORMAT, command):
                         dist = self.wait_for_dist()
                         if dist > 0: 
                             self.ydist = dist
+                            print("[STM] updated YDIST =", self.ydist)
                         else:
                             print("[STM] ERROR: failed to update YDIST, received invalid value:", dist)
                     else: # standard movement/navigation command
                         print("[STM] Waiting for ACK")
                         self.wait_for_ack()
         else:
-            print(f"[STM] ERROR: Invalid command to STM [{command}]. Discarding rest of NAVIGATION message {message}")
+            print(f"[STM] ERROR: Invalid command to STM [{command}]. Skipping...")
 
     def wait_for_ack(self):
         message = self.listen()
@@ -149,11 +154,10 @@ class STMInterface:
             message = self.listen()
             if message.isnumeric(): 
                 distance += message
-                print(f"[STM] Read DIST[{i}] =", message) 
             else: 
                 print(f"[STM] ERROR: Unexpected message from STM while getting distance - {message}")
                 self.reconnect() 
-        distance = float(distance)
+        distance = int(distance)
         print(f"[STM] Read final DIST =", distance) 
         return distance
 
@@ -187,12 +191,13 @@ class STMInterface:
             return (command in STM_OBS_ROUTING_MAP.keys())
 
         def adjust_obstacle_routing_command(obs_routing_command):
-            if obs_routing_command.startswith("second"):
-                self.second_arrow = obs_routing_command[len("second")]
+            if obs_routing_command.startswith("SECOND"):
+                self.second_arrow = obs_routing_command[len("SECOND")]
+                print("[STM] Saving second arrow as", self.second_arrow)
             return STM_OBS_ROUTING_MAP[obs_routing_command]
         
         def is_straight_command(command):
-            return self.is_valid_command(command) and not (is_turn_command(command) or is_obstacle_routing_command(command))
+            return self.is_valid_command(command) and command.startswith("S")
 
         def combine_straight_commands(straight_commands):
             dir_dict = {"SF": 1, "SB": -1} # let forward direction be positive
@@ -227,16 +232,17 @@ class STMInterface:
 
         final_commands = []     
         for i in range(len(commands)):
-            if is_straight_command(commands[i]):
-                final_commands = add_command(final_commands, commands[i])
+            command = commands[i].upper()
+            if is_straight_command(command):
+                final_commands = add_command(final_commands, command)
             else:
                 adj_commands = []
-                if is_turn_command(commands[i]): 
-                    adj_commands = adjust_turn_command(commands[i])
-                elif is_obstacle_routing_command(commands[i]): 
-                    adj_commands = adjust_obstacle_routing_command(commands[i])
+                if is_turn_command(command): 
+                    adj_commands = adjust_turn_command(command)
+                elif is_obstacle_routing_command(command): 
+                    adj_commands = adjust_obstacle_routing_command(command)
                 else:
-                    final_commands = add_command(final_commands, commands[i])
+                    final_commands = add_command(final_commands, command)
                 for c in adj_commands:
                     final_commands = add_command(final_commands, c)
         return final_commands
@@ -252,32 +258,31 @@ class STMInterface:
     
     # functions for task 2 (W9) - fastest car
     def return_to_carpark(self):
-        commands = self.get_commands_to_carpark(self.xdist, self.ydist, self.second_arrow)
-        print("[STM] Returning to carpark...")
+        print(f"[STM] Initiating return to carpark: XDIST = {self.xdist}, YDIST = {self.ydist}, ARROW = {self.second_arrow}")
+        commands = self.get_commands_to_carpark()
         for command in commands: # send and wait for ACK
-            print("[STM] Sending command", command)
             self.write_to_stm(command)  
 
-    def get_commands_to_carpark(self, xdist, ydist):
-        print(f"[STM] Calculating path to carpark after {self.second_arrow} arrow for XDIST = {xdist} YDIST = {ydist}")
+    def get_commands_to_carpark(self):
+        print(f"[STM] Calculating path to carpark...") # after {self.second_arrow} arrow for XDIST = {self.xdist} YDIST = {self.ydist}"
         movement_list = []
         y_adjustment = 10   # to be tested later, range[4, ?]
-        x_adjustment = 0.5 * xdist
-        y_offset = ydist + 20 + y_adjustment
+        x_adjustment = self.xdist // 2 # take floor of div 2
+        y_offset = self.ydist + 20 + y_adjustment
 
         movement_list.append(f"SF{str(y_offset)}")
         if self.second_arrow == 'R':
             movement_list.append("LF090")
-            movement_list.append(f"SF{str(x_adjustment)}")
+            movement_list.append(f"SF{x_adjustment:03d}")
             movement_list.append("RF090")
             movement_list.append("UF200") # obs 1 distance + carpark depth
         elif self.second_arrow == 'L':
             movement_list.append("RF090")
-            movement_list.append(f"SF{str(x_adjustment)}")
+            movement_list.append(f"SF{x_adjustment:03d}")
             movement_list.append("LF090")
             movement_list.append("UF200") # obs 1 distance + carpark depth
         else:
-            print("[STM] ERROR getting path to carpark, second arrow undefined -", self.second_arrow)
+            print("[STM] ERROR getting path to carpark, second arrow invalid -", self.second_arrow)
         
         print("[STM] Final path to carpark:", movement_list)
         return movement_list
