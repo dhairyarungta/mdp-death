@@ -12,6 +12,7 @@ if args.testwifi:
     constants.WIFI_IP = constants.TEST_IP
     print("Use local IP address for integration testing without RPi")
 
+
 if __name__ == "__main__":
     x = Week9Task()
     x.run()
