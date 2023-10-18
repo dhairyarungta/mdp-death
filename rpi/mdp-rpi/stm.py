@@ -197,7 +197,7 @@ class STMInterface:
             return STM_OBS_ROUTING_MAP[obs_routing_command]
         
         def is_straight_command(command):
-            return self.is_valid_command(command) and not (is_turn_command(command) or is_obstacle_routing_command(command))
+            return self.is_valid_command(command) and command.startswith("S")
 
         def combine_straight_commands(straight_commands):
             dir_dict = {"SF": 1, "SB": -1} # let forward direction be positive
@@ -258,13 +258,13 @@ class STMInterface:
     
     # functions for task 2 (W9) - fastest car
     def return_to_carpark(self):
-        print(f"[STM] Initiating return to carpark... (XDIST = {self.xdist} YDIST = {self.ydist} ARROW = {self.second_arrow})")
+        print(f"[STM] Initiating return to carpark: XDIST = {self.xdist}, YDIST = {self.ydist}, ARROW = {self.second_arrow}")
         commands = self.get_commands_to_carpark()
         for command in commands: # send and wait for ACK
             self.write_to_stm(command)  
 
     def get_commands_to_carpark(self):
-        print(f"[STM] Calculating path to carpark after {self.second_arrow} arrow for XDIST = {self.xdist} YDIST = {self.ydist}")
+        print(f"[STM] Calculating path to carpark...") # after {self.second_arrow} arrow for XDIST = {self.xdist} YDIST = {self.ydist}"
         movement_list = []
         y_adjustment = 10   # to be tested later, range[4, ?]
         x_adjustment = self.xdist // 2 # take floor of div 2
