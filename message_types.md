@@ -21,17 +21,32 @@
 9.  repeat steps 2-8 until all obstacles/images identified
 
 ## Flow of messages for task 2: fastest car (W9)
-1. **AR2, RP1:** Android tells PC obstacle locations and task type=`FASTEST_PATH`
-2. **PR1:** PC sends RPi sequence of movement instructions for STM after calculating path
-3. **RA3**: RPi sends Android list of cells traversed by robot on the way to this obstacle
-4. **RS1:** RPi sends individual commands to STM one at a time
-   1. **SR1:** STM acknowledges end of each command 
-   2. **SR2, RP2:** if emergency stop is triggered by STM for collision avoidance, STM returns ultrasonic sensor output, which is relayed by RPi to PC
-5. optionally repeat steps 2-3 if not at planned coordinates/distance from obstacle
-6. **PR2, RP3:** PC requests image from RPi, RPi returns image
-7. **PR3, RA2:** PC returns image recognition results to Android
-8. calculate path based on arrow identified in image and repeat steps 2-7 until all images identified
-9. repeat steps 2-5 to return to start
+1. **AR2, RP1:** android sends START_TASK message to PC
+2. **PR1, RS2, SR1:** PC sends NAVIGATION message with commands `[UF150]` no path to RPi, forward to STM 
+   - STM moves to directly in front of obstacle 1
+3. **RP3:** RPi gets image, send to PC
+4. **PR1, RS1/3, SR1/2:** PC sends NAVIGATION message with commands `[firstLeft/firstRight, YF150, SB010]` no path to RPi, convert and forward to STM
+    - RPi records `YDIST`, required for returning to carpark later, returned by STM after `YF150` command
+    - STM moves around obstacle 1 then forward to in front of the image on obstacle 2
+5. **RP3:** RPi gets image, send to PC
+6. **PR1, RS1/4/5, SR1/2:** PC sends NAVIGATION message with commands `[secondLeft/secondRight]` no path to RPi, convert and forward to STM
+    - RPi records `second_arrow`, required for returning to carpark later
+    - RPi records `XDIST`, required for returning to carpark later, returned by STM after `XL/R200` command
+    - STM moves around obstacle 2, ending up on side of obstacle 2 in opposite direction than `second_arrow` 
+7.  RPi calls `return_to_carpark()`, sending STM commands to return home
+
+8.  **AR2, RP1:** Android sends START_TASK message to PC
+9.  **PR1:** PC sends NAVIGATION message with commands `[OF150]` no path to RPi
+10. **RS1/2, SR1:** RPi forwards commands to STM and waits for ACK, STM moves to directly in front of obstacle 1
+11. **RP3:** RPi gets image, sends to PC
+12. **PR1:** PC sends NAVIGATION message with commands `[firstLeft/firstRight, OF150, SB010]` no path to RPi
+13. **RS1/2, SR1:** RPi forwards commands to STM and waits for ACK, STM moves around obstacle 1, then forward, to just in front of the image on obstacle 2
+14. **RP3:** RPi gets image, sends to PC
+15. **PR1:** PC sends NAVIGATION message with commands `[secondLeft/secondRight]` no path to RPi
+   - RPi records `second_arrow`, required for returning to carpark later
+16. **RS1/2, SR1:** RPi forwards commands to STM and waits for ACK, STM moves around obstacle 2, ending up on side of obstacle 2 in opposite direction than `second_arrow` 
+17. **RS3/4**: RPi gets `XDIST` and `YDIST` from STM, required for returning to carpark 
+18. **RS1/2, SR1:** RPi calls `return_to_carpark(xdist, ydist)`, sending STM commands to return home
 
 
 # Message types
@@ -120,14 +135,13 @@
 1. Acknowledgement of command
    ```A```
    - acknowledges that command has been received and completed
-2. ultrasonic sensor info // TODO: format TBD
+2. distance moved from last command 
    ```100```
-    - the distance in cm from an obstacle, measured by the ultrasonic sensor
-    - this message is sent by STM after an emergency stop is triggered for collision avoidance
-    - see also RP2 
+   - 3 digit number
+   - the distance in cm from an obstacle, measured by the ultrasonic sensor
 
 ## RS: RPi to STM 
-1. movement instructions from PC/Android: WASD + distance
+1. movement instructions from PC/Android: direction + forward/backward + distance
     ```SF010```
     - while RPi receives a list of commands from PC (see `NAVIGATION` messages - AR1 and PR1), it sends each 5 character command 1 at a time to STM
       - each command is a 5 character code: <L/R/S><F/B>XXX 
@@ -135,7 +149,37 @@
       - F/B: the second character indicates Forward / Backward
       - XXX: the last 3 digits indicate distance in cm for S, or rotation angle for L/R
       - e.g. SB010 is move backwards 10cm, LF090 is turn 90 degrees to the left in the forward direction
-
+    - on completion, STM acknowledges with A
+2. movement until ultrasonic sensor output indicates imminent obstacle
+    ```UF100```
+    - move Forward (this is the only valid direction since our ultrasonic sensor is front mounted)
+    - end the movement based on the ultrasonic sensor
+    - XXX: the last 3 digits indicate distance in cm which is the upper limit of how far to move if the ultrasonic sensor is not triggered
+    - e.g. UF100 is to move foward 100cm, or until the ultrasonic sensor indicates that an obstacle is ahead
+    - on completion, STM acknowledges with A
+3. read distance of movement until ultrasonic sensor output indicates imminent obstacle
+    ```YF100```
+    - move Forward (this is the only valid direction since our ultrasonic sensor is front mounted)
+    - end the movement based on the ultrasonic sensor
+    - measure the distance moved
+    - XXX: the last 3 digits indicate distance in cm which is the upper limit of how far to move if the ultrasonic sensor is not triggered
+    - e.g. YF100 is to move foward 100cm, or until the ultrasonic sensor indicates that an obstacle is ahead, and return the actual distance moved
+    - on completion, STM acknowledges with a 3 digit distance in cm
+4. movement until IR sensor output indicates imminent obstacle
+    ```IL100, IR100```
+    - move forward until side-mounted IR sensor shows no obstacle to side
+    - check for end of obstacle to Left or Right 
+    - XXX: the last 3 digits indicate distance in cm which is the upper limit of how far to move if the ultrasonic sensor is not triggered
+    - e.g. IL100 is to move foward 100cm, or until the left ultrasonic sensor indicates that there is no obstacle to the left
+    - on completion, STM acknowledges with A
+5. read distance of movement until ultrasonic sensor output indicates imminent obstacle
+    ```XL100, XR100```
+    - move forward until side-mounted IR sensor shows no obstacle to side
+    - check for end of obstacle to Left or Right 
+    - XXX: the last 3 digits indicate distance in cm which is the upper limit of how far to move if the ultrasonic sensor is not triggered
+    - e.g. XL100 is to move foward 100cm, or until the left ultrasonic sensor indicates that there is no obstacle to the left, and return the actual distance moved
+    - on completion, STM acknowledges with a 3 digit distance in cm
+    
 ## PR: PC to RPi
 1. movement instructions for STM
     ```
@@ -153,6 +197,7 @@
       - F/B: the second character indicates Forward / Backward
       - XXX: the last 3 digits indicate distance in cm for S, or rotation angle for L/R
       - e.g. SB010 is move backwards 10cm, LF090 is turn 90 degrees to the left in the forward direction
+      - note: for task 2, commands may also include specially defined commands in `STM_OBS_ROUTING_MAP` found in `rpi/mdp-rpi/rpi_config.py`
     - `path` is the list of cells (each a 10x10cm block) to be traversed by the robot
       - RPi reformats this into a `PATH` message to be forwarded to Android (see RA3)
     - AR1 and PR1 are consistent

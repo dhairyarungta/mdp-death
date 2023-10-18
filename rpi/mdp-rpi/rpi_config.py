@@ -1,4 +1,4 @@
-LOCATION = "IN" # IN (indoors) / OUT (outdoors)
+LOCATION = "NONE" # IN (indoors) / OUT (outdoors) / NONE (disable turn adjustment)
 
 RPI_IP = "192.168.14.1"
 MSG_LOG_MAX_SIZE = 150 # characters
@@ -15,7 +15,7 @@ BT_BUFFER_SIZE = 2048
 STM_BAUDRATE = 115200
 STM_ACK_MSG = "A"
 # STM_NAV_COMMAND_FORMAT = '^[SLR][FB][0-9]{3}$' # task 1
-STM_NAV_COMMAND_FORMAT = '^(([SLR][FB]|OF)[0-9]{3})|([XY]DIST)$' # task 2
+STM_NAV_COMMAND_FORMAT = '^(([SLR][FB])|([UY]F)|([IX][LR]))[0-9]{3}$' # task 2
 STM_GYRO_RESET_COMMAND = "GYROR"
 STM_GYRO_RESET_DELAY = 8 # time to wait for gyro reset
 STM_GYRO_RESET_FREQ = 1414 # number of obstacles before GRYO RESET command is sent
@@ -56,6 +56,7 @@ STM_COMMAND_ADJUSTMENT_DICT = {
         "RB270": ["SF009", "RB270", "SB009"],
         "LB270": ["SF009", "LB090", "SF003", "LB090", "SF003", "LB090", "SB006"]
     },
+    "NONE": {}
 }
 STM_COMMAND_ADJUSTMENT_MAP = STM_COMMAND_ADJUSTMENT_DICT[LOCATION]
 
@@ -63,8 +64,8 @@ STM_COMMAND_ADJUSTMENT_MAP = STM_COMMAND_ADJUSTMENT_DICT[LOCATION]
 STM_OBS_ROUTING_MAP = {
     "firstLeft": ["LF050", "RF050", "RF060", "LF040", "RB020"],
     "firstRight": ["RF050", "LF050", "LF060", "RF040", "LB020"],
-    "secondLeft": ["LF090", "OF065", "SB010", "RF180", "OF130", "RF090"],
-    "secondRight": ["RF090", "OF065", "SB010", "LF180", "OF130", "LF090"]
+    "secondLeft": ["LF090", "IR100", "RF180", "XR200", "RF090"],
+    "secondRight": ["RF090", "IL100", "LF180", "XL200", "LF090"]
 }
-STM_XDIST_COMMAND = "XDIST"
-STM_YDIST_COMMAND = "YDIST"
+STM_XDIST_COMMAND_FORMAT = "^[IX][LR][0-9]{3}$"
+STM_YDIST_COMMAND_FORMAT = "^[UY]F[0-9]{3}$"

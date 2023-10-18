@@ -19,16 +19,16 @@ from interface.panel import Panel
 from map.grid import Grid
 from robot.robot import Robot
 
-from Algorithm.mdpalgo.map.cell import Cell, CellStatus
-from Algorithm.mdpalgo.map.obstacle import Obstacle
-
+from mdpalgo.map.cell import Cell, CellStatus
+from mdpalgo.map.obstacle import Obstacle
+import argparse
 # Set the HEIGHT and WIDTH of the screen
 WINDOW_SIZE = [960, 660]
 
 
 class Simulator:
 
-    def __init__(self):
+    def __init__(self, id_list=[]):
         self.obs_ar = []
         self.obs_idx = 0
         self.obs_hashmap = {}
@@ -186,9 +186,7 @@ class Simulator:
         Running UI updating methods in a worker thread will cause a flashing effect as both threads attempt to update the UI
         """
 
-        print("reached here 1")
         while True:
-            print("reached here 2")
             try:
                 all_data = self.commsClient.recv()
                 message_type_and_data = json.loads(all_data)
@@ -198,7 +196,6 @@ class Simulator:
                     self.on_receive_start_task_message(message_data)
 
                 elif message_type_and_data["type"] == MessageType.IMAGE_TAKEN.value:
-                    print("in elif statement")
                     self.on_receive_image_taken_message(message_data)
 
                 # elif message_type_and_data["type"] == MessageType.UPDATE_ROBOT_POSE:
@@ -250,7 +247,7 @@ class Simulator:
             logging.info("[AND] Doing path calculation...")
             self.start_button_clicked()
 
-    def get_img_id_from_image_taken(self, message_data):
+    def get_img_id_from_image_taken(self, message_data, arrow: bool = False):
         image_data = message_data["image"]
         image_data = image_data.encode('utf-8')
         image_data = base64.b64decode(image_data)
@@ -263,14 +260,14 @@ class Simulator:
 
         if os.path.isfile(image_path):
             result_path = f'images_result/{image_name}'
-            result = image_rec(image_path, save_path=result_path)
-            print(f"Output image is save to {result_path}")
+            result = image_rec(image_path, save_path=result_path, arrow=arrow)
             if result is None:
                 print('No object detected!')
                 img_id = '00'
             else:
                 img_id = result["predictions"][0]["class"][2:]
-
+                #Use arrow model if detect arrow
+                print(f"Output image is save to {result_path}")
         return img_id
 
     def on_receive_image_taken_message(self, message_data: dict):

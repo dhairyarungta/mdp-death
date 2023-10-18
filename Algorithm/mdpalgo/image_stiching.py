@@ -5,18 +5,18 @@ import math
 
 def stiching_images(image_folder_path, output_img_path):
     # Initialize the big image
-    big_img = Image.new('RGB', (1600, 1600))
+    big_img = Image.new('RGB', (2400, 2400))
 
     # Get a list of all image files in the input folder
     image_files = [f for f in os.listdir(image_folder_path) if f.endswith(('.jpg', '.png', '.jpeg'))]
     image_num = len(image_files)
 
-    num_cols = math.ceil(math.sqrt(image_num))
-    num_rows = math.ceil(image_num/num_cols)
+    num_cols = 3
+    num_rows = 3
 
     # Calculate the size of each grid cell
-    grid_cell_width = 1600 // num_cols
-    grid_cell_height = 1600 // num_rows
+    grid_cell_width = 800
+    grid_cell_height = 800
 
     # Iterate through the image files and paste them onto the big image in a grid
     for i in range((num_rows * num_cols)):
