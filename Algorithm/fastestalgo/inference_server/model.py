@@ -69,3 +69,6 @@ def predict_image_week_9(img, model):
             }]
         }
         return result
+    return {
+        'predictions': []
+    }
