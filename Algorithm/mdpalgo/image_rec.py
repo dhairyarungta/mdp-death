@@ -108,7 +108,7 @@ def image_rec(image_path, save_path=None, arrow: bool = False):
     nretries = 5
     while len(result_dict['predictions']) == 0 and nretries>0:
         print(f'No Object detected. Retrying')
-        response = send_post_request(encoded_image, infer_server_url)
+        response = send_post_request(encoded_image, infer_server_url, arrow)
         result_str = response.text
         result_dict = json.loads(result_str)
         nretries-=1
