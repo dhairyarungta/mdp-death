@@ -82,7 +82,7 @@ class Week9Task:
         result_message = {
             "type": "PATH",
             "data": {
-                "OF150"
+                "UF200"
             }
         }
         self.commsClient.send(result_message)
@@ -100,7 +100,7 @@ class Week9Task:
         result_message ={
             "type": "NAVIGATION",
             "data": {
-            "commands": [img_dic_one[img_id],"SF010", "OF150", "SB010"]
+            "commands": [img_dic_one[img_id],"YF150", "SB010"]
             }
         }
 
