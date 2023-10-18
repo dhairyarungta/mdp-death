@@ -1,5 +1,13 @@
+import os
+import sys
+
+cwd = os.getcwd()
+pardir = os.path.dirname(cwd)
+mdp_algo_dir = os.path.join(pardir, 'mdpalgo')
+sys.path.insert(1, mdp_algo_dir)
+
 from week9task import Week9Task
-from Algorithm.mdpalgo import constants
+from mdpalgo import constants
 
 import argparse
 # parse the arguments
