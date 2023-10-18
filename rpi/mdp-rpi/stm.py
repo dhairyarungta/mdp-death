@@ -178,7 +178,7 @@ class STMInterface:
 
     def adjust_commands(self, commands):
         def is_turn_command(command):
-            return (command in STM_COMMAND_ADJUSTMENT_MAP.keys())
+            return self.is_valid_command(command) and re.match("^[LR]", command)
 
         def adjust_turn_command(turn_command):
             return STM_COMMAND_ADJUSTMENT_MAP.get(turn_command, turn_command)

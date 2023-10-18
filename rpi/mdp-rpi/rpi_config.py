@@ -1,4 +1,4 @@
-LOCATION = "IN" # IN (indoors) / OUT (outdoors)
+LOCATION = "NONE" # IN (indoors) / OUT (outdoors) / NONE (disable turn adjustment)
 
 RPI_IP = "192.168.14.1"
 MSG_LOG_MAX_SIZE = 150 # characters
@@ -56,6 +56,7 @@ STM_COMMAND_ADJUSTMENT_DICT = {
         "RB270": ["SF009", "RB270", "SB009"],
         "LB270": ["SF009", "LB090", "SF003", "LB090", "SF003", "LB090", "SB006"]
     },
+    "NONE": {}
 }
 STM_COMMAND_ADJUSTMENT_MAP = STM_COMMAND_ADJUSTMENT_DICT[LOCATION]
 
@@ -64,7 +65,7 @@ STM_OBS_ROUTING_MAP = {
     "firstLeft": ["LF050", "RF050", "RF060", "LF040", "RB020"],
     "firstRight": ["RF050", "LF050", "LF060", "RF040", "LB020"],
     "secondLeft": ["LF090", "IR100", "RF180", "XR200", "RF090"],
-    "secondRight": ["RF090", "IL100", "LF180", "XL200", "RF090"]
+    "secondRight": ["RF090", "IL100", "LF180", "XL200", "LF090"]
 }
 STM_XDIST_COMMAND_FORMAT = "^[IX][LR][0-9]{3}$"
 STM_YDIST_COMMAND_FORMAT = "^[UY]F[0-9]{3}$"
