@@ -144,14 +144,17 @@ class STMInterface:
             self.reconnect() 
 
     def wait_for_dist(self):
-        distance = -1
-        message = self.listen()
-        if message.isnumeric(): # expecting 3 digit distance in cm
-            distance = float(message) 
-            print("[STM] Read DIST =", distance) 
-        else: 
-            print(f"[STM] ERROR: Unexpected message from STM while getting distance - {message}")
-            self.reconnect() 
+        distance = "0"
+        for i in range(3): # expecting 3 digit distance in cm
+            message = self.listen()
+            if message.isnumeric(): 
+                distance += message
+                print(f"[STM] Read DIST[{i}] =", message) 
+            else: 
+                print(f"[STM] ERROR: Unexpected message from STM while getting distance - {message}")
+                self.reconnect() 
+        distance = float(distance)
+        print(f"[STM] Read final DIST =", distance) 
         return distance
 
     def send_image_to_pc(self):
