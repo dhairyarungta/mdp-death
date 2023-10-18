@@ -227,16 +227,17 @@ class STMInterface:
 
         final_commands = []     
         for i in range(len(commands)):
-            if is_straight_command(commands[i]):
-                final_commands = add_command(final_commands, commands[i])
+            command = commands[i].upper()
+            if is_straight_command(command):
+                final_commands = add_command(final_commands, command)
             else:
                 adj_commands = []
-                if is_turn_command(commands[i]): 
-                    adj_commands = adjust_turn_command(commands[i])
-                elif is_obstacle_routing_command(commands[i]): 
-                    adj_commands = adjust_obstacle_routing_command(commands[i])
+                if is_turn_command(command): 
+                    adj_commands = adjust_turn_command(command)
+                elif is_obstacle_routing_command(command): 
+                    adj_commands = adjust_obstacle_routing_command(command)
                 else:
-                    final_commands = add_command(final_commands, commands[i])
+                    final_commands = add_command(final_commands, command)
                 for c in adj_commands:
                     final_commands = add_command(final_commands, c)
         return final_commands
