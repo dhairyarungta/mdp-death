@@ -186,10 +186,10 @@ class STMInterface:
         def adjust_obstacle_routing_command(obs_routing_command):
             if obs_routing_command.startswith("second"):
                 self.second_arrow = obs_routing_command[len("second")]
-            return STM_OBS_ROUTING_MAP.get(obs_routing_command, STM_OBS_ROUTING_MAP["secondLeft"])
+            return STM_OBS_ROUTING_MAP[obs_routing_command]
         
         def is_straight_command(command):
-            return not (is_turn_command(command) or is_obstacle_routing_command(command))
+            return self.is_valid_command(command) and not (is_turn_command(command) or is_obstacle_routing_command(command))
 
         def combine_straight_commands(straight_commands):
             dir_dict = {"SF": 1, "SB": -1} # let forward direction be positive
@@ -215,10 +215,11 @@ class STMInterface:
                 if combined != None:
                     final.append(combined)
                 else: # failed to combine commands
+                    final.append(prev)
                     final.append(new)
             else:
                 final.append(new)
-
+            
             return final
 
         final_commands = []     
