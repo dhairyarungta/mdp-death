@@ -100,7 +100,7 @@ def image_rec(image_path, save_path=None, arrow: bool = False):
     else:
         infer_server_url = common_object_url
 
-    response = send_post_request(encoded_image, infer_server_url)
+    response = send_post_request(encoded_image, infer_server_url, arrow)
 
     # Optional: print the response
     result_str = response.text
@@ -131,22 +131,17 @@ def image_rec(image_path, save_path=None, arrow: bool = False):
     
     if len(result_dict['predictions']) == 0:
         return None
+    
+    print(result_dict)
         
     if save_path is not None:
-        if arrow_id is not None:
-            result_dict['predictions'][0]['class'] = f'id{arrow_id}'
         visualise_predictions(result_dict["predictions"], image_path, save_path)
     return result_dict
 
 if __name__ == "__main__":
     import os 
-    # image_rec('20230825_132514.jpg', 'output.jpg')
     image_dir = 'test_images_2'
     resutl_dir = 'test_images_result_2'
     for img in os.listdir(image_dir):
         if img.endswith('.jpg'):
-            image_rec(f'{image_dir}/{img}', f'{resutl_dir}/{img}')
-            # else:
-            #     print(img)
-            #     image_rec(f'{image_dir}/{img}', f'{resutl_dir}/{img}', arrow=False)
-            # count+=1
+            image_rec(f'{image_dir}/{img}', f'{resutl_dir}/{img}', arrow=True)

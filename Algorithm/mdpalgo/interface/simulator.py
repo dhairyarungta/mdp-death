@@ -89,7 +89,6 @@ class Simulator:
 
         # count of 'no image result' exception
         self.no_image_result_count = 0
-        self.id_list = id_list
 
     def redraw_grid(self):
         self.grid_surface = self.grid.get_updated_grid_surface()
@@ -187,9 +186,7 @@ class Simulator:
         Running UI updating methods in a worker thread will cause a flashing effect as both threads attempt to update the UI
         """
 
-        print("reached here 1")
         while True:
-            print("reached here 2")
             try:
                 all_data = self.commsClient.recv()
                 message_type_and_data = json.loads(all_data)
@@ -199,7 +196,6 @@ class Simulator:
                     self.on_receive_start_task_message(message_data)
 
                 elif message_type_and_data["type"] == MessageType.IMAGE_TAKEN.value:
-                    print("in elif statement")
                     self.on_receive_image_taken_message(message_data)
 
                 # elif message_type_and_data["type"] == MessageType.UPDATE_ROBOT_POSE:
@@ -251,7 +247,7 @@ class Simulator:
             logging.info("[AND] Doing path calculation...")
             self.start_button_clicked()
 
-    def get_img_id_from_image_taken(self, message_data):
+    def get_img_id_from_image_taken(self, message_data, arrow: bool = False):
         image_data = message_data["image"]
         image_data = image_data.encode('utf-8')
         image_data = base64.b64decode(image_data)
@@ -264,24 +260,13 @@ class Simulator:
 
         if os.path.isfile(image_path):
             result_path = f'images_result/{image_name}'
-            result = image_rec(image_path, save_path=result_path)
+            result = image_rec(image_path, save_path=result_path, arrow=arrow)
             if result is None:
                 print('No object detected!')
                 img_id = '00'
             else:
                 img_id = result["predictions"][0]["class"][2:]
                 #Use arrow model if detect arrow
-                if img_id in ['38', '39']:
-                    if len(self.id_list) == 1:
-                        mage_rec(image_path, save_path=result_path, arrow_id=self.id_list[0])
-                        return self.id_list[0]
-                    else:
-                        return '00'
-                
-                if len(self.id_list) >1:
-                    if img_id not in self.id_list:
-                        return '00'
-
                 print(f"Output image is save to {result_path}")
         return img_id
 

@@ -41,10 +41,6 @@ def predict_image_week_9(img, model):
                 pred = row    
                 break
 
-        # # Draw the bounding box on the image 
-        # if not isinstance(pred,str):
-        #     draw_own_bbox(np.array(img), pred['xmin'], pred['ymin'], pred['xmax'], pred['ymax'], pred['name'])
-        
     # Dictionary is shorter as only two symbols, left and right are needed
     name_to_id = {
         "NA": 'NA',

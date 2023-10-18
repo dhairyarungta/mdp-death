@@ -20,9 +20,6 @@ parser.add_argument("--cen", help="center pathing on obstacle",
 parser.add_argument("--testwifi", help="use test wifi server on PC instead "
                                        "of real rpi",
                     action="store_true")
-parser.add_argument("--il", type=list_of_strings)
-parser.add_argument("-l", action="store_true")
-parser.add_argument("-r", action="store_true")
 
 def main():
     mdp_constants.HEADLESS = False
@@ -33,14 +30,7 @@ def main():
         print("Running in headless mode")
 
     try:
-        if args.l:
-            x = Simulator(['39'])
-        elif args.r:
-            x = Simulator(['38'])
-        elif args.il and len(args.il)>0:
-            x = Simulator(args.il)
-        else:
-            x = Simulator()
+        x = Simulator()
         x.run()
     except Exception as err:
         print(err)

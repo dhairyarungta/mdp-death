@@ -14,6 +14,7 @@ model = load_model()
 def image_predict_w9():
     image = request.data
     image_bytes = base64.b64decode(image)
+    
     # convert base64 to PIL image
     img = Image.open(io.BytesIO(image_bytes))
     # Run inference
