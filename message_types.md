@@ -35,18 +35,6 @@
     - STM moves around obstacle 2, ending up on side of obstacle 2 in opposite direction than `second_arrow` 
 7.  RPi calls `return_to_carpark()`, sending STM commands to return home
 
-8.  **AR2, RP1:** Android sends START_TASK message to PC
-9.  **PR1:** PC sends NAVIGATION message with commands `[OF150]` no path to RPi
-10. **RS1/2, SR1:** RPi forwards commands to STM and waits for ACK, STM moves to directly in front of obstacle 1
-11. **RP3:** RPi gets image, sends to PC
-12. **PR1:** PC sends NAVIGATION message with commands `[firstLeft/firstRight, OF150, SB010]` no path to RPi
-13. **RS1/2, SR1:** RPi forwards commands to STM and waits for ACK, STM moves around obstacle 1, then forward, to just in front of the image on obstacle 2
-14. **RP3:** RPi gets image, sends to PC
-15. **PR1:** PC sends NAVIGATION message with commands `[secondLeft/secondRight]` no path to RPi
-   - RPi records `second_arrow`, required for returning to carpark later
-16. **RS1/2, SR1:** RPi forwards commands to STM and waits for ACK, STM moves around obstacle 2, ending up on side of obstacle 2 in opposite direction than `second_arrow` 
-17. **RS3/4**: RPi gets `XDIST` and `YDIST` from STM, required for returning to carpark 
-18. **RS1/2, SR1:** RPi calls `return_to_carpark(xdist, ydist)`, sending STM commands to return home
 
 
 # Message types
