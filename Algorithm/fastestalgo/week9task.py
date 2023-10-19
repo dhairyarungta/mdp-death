@@ -65,7 +65,7 @@ class Week9Task:
                     continue
 
                 message_type_and_data = json.loads(all_data)
-                message_data = message_type_and_data["data"]
+                return message_type_and_data
 
             except (IndexError, ValueError) as e:
                 print(e)
@@ -123,8 +123,35 @@ class Week9Task:
         }
         self.commsClient.send(result_message)
         
-        while True:
+        print("pc done, closing rpi client")
+        self.commsClient.disconnect()
+        mdp_constants.RPI_CONNECTED = False
+        self.commsClient = None
 
+
+
+    def get_img_id_from_image_taken(self, message_data, arrow: bool = False):
+        image_data = message_data["image"]
+        image_data = image_data.encode('utf-8')
+        image_data = base64.b64decode(image_data)
+        import uuid
+        image_name = f'{str(uuid.uuid4())}.jpg'
+        image_path = f"images/{image_name}"
+        with open(image_path, "wb") as fh:
+            print(f"Image save to {image_path}!")
+            fh.write(image_data)
+
+        if os.path.isfile(image_path):
+            result_path = f'images_result/{image_name}'
+            result = image_rec(image_path, save_path=result_path, arrow=arrow)
+            if result is None:
+                print('No object detected!')
+                img_id = '00'
+            else:
+                img_id = result["predictions"][0]["class"][2:]
+                #Use arrow model if detect arrow
+                print(f"Output image is save to {result_path}")
+        return img_id
 
 
 
