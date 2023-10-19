@@ -84,13 +84,14 @@ class STMInterface:
                 # smooth out commands by combining consecutive SF/SB commands
                 commands = self.adjust_commands(message_json["data"]["commands"])
                 for command in commands: # send and wait for ACK/reset delay
-                    if command.startswith("UF"):
-                        self.write_to_stm("Y" + command[1:])
-                        print("[STM] DEBUGGING: first movement distance =", self.ydist)
-                        if self.ydist < 30:
-                            self.write_to_stm(command)
-                    else:
-                        self.write_to_stm(command)  
+                    self.write_to_stm(command)
+                    # if command.startswith("UF"):
+                    #     self.write_to_stm("Y" + command[1:])
+                    #     print("[STM] DEBUGGING: first movement distance =", self.ydist)
+                    #     if self.ydist < 30:
+                    #         self.write_to_stm(command)
+                    # else:
+                    #     self.write_to_stm(command)  
                 self.obstacle_count += 1
 
                 print("[STM] Checking second arrow:", self.second_arrow)
@@ -283,22 +284,22 @@ class STMInterface:
         movement_list.append(f"SF{y_adjustment:03d}")
         if self.second_arrow == 'R':
             movement_list.append("LF090")
-            if abs(x_adjustment) > 5:
-                if x_adjustment > 0:
-                    movement_list.append(f"SF{x_adjustment:03d}")
-                else:
-                    movement_list.append(f"SB{abs(x_adjustment):03d}")
+            # if abs(x_adjustment) > 5:
+            if x_adjustment > 0:
+                movement_list.append(f"SF{x_adjustment:03d}")
+            else:
+                movement_list.append(f"SB{abs(x_adjustment):03d}")
             movement_list.append("RF090")
             movement_list.append("VF200") # reduce ultrasonic threshold
             # movement_list.append("VF000") # reduce ultrasonic threshold
             # movement_list.append("UF200") # obs 1 distance + carpark depth
         elif self.second_arrow == 'L':
             movement_list.append("RF090")
-            if abs(x_adjustment) > 5:
-                if x_adjustment > 0:
-                    movement_list.append(f"SF{x_adjustment:03d}")
-                else:
-                    movement_list.append(f"SB{abs(x_adjustment):03d}")
+            # if abs(x_adjustment) > 5:
+            if x_adjustment > 0:
+                movement_list.append(f"SF{x_adjustment:03d}")
+            else:
+                movement_list.append(f"SB{abs(x_adjustment):03d}")
             movement_list.append("LF090")
             movement_list.append("VF200") # reduce ultrasonic threshold
             # movement_list.append("VF000") # reduce ultrasonic threshold
