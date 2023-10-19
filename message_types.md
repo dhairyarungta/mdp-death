@@ -29,9 +29,10 @@
     - RPi records `YDIST`, required for returning to carpark later, returned by STM after `YF150` command
     - STM moves around obstacle 1 then forward to in front of the image on obstacle 2
 5. **RP3:** RPi gets image, send to PC
-6. **PR1, RS1/4/5, SR1/2:** PC sends NAVIGATION message with commands `[secondLeft/secondRight]` no path to RPi, convert and forward to STM
+6. **PR1, RS1/4/5/6, SR1/2:** PC sends NAVIGATION message with commands `[secondLeft/secondRight]` no path to RPi, convert and forward to STM
     - RPi records `second_arrow`, required for returning to carpark later
     - RPi records `XDIST`, required for returning to carpark later, returned by STM after `XL/R200` command
+    - RPi must send TL/TR command (RS6) before any IL/IR/XL/XR commands (RS4, RS5) to reset IR sensor baseline value
     - STM moves around obstacle 2, ending up on side of obstacle 2 in opposite direction than `second_arrow` 
 7.  RPi calls `return_to_carpark()`, sending STM commands to return home
 
@@ -179,6 +180,12 @@
     - XXX: the last 3 digits indicate distance in cm which is the upper limit of how far to move if the ultrasonic sensor is not triggered
     - e.g. XL100 is to move foward 100cm, or until the left ultrasonic sensor indicates that there is no obstacle to the left, and return the actual distance moved
     - on completion, STM acknowledges with a 3 digit distance in cm
+6. reset IR sensor baseline when next to obstacle
+   ```TL000, TR000```
+   - T indicates reset IR sensor
+   - L/R indicates which sensor to reset: left or right
+   - 000 are numbers which are ignored by STM
+   - this command should be sent before IL/IR and XL/XR commands (RS4, RS5)
     
 ## PR: PC to RPi
 1. movement instructions for STM
