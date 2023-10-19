@@ -2,13 +2,18 @@
 Algorithm Socket to connect with RPi.
 """
 
+<<<<<<< Updated upstream
 from constants import mdp_constants
 from image_rec import image_rec
+=======
+from Algorithm.mdpalgo.constants import mdp_constants
+# from Algorithm.mdpalgo.image_rec import image_rec
+>>>>>>> Stashed changes
 
 import socket
 import struct
 import json
-import cv2
+# import cv2
 import numpy as np
 import base64
 import os
@@ -155,6 +160,7 @@ if __name__ == '__main__':
         with open("test.jpg", "wb") as fh:
             fh.write(image_data)
 
+<<<<<<< Updated upstream
         if os.path.isfile("test.jpg"):
             result = image_rec("test.jpg", save_path="output.jpg")
             result_message = {
@@ -165,3 +171,15 @@ if __name__ == '__main__':
                 }
             }
             client.send(result_message)
+=======
+        # if os.path.isfile("test.jpg"):
+        #     result = image_rec("test.jpg", save_path="output.jpg")
+        #     result_message ={
+        #         "type": "IMAGE_RESULTS",
+        #         "data":{
+        #             "obs_id": obs_id,
+        #             "img_id": result["predictions"][0]["class"]
+        #         }
+        #     }
+        #     client.send(json.dumps(result_message))
+>>>>>>> Stashed changes
