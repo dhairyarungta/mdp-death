@@ -14,7 +14,9 @@ def load_model():
     """
     Load the model from the local directory
     """
-    model = torch.hub.load('../yolov5', 'custom', path='Week_9.pt', source='local')
+    path = "TrainedWeek9Sunlight.pt" # "sunlightWeek9.pt" # "Week_9.pt"
+    model = torch.hub.load('../yolov5', 'custom', path=path, source='local')
+    print("USING MODEL: ", path)
     return model
 
 def predict_image_week_9(img, model):
