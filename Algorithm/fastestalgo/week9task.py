@@ -159,127 +159,18 @@ class Week9Task:
                 print(f"Output image is save to {result_path}")
         return img_id
 
-
-
-
-    # def on_receive_image_taken_message(self, message_data: dict):
-    #     img_id = self.simulator.get_img_id_from_image_taken(message_data, arrow=True)
-
-    #     result_message = {
-    #         "type": "IMAGE_RESULTS",
-    #         "data": {
-    #             "obs_id": self.obstacle_id,
-    #             "img_id": img_id
-    #         }
-    #     }
-
-    #     # send image result string to rpi
-    #     self.send_message_to_rpi(image_result_string)
-
-    #     # change obstacle_id to 2 after sending first image result
-    #     if self.obstacle_id == 1:
-    #         self.obstacle_id = 2
-
-    # def send_message_to_rpi(self, message: str):
-    #     if constants.RPI_CONNECTED:
-    #         self.comms.send(message)
-
-    # def check_infer_result(self, infer_result):
-    #     if infer_result == "Nothing detected":
-    #         return "Others"
-    #     elif type(infer_result) != list:
-    #         print(f"Strange behaviour from imagerec. Infer result: {infer_result}. Neither a list nor \"Nothing detected\" string")
-    #         return "Others"
-
-    #     for result in infer_result:
-    #         if result == "Left" or result == "Right":
-    #             return result
-
-    #     return "Others"
-
-    # def get_image_result_string(self, target_id):
-    #     image_result_list = ["TARGET", target_id]
-    #     return '/'.join([str(elem) for elem in image_result_list])
+def remove_file_ext(directory, file_ext = '.jpg'):
+    for f in os.listdir(directory):
+        if f.endswith(file_ext):
+            os.remove(os.path.join(directory, f))
 
 if __name__ == "__main__":
-    # unit test
-    # constants.WIFI_IP = constants.TEST_IP
+    remove_file_ext('images', '.jpg')
+    remove_file_ext('images_result', '.jpg')
+
+    
     X = Week9Task()
     X.run()
-
-    # # Test the check infer result
-    # infer_result = ["Left"]
-    # label = X.check_infer_result(infer_result)
-    # assert label == "Left"
-
-    # infer_result = ["A", "Right"]
-    # label = X.check_infer_result(infer_result)
-    # assert label == "Right"
-
-    # infer_result = "Nothing detected"
-    # label = X.check_infer_result(infer_result)
-    # assert label == "Others"
-
-    # infer_result = ["A", "One", "Two"]
-    # label = X.check_infer_result(infer_result)
-    # assert label == "Others"
-
-    # infer_result = "Invalid string"
-    # label = X.check_infer_result(infer_result)
-    # assert label == "Others"
-
-    # # Test the receiving image function
-    # import fastestalgo.tests.images
-    # image_folder = get_path_to(fastestalgo.tests.images)
-
-    # # Send first image only bullseye (so not saved)
-    # image_path = image_folder.joinpath("Bullseye.jpg")
-    # with Image.open(image_path) as image:
-    #     image.load()
-    # data_dict = {"image": image}
-    # X.on_receive_image_taken_message(data_dict)
-
-    # # Send first image only bullseye (so not saved)
-    # image_path = image_folder.joinpath("Bullseye.jpg")
-    # with Image.open(image_path) as image:
-    #     image.load()
-    # data_dict = {"image": image}
-    # X.on_receive_image_taken_message(data_dict)
-
-    # # Send first image only bullseye (so not saved)
-    # image_path = image_folder.joinpath("Bullseye.jpg")
-    # with Image.open(image_path) as image:
-    #     image.load()
-    # data_dict = {"image": image}
-    # X.on_receive_image_taken_message(data_dict)
-
-    # # Send first image
-    # image_path = image_folder.joinpath("left_arrow.jpg")
-    # with Image.open(image_path) as image:
-    #     image.load()
-    # data_dict = {"image": image}
-    # X.on_receive_image_taken_message(data_dict)
-
-    # # Send second image only bullseye (so not saved)
-    # image_path = image_folder.joinpath("Bullseye.jpg")
-    # with Image.open(image_path) as image:
-    #     image.load()
-    # data_dict = {"image": image}
-    # X.on_receive_image_taken_message(data_dict)
-
-    # # Send second image (predict on finish should be called after this)
-    # image_path2 = image_folder.joinpath("right_arrow.jpg")
-    # with Image.open(image_path2) as image2:
-    #     image2.load()
-    # data_dict2 = {"image": image2}
-    # X.on_receive_image_taken_message(data_dict2)
-
-    # # Send second image (predict on finish should be called after this)
-    # image_path2 = image_folder.joinpath("right_arrow.jpg")
-    # with Image.open(image_path2) as image2:
-    #     image2.load()
-    # data_dict2 = {"image": image2}
-    # X.on_receive_image_taken_message(data_dict2)
 
 
 
