@@ -1,14 +1,20 @@
 import logging
 import os
-from Algorithm.mdpalgo import constants
-from Algorithm.mdpalgo.communication.comms import AlgoClient
-from Algorithm.mdpalgo.communication.message_parser import MessageType
-from Algorithm.mdpalgo.interface.simulator import *
+import sys
+
+cwd = os.getcwd()
+pardir = os.path.dirname(cwd)
+mdp_algo_dir = os.path.join(pardir, 'mdpalgo')
+sys.path.insert(1, mdp_algo_dir)
+
+from mdpalgo import constants
+from mdpalgo.communication.comms import AlgoClient
+from mdpalgo.communication.message_parser import MessageType
+from mdpalgo.interface.simulator import *
 import json
 from image_rec import image_rec
 
-from imagerec.infer import infer
-from imagerec.helpers import get_path_to
+
 # for saving the image
 from PIL import Image
 
@@ -90,7 +96,7 @@ class Week9Task:
 
         # STEP 2: Detect picture
         print("2")
-        img_dic_one = {38:"firstRight", 39:"firstLeft"}
+        img_dic_one = {"38":"firstRight", "39":"firstLeft"}
         message_type_and_data = self.receive_message()
         assert message_type_and_data["type"] == MessageType.IMAGE_TAKEN.value
 
@@ -113,7 +119,7 @@ class Week9Task:
 
         message_data = message_type_and_data["data"]
         img_id = self.get_img_id_from_image_taken(message_data)
-        img_dic_two = {38:"secondRight", 39:"secondLeft"}
+        img_dic_two = {'38':"secondRight", '39':"secondLeft"}
 
         result_message ={
             "type": "NAVIGATION",
@@ -130,7 +136,7 @@ class Week9Task:
 
 
 
-    def get_img_id_from_image_taken(self, message_data, arrow: bool = False):
+    def get_img_id_from_image_taken(self, message_data, arrow: bool = True):
         image_data = message_data["image"]
         image_data = image_data.encode('utf-8')
         image_data = base64.b64decode(image_data)
