@@ -90,6 +90,8 @@ class STMInterface:
                 print("[STM] Checking second arrow:", self.second_arrow)
                 if self.second_arrow != None: # after moving around obstacle 2
                     self.return_to_carpark()
+                    print("[STM] DONE")
+                    return
 
                 # Start a new thread to capture and send the image to PC
                 capture_and_send_image_thread = threading.Thread(target=self.send_image_to_pc, daemon=True)
@@ -123,14 +125,14 @@ class STMInterface:
                         time.sleep(STM_GYRO_RESET_DELAY)
                     elif re.match(STM_XDIST_COMMAND_FORMAT, command):
                         dist = self.wait_for_dist()
-                        if dist > 0: 
+                        if dist >= 0: 
                             self.xdist = dist
                             print("[STM] updated XDIST =", self.xdist)
                         else:
                             print("[STM] ERROR: failed to update XDIST, received invalid value:", dist)
                     elif re.match(STM_YDIST_COMMAND_FORMAT, command):
                         dist = self.wait_for_dist()
-                        if dist > 0: 
+                        if dist >= 0: 
                             self.ydist = dist
                             print("[STM] updated YDIST =", self.ydist)
                         else:
@@ -269,11 +271,10 @@ class STMInterface:
     def get_commands_to_carpark(self):
         print(f"[STM] Calculating path to carpark...") # after {self.second_arrow} arrow for XDIST = {self.xdist} YDIST = {self.ydist}"
         movement_list = []
-        y_adjustment = 10   # to be tested later, range[4, ?]
-        x_adjustment = (self.xdist + 15) // 2 # take floor of div 2
-        y_offset = self.ydist + 20 + y_adjustment
+        x_adjustment = (self.xdist) // 2 - 20 # take floor of div 2
+        y_adjustment = self.ydist + 80
 
-        movement_list.append(f"SF{str(y_offset)}")
+        movement_list.append(f"SF{y_adjustment:03d}")
         if self.second_arrow == 'R':
             movement_list.append("LF090")
             movement_list.append(f"SF{x_adjustment:03d}")
