@@ -83,7 +83,10 @@ class Week9Task:
 
         message_type_and_data = self.receive_message()
         message_data = message_type_and_data["data"]
-        assert message_type_and_data["type"] == MessageType.START_TASK.value
+        while (message_type_and_data["type"] != MessageType.START_TASK.value):
+            message_type_and_data = self.receive_message()
+        
+        
         print("1")
         result_message = {
             "type": "NAVIGATION",
@@ -98,15 +101,26 @@ class Week9Task:
         print("2")
         img_dic_one = {"38":"firstRight", "39":"firstLeft"}
         message_type_and_data = self.receive_message()
-        assert message_type_and_data["type"] == MessageType.IMAGE_TAKEN.value
+
+
+        # assert message_type_and_data["type"] == MessageType.IMAGE_TAKEN.value
+        while (message_type_and_data["type"]!=MessageType.IMAGE_TAKEN.value):
+            message_type_and_data=self.receive_message()
+
 
         message_data = message_type_and_data["data"]
+        # img_id = ""
+
         img_id = self.get_img_id_from_image_taken(message_data)
+        if (img_id!="38" and img_id!="39"):
+            img_id="39" # guess left
+            # img_id=self.get_img_id_from_image_taken(message_data)
+
 
         result_message ={
             "type": "NAVIGATION",
             "data": {
-            "commands": [img_dic_one[img_id],"YF150", "SB015"]
+            "commands": [img_dic_one[img_id],"YF150", "SB012"]
             }
         }
 
@@ -115,10 +129,22 @@ class Week9Task:
         #STEP3
         print ("3")
         message_type_and_data = self.receive_message()
-        assert message_type_and_data["type"] == MessageType.IMAGE_TAKEN.value
+        # assert message_type_and_data["type"] == MessageType.IMAGE_TAKEN.value
+        while (message_type_and_data["type"]!=MessageType.IMAGE_TAKEN.value):
+            message_type_and_data=self.receive_message()
+
+
 
         message_data = message_type_and_data["data"]
+        
+        # img_id=""
         img_id = self.get_img_id_from_image_taken(message_data)
+        
+        if (img_id!="38" and img_id!="39"):
+            img_id = "39" # guess left
+            # img_id=self.get_img_id_from_image_taken(message_data)
+
+
         img_dic_two = {'38':"secondRight", '39':"secondLeft"}
 
         result_message ={
