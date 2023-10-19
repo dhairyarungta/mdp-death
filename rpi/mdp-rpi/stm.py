@@ -277,16 +277,26 @@ class STMInterface:
         movement_list.append(f"SF{y_adjustment:03d}")
         if self.second_arrow == 'R':
             movement_list.append("LF090")
-            if x_adjustment > 5:
-                movement_list.append(f"SF{x_adjustment:03d}")
+            if abs(x_adjustment) > 5:
+                if x_adjustment > 0:
+                    movement_list.append(f"SF{x_adjustment:03d}")
+                else:
+                    movement_list.append(f"SB{abs(x_adjustment):03d}")
             movement_list.append("RF090")
-            movement_list.append("UF200") # obs 1 distance + carpark depth
+            movement_list.append("VF200") # reduce ultrasonic threshold
+            # movement_list.append("VF000") # reduce ultrasonic threshold
+            # movement_list.append("UF200") # obs 1 distance + carpark depth
         elif self.second_arrow == 'L':
             movement_list.append("RF090")
-            if x_adjustment > 5:
-                movement_list.append(f"SF{x_adjustment:03d}")
+            if abs(x_adjustment) > 5:
+                if x_adjustment > 0:
+                    movement_list.append(f"SF{x_adjustment:03d}")
+                else:
+                    movement_list.append(f"SB{abs(x_adjustment):03d}")
             movement_list.append("LF090")
-            movement_list.append("UF200") # obs 1 distance + carpark depth
+            movement_list.append("VF200") # reduce ultrasonic threshold
+            # movement_list.append("VF000") # reduce ultrasonic threshold
+            # movement_list.append("UF200") # obs 1 distance + carpark depth
         else:
             print("[STM] ERROR getting path to carpark, second arrow invalid -", self.second_arrow)
         

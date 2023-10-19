@@ -140,9 +140,11 @@
       - e.g. SB010 is move backwards 10cm, LF090 is turn 90 degrees to the left in the forward direction
     - on completion, STM acknowledges with A
 2. movement until ultrasonic sensor output indicates imminent obstacle
-    ```UF100```
+    ```UF100, VF100```
     - move Forward (this is the only valid direction since our ultrasonic sensor is front mounted)
     - end the movement based on the ultrasonic sensor
+      - U is a bigger threshold used for the first part of task 2
+      - V is a smaller threshold used for ensuring the robot fully enters the parking zone 
     - XXX: the last 3 digits indicate distance in cm which is the upper limit of how far to move if the ultrasonic sensor is not triggered
     - e.g. UF100 is to move foward 100cm, or until the ultrasonic sensor indicates that an obstacle is ahead
     - on completion, STM acknowledges with A
