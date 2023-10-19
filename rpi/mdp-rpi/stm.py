@@ -267,7 +267,7 @@ class STMInterface:
         print(f"[STM] Calculating path to carpark...") # after {self.second_arrow} arrow for XDIST = {self.xdist} YDIST = {self.ydist}"
         movement_list = []
         y_adjustment = 10   # to be tested later, range[4, ?]
-        x_adjustment = self.xdist // 2 # take floor of div 2
+        x_adjustment = (self.xdist + 15) // 2 # take floor of div 2
         y_offset = self.ydist + 20 + y_adjustment
 
         movement_list.append(f"SF{str(y_offset)}")
