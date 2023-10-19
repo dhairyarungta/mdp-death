@@ -80,9 +80,9 @@ class Week9Task:
         assert message_type_and_data["type"] == MessageType.START_TASK.value
         print("1")
         result_message = {
-            "type": "PATH",
+            "type": "NAVIGATION",
             "data": {
-                "UF200"
+                "commands": ["UF200"]
             }
         }
         self.commsClient.send(result_message)
@@ -197,7 +197,7 @@ class Week9Task:
 
 if __name__ == "__main__":
     # unit test
-    constants.WIFI_IP = constants.TEST_IP
+    # constants.WIFI_IP = constants.TEST_IP
     X = Week9Task()
     X.run()
 

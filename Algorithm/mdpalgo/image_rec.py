@@ -138,7 +138,6 @@ def image_rec(image_path, save_path=None, arrow: bool = False):
         visualise_predictions(result_dict["predictions"], image_path, save_path)
     return result_dict
 
-<<<<<<< Updated upstream
 if __name__ == "__main__":
     import os 
     image_dir = 'test_images_2'
@@ -146,6 +145,3 @@ if __name__ == "__main__":
     for img in os.listdir(image_dir):
         if img.endswith('.jpg'):
             image_rec(f'{image_dir}/{img}', f'{resutl_dir}/{img}', arrow=True)
-=======
-image_rec("/Users/dhairyarungta/Downloads/mdp-death/Algorithm/mdpalgo/tests/images/img_1.jpg", save_path="/Users/dhairyarungta/Downloads/mdp-death/Algorithm/mdpalgo/tests/images/output.jpg")
->>>>>>> Stashed changes

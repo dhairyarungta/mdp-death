@@ -87,6 +87,7 @@ class STMInterface:
                     self.write_to_stm(command)  
                 self.obstacle_count += 1
 
+                print("[STM] Checking second arrow:", self.second_arrow)
                 if self.second_arrow != None: # after moving around obstacle 2
                     self.return_to_carpark()
 
@@ -167,12 +168,14 @@ class STMInterface:
 
     def send_path_to_android(self, message_json):
         # send path to Android for display
+        if "path" not in message_json["data"]:
+            print("[STM] No path found in NAVIGATION message")  
         try: 
             path_message = self.create_path_message(message_json["data"]["path"])
             self.RPiMain.Android.msg_queue.put(path_message)
             print("[STM] Adding NAVIGATION path from PC to Android message queue")
         except:
-            print("[STM] No path found in NAVIGATION message")    
+            print("[STM] ERROR with path found in NAVIGATION message")    
 
     def is_valid_command(self, command):
         if re.match(STM_NAV_COMMAND_FORMAT, command) or command == STM_GYRO_RESET_COMMAND:
