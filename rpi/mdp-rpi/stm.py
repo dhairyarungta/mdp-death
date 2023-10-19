@@ -84,7 +84,13 @@ class STMInterface:
                 # smooth out commands by combining consecutive SF/SB commands
                 commands = self.adjust_commands(message_json["data"]["commands"])
                 for command in commands: # send and wait for ACK/reset delay
-                    self.write_to_stm(command)  
+                    if command.startswith("UF"):
+                        self.write_to_stm("Y" + command[1:])
+                        print("[STM] DEBUGGING: first movement distance =", self.ydist)
+                        if self.ydist < 30:
+                            self.write_to_stm(command)
+                    else:
+                        self.write_to_stm(command)  
                 self.obstacle_count += 1
 
                 print("[STM] Checking second arrow:", self.second_arrow)
@@ -271,7 +277,7 @@ class STMInterface:
     def get_commands_to_carpark(self):
         print(f"[STM] Calculating path to carpark...") # after {self.second_arrow} arrow for XDIST = {self.xdist} YDIST = {self.ydist}"
         movement_list = []
-        x_adjustment = (self.xdist) // 2 - 20 # take floor of div 2, subtract turning radius
+        x_adjustment = (self.xdist) // 2 - 25 # take floor of div 2, subtract turning radius
         y_adjustment = self.ydist + 80 # min dist btw obs + width of obs * 2
 
         movement_list.append(f"SF{y_adjustment:03d}")
