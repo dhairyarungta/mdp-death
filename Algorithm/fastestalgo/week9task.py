@@ -106,7 +106,7 @@ class Week9Task:
         result_message ={
             "type": "NAVIGATION",
             "data": {
-            "commands": [img_dic_one[img_id],"YF150", "SB010"]
+            "commands": [img_dic_one[img_id],"YF150", "SB015"]
             }
         }
 
