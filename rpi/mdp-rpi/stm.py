@@ -271,18 +271,20 @@ class STMInterface:
     def get_commands_to_carpark(self):
         print(f"[STM] Calculating path to carpark...") # after {self.second_arrow} arrow for XDIST = {self.xdist} YDIST = {self.ydist}"
         movement_list = []
-        x_adjustment = (self.xdist) // 2 - 20 # take floor of div 2
-        y_adjustment = self.ydist + 80
+        x_adjustment = (self.xdist) // 2 - 20 # take floor of div 2, subtract turning radius
+        y_adjustment = self.ydist + 80 # min dist btw obs + width of obs * 2
 
         movement_list.append(f"SF{y_adjustment:03d}")
         if self.second_arrow == 'R':
             movement_list.append("LF090")
-            movement_list.append(f"SF{x_adjustment:03d}")
+            if x_adjustment > 5:
+                movement_list.append(f"SF{x_adjustment:03d}")
             movement_list.append("RF090")
             movement_list.append("UF200") # obs 1 distance + carpark depth
         elif self.second_arrow == 'L':
             movement_list.append("RF090")
-            movement_list.append(f"SF{x_adjustment:03d}")
+            if x_adjustment > 5:
+                movement_list.append(f"SF{x_adjustment:03d}")
             movement_list.append("LF090")
             movement_list.append("UF200") # obs 1 distance + carpark depth
         else:
