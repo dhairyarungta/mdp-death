@@ -22,7 +22,7 @@ def get_image():
     img_pth = f"img_{round(time.time())}.jpg" 
     capture(img_pth)
     # preprocessing image
-    preprocess_img(img_pth)
+    # preprocess_img(img_pth)
                 
     # construct image
     encoded_string = ""
