@@ -1,0 +1,58 @@
+import abc
+import itertools
+from enum import Enum
+
+import networkx as nx
+import numpy as np
+
+
+class AbstractHamiltonianPathPlanner(metaclass=abc.ABCMeta):
+    def __init__(self, graph: nx.Graph, starting_node: int = 0):
+        """Initialize the path Planner
+
+        Args:
+            graph: complete graph, with edge weights
+            starting_node: the node to start from"""
+        self.graph = graph
+        self.starting_node = starting_node
+
+    @abc.abstractmethod
+    def find_path(self):
+        """Return list of nodes in Hamiltonian path and length of that path"""
+        return
+
+class BruteForcePermutationHamiltonianPathPlanner(AbstractHamiltonianPathPlanner):
+    """
+    Compute shortest hamiltonian path for a complete graph by exhaustive search
+    """
+
+    def find_path(self):
+        num_nodes = len(self.graph.nodes)
+        other_nodes = list(self.graph.adj[self.starting_node])
+        shortest_length = np.infty
+        shortest_path = ()
+
+        for path in itertools.permutations(other_nodes):
+            print(f"== HAMIL_P_SVC | Considering path {path}")
+            path_length = sum(
+                (self.graph[path[i]][path[i + 1]]["weight"] for i in range(num_nodes - 2)),
+                start=self.graph[self.starting_node][path[0]]["weight"])
+            print(f"== HAMIL_P_SVC | > This path {path} has length of {path_length}")
+
+                shortest_length = path_length
+
+            if path_length < shortest_length:
+                print(f"== HAMIL_P_SVC | > This path {path} is the new shortest path")
+                shortest_path = path
+
+        shortest_path = [self.starting_node] + list(shortest_path)
+
+        print(f"== HAMIL_P_SVC | Final shortest path is {shortest_path}")
+        return shortest_path, shortest_length
+
+def get_graph_path_planner(planner_type: HamiltonianPathPlannerType
+                           ) -> AbstractHamiltonianPathPlanner:
+    if planner_type is HamiltonianPathPlannerType.GREEDY:
+        return GreedyHamiltonianPathPlanner
+    elif planner_type is HamiltonianPathPlannerType.EXHAUSTIVE:
+        return BruteForcePermutationHamiltonianPathPlanner
