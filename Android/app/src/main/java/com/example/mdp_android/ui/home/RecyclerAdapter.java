@@ -54,7 +54,6 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.ViewHo
                     ClipData data = ClipData.newPlainText("drag_data", textView.getText());
                     View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(textView);
                     v.startDragAndDrop(data, shadowBuilder, textView, 0);
-//                    v.setVisibility(View.INVISIBLE);
                     return true;
                 }
             });

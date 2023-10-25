@@ -51,7 +51,6 @@ public class HomeFragment extends Fragment {
     DeviceSingleton deviceSingleton;
 
     public Map map;
-
     private ImageButton up, down, left, right;
     private Button resetBtn, startBtn;
     private TextView robotStatus, targetStatus, bluetoothTextView, obsData;
@@ -60,7 +59,6 @@ public class HomeFragment extends Fragment {
     private RecyclerView.LayoutManager layoutManager;
     private ToggleButton setRobot, setDirection, setTaskType;
     private Toast currentToast;
-
 
     @Override
     public View onCreateView(
@@ -93,7 +91,6 @@ public class HomeFragment extends Fragment {
                 new IntentFilter("getStatus")
         );
 
-
         return root;
     }
 
@@ -112,16 +109,6 @@ public class HomeFragment extends Fragment {
                 Log.d(TAG, "onReceive: -msg- " + connectedDevice);
                 updateBluetoothStatus();
             }
-//            if (deviceName.equals("")) {
-//                connectedDevice = "";
-//                homeViewModel.setReceivedText(context.getString(
-//                        R.string.bluetooth_device_connected_not));
-//            } else {
-//                connectedDevice = deviceName;
-//                Log.d(TAG, "onReceive: -msg- " + connectedDevice);
-//                homeViewModel.setReceivedText(context.getString(
-//                        R.string.bluetooth_device_connected)+connectedDevice);
-//            }
         }
     };
 
@@ -138,7 +125,6 @@ public class HomeFragment extends Fragment {
                 status = RpiController.getRobotStatus(response);
                 homeViewModel.setRobotStatus(status);
                 updateRobotPosition(response);
-                // TODO: get robot coordinate message as list and update every few seconds using sleep and for loop
             } else if (messageType == "image") {
                 status = RpiController.getTargetStatus(response);
                 try {
@@ -264,7 +250,6 @@ public class HomeFragment extends Fragment {
                 toast( "turn left");
                 ArrayList<String> commands = new ArrayList<>();
                 commands.add("LF090");
-//                commands.add("SF010");
                 RpiController.sendToRpi(RpiController.getNavDetails(commands));
             }
         });
@@ -275,7 +260,6 @@ public class HomeFragment extends Fragment {
                 toast("turn right");
                 ArrayList<String> commands = new ArrayList<>();
                 commands.add("RF090");
-////                commands.add("SF010");
                 RpiController.sendToRpi(RpiController.getNavDetails(commands));
             }
         });

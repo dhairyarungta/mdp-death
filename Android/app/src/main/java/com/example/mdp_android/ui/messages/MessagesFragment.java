@@ -157,7 +157,6 @@ public class MessagesFragment extends Fragment {
         LocalBroadcastManager.getInstance(requireActivity()).unregisterReceiver(mTextReceiver);
     }
 
-
     private BroadcastReceiver mTextReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {

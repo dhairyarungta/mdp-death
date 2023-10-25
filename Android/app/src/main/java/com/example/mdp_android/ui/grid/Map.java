@@ -39,7 +39,7 @@ public class Map extends View {
     private static boolean mapDrawn = false;
     private static Cell[][] cells;
     private static float cellSize;
-    private Paint startPaint, obstacleFacePaint, obstaclePaint, robotPaint, exploredPaint, cellPaint, linePaint, whitePaint, targetTextPaint, imageIdentifiedPaint;
+    private Paint obstacleFacePaint, obstaclePaint, robotPaint, exploredPaint, cellPaint, linePaint, whitePaint, targetTextPaint, imageIdentifiedPaint;
 
     private static int currentSelected = -1;
     private static ArrayList<Obstacle> obstacleCoor = new ArrayList<>();
@@ -69,7 +69,6 @@ public class Map extends View {
         super(context, attributes);
 
         // create objects
-        startPaint = new Paint();
         obstacleFacePaint = new Paint();
         obstaclePaint = new Paint();
         robotPaint = new Paint();
@@ -80,9 +79,7 @@ public class Map extends View {
         targetTextPaint = new Paint();
         imageIdentifiedPaint = new Paint();
 
-        // TODO: use these paints
         // paint for paths
-        startPaint.setColor(Color.GREEN);
         exploredPaint.setColor(Color.parseColor("#A4FEFF"));
 
         // paint for grid cells
@@ -154,9 +151,6 @@ public class Map extends View {
                     break;
                 case "robot":
                     this.paint = robotPaint;
-                    break;
-                case "start":
-                    this.paint = startPaint;
                     break;
                 case "unexplored":
                     this.paint = cellPaint;
@@ -286,7 +280,6 @@ public class Map extends View {
     protected void onDraw(Canvas canvas) {
         log("start drawing map");
         super.onDraw(canvas);
-//        canvas.drawColor(Color.WHITE);
         if (!mapDrawn) {
             this.createCell();
             mapDrawn = true;
@@ -299,7 +292,6 @@ public class Map extends View {
         if (robot.getX() != -1 && robot.getY() != -1) drawRobot(canvas);
         drawIdentifiedImage(canvas);
         log("map drawn successfully");
-
     }
 
     private void drawGrids(Canvas canvas) {
@@ -307,13 +299,6 @@ public class Map extends View {
             for (int y = 0; y < NUM_ROWS; y++) {
                 canvas.drawRect(cells[x][y].sX, cells[x][y].sY, cells[x][y].eX, cells[x][y].eY, cells[x][y].paint);
             }
-//                if (!cells[x][y].type.equals("image") && cells[x][y].getId().equals("-1")) {
-//                    canvas.drawRect(cells[x][y].sX, cells[x][y].sY, cells[x][y].eX, cells[x][y].eY, cells[x][y].paint);
-//                    canvas.drawText(y + "", x * cellSize + cellSize/2.5f, y * cellSize + cellSize/1.5f, blackPaint);
-//                } else {
-//                    canvas.drawRect(cells[x][y].sX, cells[x][y].sY, cells[x][y].eX, cells[x][y].eY, cells[x][y].paint);
-//                    canvas.drawText(y + "", x * cellSize + cellSize/2.5f, y * cellSize + cellSize/1.5f, blackPaint);
-//                }
 
         // draw vertical lines
         for (int c=0; c<=NUM_COLS; c++) {
@@ -426,9 +411,6 @@ public class Map extends View {
                 default:
                     break;
             }
-//            cells[col][row].setType("robot");
-//            canvas.drawRect(rect, robotPaint);
-//            setRobotCoor(col, row, "N");
             canvas.drawBitmap(robotDirectionBitmap, null, rect, null);
     }
 
@@ -456,15 +438,12 @@ public class Map extends View {
             for (int j = row - 1; j <= row + 1; j++)
                 if (isWithinCanvasRegion(i,j)) cells[i][j].setType("robot");
 
-
         this.invalidate();
     }
 
 
     // checks if the cell is occupied
     private boolean checkGridEmpty(int x, int y) {
-//        if (cells[x][y].getType() != "robot" && cells[x][y].getType() != "obstacle") return true;
-//        else return false;
         if (isWithinCanvasRegion(x, y)) {
             if (cells[x][y].getType() == "robot" || cells[x][y].getType() == "obstacle") return false;
             else return true;
@@ -481,7 +460,6 @@ public class Map extends View {
                 }
         return true;
     }
-
 
     public boolean onDragEvent(DragEvent event) {
         switch (event.getAction()) {
@@ -551,7 +529,6 @@ public class Map extends View {
                             // ADDED: send to RPI robot details
 //                            RpiController.sendToRpi(RpiController.getRobotDetails(robot));
                             sendRobotStatus();
-//                            this.invalidate();
                         } else {
                             log("already have an object here");
                         }
@@ -569,17 +546,10 @@ public class Map extends View {
                 case MotionEvent.ACTION_MOVE:
                     // Update the position of the dragged TextView
                     if (!(currentSelected == -1) && checkGridEmpty(cellX, cellY)) {
-//                        if (isWithinCanvasRegion(cellX, cellY) && checkGridEmpty(cellX, cellY)) {
-//                        if (!(currentSelected == -1)) {
-                            log("within boundary, can move");
-                            obstacleCoor.get(currentSelected).setObsXCoor(cellX);
-                            obstacleCoor.get(currentSelected).setObsYCoor(this.convertRow(cellY));
-                            this.invalidate();
-//                        }
-//                        } else {
-//                            log("out of boundary");
-//                            HomeFragment.modifyObstacleVisibility(currentSelected, true);
-//                        }
+                        log("within boundary, can move");
+                        obstacleCoor.get(currentSelected).setObsXCoor(cellX);
+                        obstacleCoor.get(currentSelected).setObsYCoor(this.convertRow(cellY));
+                        this.invalidate();
                     }
                     break;
                 case MotionEvent.ACTION_UP:
@@ -643,7 +613,6 @@ public class Map extends View {
 
     private int convertRow(int r) {return NUM_ROWS - r;}
 
-    // uncomment on actual
     public void clearGrid() {
         // clear obstacles
         obstacleCoor.clear();
@@ -667,23 +636,6 @@ public class Map extends View {
 
         this.invalidate();
     }
-
-    // clear grid: test
-//    public void clearGrid() {
-//        // clear obstacles
-//        currentSelected = -1;
-//
-//        // clear grids
-//        for (int x = 1; x <= NUM_COLS; x++) {
-//            for (int y = 0; y < NUM_ROWS; y++) {
-//                if (cells[x][y].type.equals("explored")) {
-//                    cells[x][y].setType("unexplored");
-//                }
-//            }
-//        }
-//
-//        this.invalidate();
-//    }
 
     private void updateObstacleCoor(int start) {
         int x, y, index;
@@ -726,9 +678,9 @@ public class Map extends View {
         return null;
     }
 
-    public boolean robotInMap() {
-        return robot.getX() != -1 && robot.getY() != -1;
-    }
+//    public boolean robotInMap() {
+//        return robot.getX() != -1 && robot.getY() != -1;
+//    }
 
     private void sendRobotStatus() {
         String x = Integer.toString(robot.getX()-1);
@@ -764,79 +716,6 @@ public class Map extends View {
                 }
             }
         }, delayMillis);
-    }
-
-    // TODO: update robot movements on map for manual navigation (only if robot in map)
-    public void moveForward() {
-        String currentDir = robot.getDirection();
-        switch (currentDir) {
-            case "N":
-                log("N");
-                break;
-            case "S":
-                log("S");
-                break;
-            case "E":
-                log("E");
-                break;
-            case "W":
-                log("W");
-                break;
-        }
-    }
-
-    public void turnLeft() {
-        String currentDir = robot.getDirection();
-        switch (currentDir) {
-            case "N":
-                log("N");
-                break;
-            case "S":
-                log("S");
-                break;
-            case "E":
-                log("E");
-                break;
-            case "W":
-                log("W");
-                break;
-        }
-    }
-
-    public void turnRight() {
-        String currentDir = robot.getDirection();
-        switch (currentDir) {
-            case "N":
-                log("N");
-                break;
-            case "S":
-                log("S");
-                break;
-            case "E":
-                log("E");
-                break;
-            case "W":
-                log("W");
-                break;
-        }
-    }
-
-    public void moveBack() {
-        String currentDir = robot.getDirection();
-        switch (currentDir) {
-            case "N":
-                log("N");
-                break;
-            case "S":
-                log("S");
-                break;
-            case "E":
-                log("E");
-                break;
-            case "W":
-                log("W");
-                break;
-        }
     }
 
 }

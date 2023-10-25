@@ -18,7 +18,6 @@ import com.example.mdp_android.databinding.ActivityMainBinding;
 public class MainActivity extends AppCompatActivity {
         private String TAG = "main";
         private ActivityMainBinding binding;
-        private String connectedDevice;
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
@@ -37,11 +36,6 @@ public class MainActivity extends AppCompatActivity {
             NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
             NavigationUI.setupWithNavController(binding.navView, navController);
 
-//            // register receiver for connected devices
-//            LocalBroadcastManager.getInstance(this).registerReceiver(
-//                    mNameReceiver,
-//                    new IntentFilter("getConnectedDevice")
-//            );
         }
 
 

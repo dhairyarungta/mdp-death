@@ -458,7 +458,6 @@ public class BluetoothController {
 
         public void run() {
             Log.d(TAG, "BEGIN mConnectedThread");
-//            mmBuffer = new byte[1024];
             mmBuffer = new byte[2048];
             int numBytes; // bytes returned from read()
 
@@ -466,11 +465,7 @@ public class BluetoothController {
             while (mState == StateConstants.STATE_CONNECTED) {
                 try {
                     // Read from the InputStream.
-                    // TODO: this line causing error: java.io.IOException: bt socket closed, read return: -1
-                    Log.d(TAG, "trying to read from buffer");
                     numBytes = mmInStream.read(mmBuffer);
-//                    String inputBuffer = new String(mmBuffer, 0, numBytes);
-                    Log.d(TAG, "buffer length: " + numBytes);
                     // Send the obtained bytes to the UI activity.
                     Message readMsg = mHandler.obtainMessage(
                             MessageConstants.MESSAGE_READ, numBytes, -1,
@@ -495,13 +490,6 @@ public class BluetoothController {
                 writtenMsg.sendToTarget();
             } catch (IOException e) {
                 Log.e(TAG, "Error occurred when sending data", e);
-
-                // Send a failure message back to the activity.
-//                Message writeErrorMsg = mHandler.obtainMessage(MessageConstants.MESSAGE_TOAST);
-//                Bundle bundle = new Bundle();
-//                bundle.putString("toast", "Couldn't send data to the other device");
-//                writeErrorMsg.setData(bundle);
-//                mHandler.sendMessage(writeErrorMsg);
             }
         }
 

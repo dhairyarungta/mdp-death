@@ -123,9 +123,7 @@ public class RpiController {
         return message;
     }
 
-    // TODO: change after checklist complete
     public static JSONObject getRobotDetails(Map.Robot robot) {
-        JSONObject checklistPayload = new JSONObject();
         JSONObject robotCoor = new JSONObject();
         try {
             robotCoor.put("id", "R");
@@ -138,7 +136,6 @@ public class RpiController {
         return robotCoor;
     }
 
-    // TODO: change after checklist complete
     public static JSONObject getObstacleDetails(Map.Obstacle obstacle) {
         JSONObject obstacleCoor = new JSONObject();
         try {
