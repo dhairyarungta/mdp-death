@@ -12,6 +12,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.DragEvent;
 import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.widget.Toast;
 import android.os.Handler;
@@ -32,6 +33,11 @@ import java.util.ArrayList;
 
 
 public class Map extends View {
+    private ScaleGestureDetector mScaleDetector;
+    private float mScaleFactor = 1.f;
+    private float focusx, focusy;
+    private boolean pan = false;
+
     private static final String TAG = "MapController";
     private static final int NUM_COLS = 20, NUM_ROWS = 20;
     private static final float WALL_THICKNESS = 5;
@@ -106,6 +112,7 @@ public class Map extends View {
         targetTextPaint.setTextAlign(Paint.Align.CENTER);
         imageIdentifiedPaint.setColor(Color.parseColor("#89B09F"));
 
+        mScaleDetector = new ScaleGestureDetector(context, new ScaleListener());
     }
 
     // Grid Cell object
@@ -280,6 +287,9 @@ public class Map extends View {
     protected void onDraw(Canvas canvas) {
         log("start drawing map");
         super.onDraw(canvas);
+
+        canvas.save();
+        canvas.scale(mScaleFactor, mScaleFactor, focusx, focusy);
         if (!mapDrawn) {
             this.createCell();
             mapDrawn = true;
@@ -291,7 +301,28 @@ public class Map extends View {
         drawObstacle(canvas);
         if (robot.getX() != -1 && robot.getY() != -1) drawRobot(canvas);
         drawIdentifiedImage(canvas);
+        canvas.restore();
         log("map drawn successfully");
+    }
+
+    private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
+        @Override
+        public boolean onScaleBegin(ScaleGestureDetector detector) {
+            focusx=detector.getFocusX();
+            focusy=detector.getFocusY();
+            pan = true;
+            return super.onScaleBegin(detector);
+        }
+        @Override
+        public boolean onScale(ScaleGestureDetector detector) {
+            mScaleFactor *= detector.getScaleFactor();
+
+            // Don't let the object get too small or too large.
+            mScaleFactor = Math.max(0.1f, Math.min(mScaleFactor, 5.0f));
+
+            invalidate();
+            return true;
+        }
     }
 
     private void drawGrids(Canvas canvas) {
@@ -466,8 +497,8 @@ public class Map extends View {
             case DragEvent.ACTION_DROP:
                 Log.d(TAG, "drop object here");
                 // Determine the coordinates of the drop event
-                float x = event.getX();
-                float y = event.getY();
+                float x = (event.getX() - focusx) / mScaleFactor + focusx;
+                float y = (event.getY() - focusy) / mScaleFactor + focusy;
 
                 // Convert the coordinates into grid cell coordinates
                 int cellX = (int) (x / cellSize);  // Calculate cell width
@@ -494,8 +525,10 @@ public class Map extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        float x = event.getX();
-        float y = event.getY();
+        mScaleDetector.onTouchEvent(event);
+
+        float x = (event.getX() - focusx) / mScaleFactor + focusx;
+        float y = (event.getY() - focusy) / mScaleFactor + focusy;
 
         int cellX = (int) (x / cellSize);  // Calculate cell width
         int cellY = (int) (y / cellSize);  // Calculate cell height
@@ -545,6 +578,11 @@ public class Map extends View {
                     break;
                 case MotionEvent.ACTION_MOVE:
                     // Update the position of the dragged TextView
+                    if (pan) {
+                        focusx = event.getX();
+                        focusy = event.getY();
+                        this.invalidate();
+                    }
                     if (!(currentSelected == -1) && checkGridEmpty(cellX, cellY)) {
                         log("within boundary, can move");
                         obstacleCoor.get(currentSelected).setObsXCoor(cellX);
@@ -555,6 +593,7 @@ public class Map extends View {
                 case MotionEvent.ACTION_UP:
                     // Handle drop
                     log("ACTION_UP: ("+cellX + " , "+cellY+")");
+                    pan = false;
                     if (isWithinCanvasRegion(cellX, cellY) && checkGridEmpty(cellX, cellY)) {
                         if (!(currentSelected == -1)) {
                             // ADDED: send to RPI obstacle details
@@ -660,9 +699,7 @@ public class Map extends View {
                 obstacleCoor.get(i).setTargetID(imgID);
                 int x = obstacleCoor.get(i).getObsXCoor();
                 int y = this.convertRow(obstacleCoor.get(i).getObsYCoor());
-                log("initial cell type: "+cells[x][y].getType());
                 cells[x][y].setType("image");
-                log("updated cell type: "+cells[x][y].getType());
                 this.invalidate();
                 return;
             }
