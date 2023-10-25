@@ -112,7 +112,7 @@ def image_rec(image_path, save_path=None, arrow: bool = False):
         result_str = response.text
         result_dict = json.loads(result_str)
         nretries-=1
-    
+
     if len(result_dict['predictions']) == 0:
         return None
 
@@ -128,22 +128,22 @@ def image_rec(image_path, save_path=None, arrow: bool = False):
                 largest_box = box_area
                 largest_box_pre = pre
         result_dict['predictions'] = [largest_box_pre]
-    
+
     print(result_dict)
-        
+
     if save_path is not None:
         visualise_predictions(result_dict["predictions"], image_path, save_path)
-    
+
     if len(result_dict['predictions']) == 0:
         return None
     return result_dict
 
 if __name__ == "__main__":
-    import os 
-    image_pth = '/home/charlestran/mdp-death/Algorithm/mdpalgo/photo_2023-10-19_16-47-40.jpg'
-    image_rec(image_pth, arrow=True)
-    # image_dir = 'test_images_2'
-    # resutl_dir = 'test_images_result_2'
-    # for img in os.listdir(image_dir):
-    #     if img.endswith('.jpg'):
-    #         image_rec(f'{image_dir}/{img}', f'{resutl_dir}/{img}', arrow=True)
+    import os
+    # image_pth = '/mdp-death/Algorithm/mdpalgo/photo_2023-10-19_16-47-40.jpg'
+    # image_rec(image_pth, arrow=True)
+    image_dir = 'test_images_2'
+    resutl_dir = 'test_images_result_2'
+    for img in os.listdir(image_dir):
+        if img.endswith('.jpg'):
+            image_rec(f'{image_dir}/{img}', f'{resutl_dir}/{img}', arrow=True)

@@ -340,7 +340,7 @@ class AutoPlanner:
                 if self.is_node_in_yet_to_visit_and_has_higher_cost(child):
                     continue
 
-                print(f"== A_TO_B_PLANNER_SVC > get_movements() | Adding child: {child.pose.to_tuple()}")
+                # print(f"== A_TO_B_PLANNER_SVC > get_movements() | Adding child: {child.pose.to_tuple()}")
                 self.yet_to_visit_add(child)
         raise Exception("no path found to goal")
 
@@ -362,10 +362,6 @@ class AutoPlanner:
         movements_str.reverse()
         path.reverse()
         movements_str = self.parse_raw_movements_into_movement_string(movements_str)
-        print("HELLO (EDIT BEFORE ME)")
-        print(movements)
-        print("HELLO2")
-        print(movements_str)
         self.full_path.append(movements_str)
         return movements, path, movements_str
 
