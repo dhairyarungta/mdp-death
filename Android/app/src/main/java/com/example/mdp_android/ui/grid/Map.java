@@ -95,7 +95,7 @@ public class Map extends View {
         linePaint.setStyle(Paint.Style.FILL_AND_STROKE);
 
         // paint for robot
-        robotPaint.setColor(Color.parseColor("#C8A2C8"));
+        robotPaint.setColor(ContextCompat.getColor(context, R.color.pink_500));
 
         // paint for obstacle
         obstaclePaint.setColor(Color.BLACK);

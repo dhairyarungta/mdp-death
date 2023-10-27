@@ -6,7 +6,7 @@
     android:layout_height="25dp"
     android:layout_margin="5dp"
     android:textColor="@color/white"
-    android:background="@color/purple_500"
+    android:background="@color/pink_500"
     android:textAlignment="center"
     android:gravity="center">
 </TextView>
